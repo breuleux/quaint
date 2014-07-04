@@ -1,0 +1,361 @@
+
+require:
+   "earl-grey/location" ->
+      Source, Location
+      <<:
+   "earl-grey/lex" ->
+      fill_locations
+
+
+fullsplit{pos0, text, re} =
+   ss{a, b} =
+      text.substring{a-pos0, b-pos0}
+   results = {}
+   var pos = pos0
+   while true:
+      match re.exec{text}:
+         null? ->
+            break
+         {m} and {=> index} ->
+            results.push with
+               #word{pos, index+pos0, ss{pos, index+pos0}}
+               #sep{index+pos0, re.lastIndex+pos0, ss{index+pos0, re.lastIndex+pos0}}
+            pos = re.lastIndex+pos0
+   lastpos = pos0 + text.length
+   results.push with
+      #word{pos, lastpos, ss{pos, lastpos}}
+   results
+
+
+produce{src} =
+   text = src.text
+   url = src.url
+   results = {#ws{0, 0, 0, 1, 0}}
+   fullsplit{0, text, R.g"\\s+"} each
+      #sep{s, e, R"^( *)((?:.|\n)*?)( *)$"! {_, wsb, mid, wsa}} ->
+         nl = mid.split{"\n"}.length - 1
+         if nl:
+            results.push with
+               #ws{s, s, 1, nl, 1}
+               #INDENT{s, s, wsa.length}
+         results.push with
+            #ws{s, e, wsb.length, nl
+                if{mid, wsa.length, wsb.length}}
+      #word{s, e, ""} ->
+         results.push with
+            #ID{s, e, ""}
+      #word{s, e, w} ->
+         var gap = false
+         fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
+            {type, s2, e2, match} ->
+               "" -> pass
+               w2 ->
+                  tr = {word = .ID, sep = .OP}
+                  if gap:
+                     results.push with
+                        #ws{s2, s2, 0, 0, 0}
+                  results.push with
+                     {tr[type], s2, e2, w2}
+                  gap = true
+      other ->
+         results.push with other
+   {_, last, *} = results[results.length - 1]
+   results.push with
+      #ws{last, last, 0, 1, 0}
+   results
+
+
+piece_together{elements, src} =
+   ;; var curpos = 0
+   ;; var last = .OP
+
+   results = {}
+   0..[elements.length // 2 - 1] each i ->
+      idx = 2*i + 1
+      {wsb, main, wsa} = elements.slice{idx - 1, idx + 2}
+
+      #ws{bstart, bend, _, bl, bw} = wsb
+      {type, start, end, text} = main
+      #ws{astart, aend, aw, al, _} = wsa
+
+      loc = Location{src, start, end}
+
+      match type:
+         .OP ->
+            line = bl and al
+            pfx = if{line, .L, ""}
+            if line:
+               results[results.length - 1].silent = true
+               elements[idx + 2].silent = true
+            results.push with
+               #OP{"?FX", pfx + text} &: {
+                  location = loc
+                  wsb = if{line, bl - 1, bw}
+                  wsa = if{line, al - 1, aw}
+               }                  
+         else ->
+            results.push with
+               {type, text} &: {
+                  location = loc
+                  wsb = bw
+                  wsa = aw
+                  silent = main.silent
+               }
+            curpos = aend
+      last = type
+   results
+
+
+
+indent_tracker{} =
+   ;; This returns a function that tracks indentation levels
+   ;; as tokens are fed into it. For each token it returns a
+   ;; list of tokens including additional commas and brackets
+   ;; corresponding to line breaks, indent and dedents.
+
+   var curr = 0          ;; current indent
+   var stack = {}        ;; stack of indent levels up to this point
+   ;; var stacks = {stack}  ;; [ or { start a new stack of indent levels
+
+   ;; We return the following function
+   {match token} ->
+
+      #INDENT{match new_indent} ->
+         when [curr === false] ->
+            ;; This is the first line break, we produce "NL"
+            set curr = new_indent
+            if token.silent:
+               then: {}
+               else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+
+         [> curr] ->
+            ;; Indent is larger than before, so we push the previous
+            ;; and produce "I("
+            stack.push{curr}
+            set curr = new_indent
+            {#OP{.PFX, "I("} & {wsb = true, wsa = true}}
+
+         [=== curr] ->
+            ;; Same as before, "NL"
+            if token.silent:
+               then: {}
+               else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+
+         [< curr] ->
+            ;; Smaller than before, so we generate ")I" until
+            ;; the new indent is no larger than the current one
+            rval = {}
+            while [[stack.length > 0] and [new_indent < curr]]:
+               set curr = stack.pop{}
+               rval.push{#OP{.SFX, ")I"} & {wsb = true, wsa = true}}
+
+            if [not token.silent]:
+               rval.push{#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            rval
+
+      #ID{*stuff} -> {token}
+
+      ;; #OP{fixity, "[" or "{"} ->
+      ;;    ;; We restart indent calculation inside each []/{} that
+      ;;    ;; we find.
+      ;;    stack.push{curr}
+      ;;    stacks.push{stack}
+      ;;    set stack = {}
+      ;;    set curr = false
+      ;;    {token}
+
+      ;; #OP{fixity, "]" or "}"} ->
+      ;;    ;; We close all indented blocks with every closing bracket
+      ;;    rval = stack each _ ->
+      ;;       #OP{.SFX, "]"} & {wsb = true, wsa = true}
+      ;;    set stack = stacks.pop{}
+      ;;    set curr = stack.pop{}
+      ;;    rval.push{token}
+      ;;    rval
+
+      #EOF ->
+         stack each _ ->
+            #OP{.SFX, ")I"} & {wsb = true, wsa = true}
+
+      other -> {token}
+
+process_indent{stream} =
+   tracker = indent_tracker{}
+   var results = {}
+   stream each token ->
+      results ++= tracker{token}
+   results ++ tracker{#EOF}
+
+
+
+disambiguate_fixity{stream} =
+
+   [a <<<: b] =
+      a.wsb = b.wsb
+      a.wsa = b.wsa
+      a <<: b
+
+   collapse_operators{buffer, *match} =
+      do: n = buffer.length
+
+      when not buffer.length ->
+         {}
+
+      {true?, true?} ->
+         match buffer:
+            {token and #OP{fixity, name}} ->
+               {#ID{name} <<<: token}
+            longer ->
+               throw E.syntax.nullary{msg, {operators = buffer}} where
+                  msg = "Too many consecutive operators were found here."
+
+      {true?, _} ->
+         buffer each token and #OP{_, name} ->
+            #OP{.PFX, name} <<<: token
+
+      {_, true?} ->
+         buffer each token and #OP{_, name} ->
+            #OP{.SFX, name} <<<: token
+
+      _ ->
+         {first and #OP{fixity, name}, *rest} = buffer
+         match {first.wsb, first.wsa}:
+            {false?, false?} or {true?, true?} ->
+               {#OP{.IFX, name} <<<: first} ++
+                  collapse_operators{rest, true, false}
+            {true?, _} ->
+               {#OP{.PFX, name} <<<: first} ++
+                  collapse_operators{rest, true, false}
+            {_, true?} ->
+               {#OP{.SFX, name} <<<: first} ++
+                  collapse_operators{rest, false, false}
+               ;; let results = collapse_operators{rest, false, false}
+               ;; {t <<<: first} ++ results where t =
+               ;;    match results:
+               ;;       {} or {#OP{.PFX, *}, *} -> #OP{.IFX, name}
+               ;;       _ -> #OP{.SFX, name}
+
+   var buffer = {}
+   var pfx = true
+
+   collapse{sfx} =
+      rval = collapse_operators{buffer, pfx, sfx}
+      set buffer = {}
+      rval
+
+   var results = {}
+
+   stream each match token ->
+
+      #OP{match, name} ->
+         "?FX" ->
+            buffer.push with token
+         .IFX ->
+            results ++= collapse{true}
+            results.push with token
+            set pfx = true
+         .PFX ->
+            results ++= collapse{false}
+            results.push with token
+            set pfx = true
+         .SFX ->
+            results ++= collapse{true}
+            results.push with token
+            set pfx = false
+
+      other ->
+         results ++= collapse{false}
+         results.push with token
+         set pfx = false
+
+   results ++ collapse{true}
+
+
+
+alternate_operators{stream} =
+
+   W{x} = if{x, .wide, .short}
+
+   var last_op = true
+   var line_op = false
+   results = {}
+
+   stream each match token ->
+
+      #IGNORE ->
+         null
+
+      #OP{fixity, name} ->
+         if last_op:
+            results.push with #VOID{}
+         match fixity:
+            .IFX ->
+               results.push with
+                  #IFX{W{token.wsa or token.wsb}, name} <<: token
+               set last_op = true
+            .PFX ->
+               if [not last_op]:
+                  results.push with
+                     #IFX{W{token.wsb}} with
+                        if{R"^L"? name, .NL, .WHITE}
+                     #VOID{}
+               results.push with
+                  #PFX{W{token.wsa}, name} <<: token
+               set last_op = true
+            .SFX ->
+               results.push with
+                  #SFX{W{token.wsb}, name} <<: token
+                  #VOID{}
+               set last_op = false
+         set line_op = R"^L"? name
+
+      #ILLEGAL ->
+         throw E.syntax.illegal{"unknown character", {chr = token}}
+
+      token ->
+         if [not last_op]:
+            results.push with
+               #IFX{W{token.wsb}} with
+                  if{line_op, .NL, .WHITE}
+         results.push{token}
+         set last_op = false
+
+   if last_op:
+      results.push with #VOID{}
+
+   results
+
+
+
+
+tokenize{src} =
+   chain src:
+      produce{@}
+      piece_together{@, src}
+      process_indent{@}
+      disambiguate_fixity{@}
+      alternate_operators{@}
+      fill_locations{src, @}
+
+
+var text = "Hello
+=====
+    
+My god this_is  exciting!  
+
+   yay !+- [ bob ] sop
+
+"
+
+text = "A
+===
+
+C +B"
+
+res = tokenize{Source{text}}
+
+res each x ->
+   x.slice{0}
+   ;; {a, b, x.wsb > 0, x.wsa > 0}
+
+
