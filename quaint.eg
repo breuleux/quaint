@@ -7,6 +7,20 @@ require:
       fill_locations
 
 
+
+fixity_table = {
+   "(" => .PFX
+   "[" => .PFX
+   "{" => .PFX
+
+   ")" => .SFX
+   "]" => .SFX
+   "}" => .SFX
+}
+
+inherent_fixity{op} =
+   fixity_table[op] or "?FX"
+
 fullsplit{pos0, text, re} =
    ss{a, b} =
       text.substring{a-pos0, b-pos0}
@@ -16,7 +30,7 @@ fullsplit{pos0, text, re} =
       match re.exec{text}:
          null? ->
             break
-         {m} and {=> index} ->
+         {m, *} and {=> index} ->
             results.push with
                #word{pos, index+pos0, ss{pos, index+pos0}}
                #sep{index+pos0, re.lastIndex+pos0, ss{index+pos0, re.lastIndex+pos0}}
@@ -28,82 +42,105 @@ fullsplit{pos0, text, re} =
 
 
 produce{src} =
+   lineop_re = R"^[!@#$%^&*_\\-+=<>?;:`]{3,}$"
    text = src.text
    url = src.url
-   results = {#ws{0, 0, 0, 1, 0}}
-   fullsplit{0, text, R.g"\\s+"} each
-      #sep{s, e, R"^( *)((?:.|\n)*?)( *)$"! {_, wsb, mid, wsa}} ->
-         nl = mid.split{"\n"}.length - 1
-         if nl:
-            results.push with
-               #ws{s, s, 1, nl, 1}
-               #INDENT{s, s, wsa.length}
-         results.push with
-            #ws{s, e, wsb.length, nl
-                if{mid, wsa.length, wsb.length}}
-      #word{s, e, ""} ->
-         results.push with
-            #ID{s, e, ""}
-      #word{s, e, w} ->
-         var gap = false
-         fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
-            {type, s2, e2, match} ->
-               "" -> pass
-               w2 ->
-                  tr = {word = .ID, sep = .OP}
-                  if gap:
-                     results.push with
-                        #ws{s2, s2, 0, 0, 0}
-                  results.push with
-                     {tr[type], s2, e2, w2}
-                  gap = true
-      other ->
-         results.push with other
-   {_, last, *} = results[results.length - 1]
-   results.push with
-      #ws{last, last, 0, 1, 0}
-   results
-
-
-piece_together{elements, src} =
-   ;; var curpos = 0
-   ;; var last = .OP
-
    results = {}
-   0..[elements.length // 2 - 1] each i ->
-      idx = 2*i + 1
-      {wsb, main, wsa} = elements.slice{idx - 1, idx + 2}
-
-      #ws{bstart, bend, _, bl, bw} = wsb
-      {type, start, end, text} = main
-      #ws{astart, aend, aw, al, _} = wsa
-
-      loc = Location{src, start, end}
-
-      match type:
-         .OP ->
-            line = bl and al
-            pfx = if{line, .L, ""}
-            if line:
-               results[results.length - 1].silent = true
-               elements[idx + 2].silent = true
+   var curw = 0
+   fullsplit{0, text, R.g" *(\n *)+"} each
+      #sep{s, e, word} ->
+         spl = word.split{"\n"}
+         curw and results[results.length - 1].wsa = spl.length - 2
+         results.push with
+            #INDENT{spl[spl.length - 1].length} &: {
+               location = Location{src, s, e}
+            }
+      #word{s, e, match w} ->
+         do:
+            info = {...} with
+               location = Location{src, s, e}
+               wsb = curw
+         lineop_re? ->
+            lw = .L + w
             results.push with
-               #OP{"?FX", pfx + text} &: {
-                  location = loc
-                  wsb = if{line, bl - 1, bw}
-                  wsa = if{line, al - 1, aw}
-               }                  
+               #OP{inherent_fixity{lw}, lw} &: info
          else ->
             results.push with
-               {type, text} &: {
-                  location = loc
-                  wsb = bw
-                  wsa = aw
-                  silent = main.silent
-               }
-            curpos = aend
-      last = type
+               #LINE{w} &: info
    results
+
+   ;;    #sep{s, e, R"^( *)((?:.|\n)*?)( *)$"! {_, wsb, mid, wsa}} ->
+   ;;       nl = mid.split{"\n"}.length - 1
+   ;;       if nl:
+   ;;          results.push with
+   ;;             #ws{s, s, 1, nl, 1}
+   ;;             #INDENT{s, s, wsa.length}
+   ;;       results.push with
+   ;;          #ws{s, e, wsb.length, nl
+   ;;              if{mid, wsa.length, wsb.length}}
+   ;;    #word{s, e, ""} ->
+   ;;       results.push with
+   ;;          #ID{s, e, ""}
+   ;;    #word{s, e, w} ->
+   ;;       var gap = false
+   ;;       fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
+   ;;          {type, s2, e2, match} ->
+   ;;             "" -> pass
+   ;;             w2 ->
+   ;;                tr = {word = .ID, sep = .OP}
+   ;;                if gap:
+   ;;                   results.push with
+   ;;                      #ws{s2, s2, 0, 0, 0}
+   ;;                results.push with
+   ;;                   {tr[type], s2, e2, w2}
+   ;;                gap = true
+   ;;    other ->
+   ;;       results.push with other
+   ;; {_, last, *} = results[results.length - 1]
+   ;; results.push with
+   ;;    #ws{last, last, 0, 1, 0}
+   ;; results
+
+
+;; piece_together{elements, src} =
+;;    ;; var curpos = 0
+;;    ;; var last = .OP
+
+;;    results = {}
+;;    0..[elements.length // 2 - 1] each i ->
+;;       idx = 2*i + 1
+;;       {wsb, main, wsa} = elements.slice{idx - 1, idx + 2}
+
+;;       #ws{bstart, bend, _, bl, bw} = wsb
+;;       {type, start, end, text} = main
+;;       #ws{astart, aend, aw, al, _} = wsa
+
+;;       loc = Location{src, start, end}
+
+;;       match type:
+;;          .OP ->
+;;             line = bl and al
+;;             pfx = if{line, .L, ""}
+;;             if line:
+;;                results[results.length - 1].silent = true
+;;                elements[idx + 2].silent = true
+;;             results.push with
+;;                #OP{"?FX", pfx + text} &: {
+;;                   location = loc
+;;                   wsb = if{line, bl - 1, bw}
+;;                   wsa = if{line, al - 1, aw}
+;;                }                  
+;;          else ->
+;;             results.push with
+;;                {type, text} &: {
+;;                   location = loc
+;;                   wsb = bw
+;;                   wsa = aw
+;;                   silent = main.silent
+;;                }
+;;             curpos = aend
+;;       last = type
+;;    results
 
 
 
@@ -124,9 +161,10 @@ indent_tracker{} =
          when [curr === false] ->
             ;; This is the first line break, we produce "NL"
             set curr = new_indent
-            if token.silent:
-               then: {}
-               else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            ;; if token.silent:
+            ;;    then: {}
+            ;;    else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            {}
 
          [> curr] ->
             ;; Indent is larger than before, so we push the previous
@@ -137,9 +175,10 @@ indent_tracker{} =
 
          [=== curr] ->
             ;; Same as before, "NL"
-            if token.silent:
-               then: {}
-               else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            ;; if token.silent:
+            ;;    then: {}
+            ;;    else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            {}
 
          [< curr] ->
             ;; Smaller than before, so we generate ")I" until
@@ -149,8 +188,8 @@ indent_tracker{} =
                set curr = stack.pop{}
                rval.push{#OP{.SFX, ")I"} & {wsb = true, wsa = true}}
 
-            if [not token.silent]:
-               rval.push{#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
+            ;; if [not token.silent]:
+            ;;    rval.push{#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
             rval
 
       #ID{*stuff} -> {token}
@@ -272,7 +311,7 @@ disambiguate_fixity{stream} =
 
 
 
-alternate_operators{stream} =
+alternate_operators{stream, white} =
 
    W{x} = if{x, .wide, .short}
 
@@ -296,8 +335,7 @@ alternate_operators{stream} =
             .PFX ->
                if [not last_op]:
                   results.push with
-                     #IFX{W{token.wsb}} with
-                        if{R"^L"? name, .NL, .WHITE}
+                     #IFX{W{token.wsb}, white}
                      #VOID{}
                results.push with
                   #PFX{W{token.wsa}, name} <<: token
@@ -315,8 +353,7 @@ alternate_operators{stream} =
       token ->
          if [not last_op]:
             results.push with
-               #IFX{W{token.wsb}} with
-                  if{line_op, .NL, .WHITE}
+               #IFX{W{token.wsb}, white}
          results.push{token}
          set last_op = false
 
@@ -327,15 +364,52 @@ alternate_operators{stream} =
 
 
 
+produce_line{src, line, start} =
+   var ws = 0
+   results = {}
+   fullsplit{start, line, R.g" +"} each
+      #sep{s, e, white} ->
+         results[results.length - 1].wsa and ws = white.length
+      #word{s, e, w} ->
+         fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
+            {match type, s2, e2, w2} ->
+               do:
+                  info = {
+                     location = Location{src, s2, e2}
+                     wsb = ws
+                     wsa = 0
+                  }
+
+               .sep ->
+                  results.push with
+                     #OP{inherent_fixity{w2}, w2} &: info
+                  ws = 0
+
+               .word ->
+                  match w2:
+                     "" -> pass
+                     w2 ->
+                        results.push with
+                           #ID{w2} &: info
+                        ws = 0
+   results
+
 
 tokenize{src} =
    chain src:
       produce{@}
-      piece_together{@, src}
       process_indent{@}
       disambiguate_fixity{@}
-      alternate_operators{@}
+      alternate_operators{@, .NL}
+      [++] | [@] each
+              #LINE{l} and {location => loc} ->
+                 chain produce_line{loc.src, l, loc.start}:
+                    disambiguate_fixity{@}
+                    alternate_operators{@, .WHITE}
+              other ->
+                 {other}
       fill_locations{src, @}
+
 
 
 var text = "Hello
@@ -347,10 +421,11 @@ My god this_is  exciting!
 
 "
 
-text = "A
-===
-
-C +B"
+text = "
+A
+    B
+  C
+"
 
 res = tokenize{Source{text}}
 
