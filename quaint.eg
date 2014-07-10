@@ -27,27 +27,8 @@ fixity_table = {
 inherent_fixity{op} =
    fixity_table[op] or "?FX"
 
-;; fullsplit{pos0, text, _re, invert = false} =
-;;    re = new RegExp{"\\\\?" + _re, "g"}
-;;    ss{a, b} =
-;;       text.substring{a-pos0, b-pos0}
-;;    results = {}
-;;    var pos = pos0
-;;    while true:
-;;       match re.exec{text}:
-;;          null? ->
-;;             break
-;;          {m, *} and {=> index} ->
-;;             results.push with
-;;                #word{pos, index+pos0, ss{pos, index+pos0}}
-;;                #sep{index+pos0, re.lastIndex+pos0, ss{index+pos0, re.lastIndex+pos0}}
-;;             pos = re.lastIndex+pos0
-;;    lastpos = pos0 + text.length
-;;    results.push with
-;;       #word{pos, lastpos, ss{pos, lastpos}}
-;;    results
 
-fullsplit{pos0, text, _re, invert = false} =
+fullsplit{pos0, text, _re} =
    re = new RegExp{"(\\\\.)|(" + _re + ")", "g"}
    ss{a, b} =
       text.substring{a-pos0, b-pos0}
@@ -554,25 +535,6 @@ finalize{match x} =
 
       rval <<: sumloc
 
-      ;; match [ops each o -> o[2]]:
-      ;;    {"I(", ")I"} ->
-      ;;       {pre, contents, _} = args
-      ;;       match pre:
-      ;;          #oper{oper, *mid, last} ->
-      ;;             nl = #oper{.NL, last, contents} <<:
-      ;;                last.location ++: contents
-      ;;             ind = #bracket{.INDENT, nl} <<: nl
-      ;;             #oper{oper, *mid, ind} <<:
-      ;;                pre.location ++: nl
-      ;;          else ->
-      ;;             nl = #oper{.NL, pre, contents} <<: sumloc
-      ;;             #bracket{.INDENT, nl} <<: nl
-      ;;    {"[", "]"} ->
-      ;;       {_, contents, _} = args
-      ;;       #bracket{"[]", contents} <<: sumloc
-      ;;    {oper, *} ->
-      ;;       #oper{oper, *args} <<: sumloc
-
 
 parse{tokens} =
    next{} = tokens.shift{}
@@ -620,8 +582,6 @@ parse_spec{match} =
             #eq{#oper{op}}
          #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
             helper{contents, opts & {shed = false}}
-         ;; #seq{*} when opts.rest ->
-         ;;    #restarg{helper{args, opts & {multi = false}}}
          #seq{*args} and {=> operator} ->
             if [not top]:
                top = operator
@@ -687,30 +647,12 @@ class Dispatcher:
                      return {parts, c}
                   else ->
                      pass
-               ;; {null?, f} ->
-               ;;    return f
-               ;; {filt, f} when filt{node} ->
-               ;;    return f
-               ;; f when f? node ->
-               ;;    return f
-               ;; else ->
-               ;;    pass
             false
 
    register{handler} =
       key = handler.operator
       l = [@dispatch[key] or= {}]
       l.unshift with handler
-
-   ;; register{spec, handler, filter = null} =
-   ;;    keys = match spec.split{" "}:
-   ;;       {width, op} -> {spec}
-   ;;       {op} -> {w, s} where
-   ;;          w = "wide " + op
-   ;;          s = "short " + op
-   ;;    keys each key ->
-   ;;       l = [@dispatch[key] or= {}]
-   ;;       l.unshift with {filter, handler}
 
 
 class Engine:
@@ -761,10 +703,6 @@ class Spec:
 
 
 dispatch = Dispatcher{}
-
-;; dispatch.register with Spec{"_ x", fn} where
-;;    fn{engine, node, {=> x}} =
-;;       i % engine.run{x}
 
 
 
