@@ -2,10 +2,16 @@
 require:
    "earl-grey/location" ->
       Source, Location
-      <<:
+      <<:, ++:
    "earl-grey/lex" ->
       fill_locations
+   "earl-grey/parse" ->
+      OperatorGroups
+      SimplePriority
+      oparse
 
+provide:
+   Quaint
 
 
 fixity_table = {
@@ -21,7 +27,28 @@ fixity_table = {
 inherent_fixity{op} =
    fixity_table[op] or "?FX"
 
-fullsplit{pos0, text, re} =
+;; fullsplit{pos0, text, _re, invert = false} =
+;;    re = new RegExp{"\\\\?" + _re, "g"}
+;;    ss{a, b} =
+;;       text.substring{a-pos0, b-pos0}
+;;    results = {}
+;;    var pos = pos0
+;;    while true:
+;;       match re.exec{text}:
+;;          null? ->
+;;             break
+;;          {m, *} and {=> index} ->
+;;             results.push with
+;;                #word{pos, index+pos0, ss{pos, index+pos0}}
+;;                #sep{index+pos0, re.lastIndex+pos0, ss{index+pos0, re.lastIndex+pos0}}
+;;             pos = re.lastIndex+pos0
+;;    lastpos = pos0 + text.length
+;;    results.push with
+;;       #word{pos, lastpos, ss{pos, lastpos}}
+;;    results
+
+fullsplit{pos0, text, _re, invert = false} =
+   re = new RegExp{"(\\\\.)|(" + _re + ")", "g"}
    ss{a, b} =
       text.substring{a-pos0, b-pos0}
    results = {}
@@ -30,11 +57,13 @@ fullsplit{pos0, text, re} =
       match re.exec{text}:
          null? ->
             break
-         {m, *} and {=> index} ->
+         {m, undefined?, *} and {=> index} ->
             results.push with
                #word{pos, index+pos0, ss{pos, index+pos0}}
                #sep{index+pos0, re.lastIndex+pos0, ss{index+pos0, re.lastIndex+pos0}}
             pos = re.lastIndex+pos0
+         {m, *} ->
+            continue
    lastpos = pos0 + text.length
    results.push with
       #word{pos, lastpos, ss{pos, lastpos}}
@@ -42,12 +71,12 @@ fullsplit{pos0, text, re} =
 
 
 produce{src} =
-   lineop_re = R"^[!@#$%^&*_\\-+=<>?;:`]{3,}$"
+   lineop_re = R"^[!@#$%^&*_\\-+=<>?;:`|]{3,}$"
    text = src.text
    url = src.url
    results = {}
    var curw = 0
-   fullsplit{0, text, R.g" *(\n *)+"} each
+   fullsplit{0, text, "[ ~]*(\n[ ~]*)+"} each
       #sep{s, e, word} ->
          spl = word.split{"\n"}
          curw and results[results.length - 1].wsa = spl.length - 2
@@ -69,80 +98,6 @@ produce{src} =
                #LINE{w} &: info
    results
 
-   ;;    #sep{s, e, R"^( *)((?:.|\n)*?)( *)$"! {_, wsb, mid, wsa}} ->
-   ;;       nl = mid.split{"\n"}.length - 1
-   ;;       if nl:
-   ;;          results.push with
-   ;;             #ws{s, s, 1, nl, 1}
-   ;;             #INDENT{s, s, wsa.length}
-   ;;       results.push with
-   ;;          #ws{s, e, wsb.length, nl
-   ;;              if{mid, wsa.length, wsb.length}}
-   ;;    #word{s, e, ""} ->
-   ;;       results.push with
-   ;;          #ID{s, e, ""}
-   ;;    #word{s, e, w} ->
-   ;;       var gap = false
-   ;;       fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
-   ;;          {type, s2, e2, match} ->
-   ;;             "" -> pass
-   ;;             w2 ->
-   ;;                tr = {word = .ID, sep = .OP}
-   ;;                if gap:
-   ;;                   results.push with
-   ;;                      #ws{s2, s2, 0, 0, 0}
-   ;;                results.push with
-   ;;                   {tr[type], s2, e2, w2}
-   ;;                gap = true
-   ;;    other ->
-   ;;       results.push with other
-   ;; {_, last, *} = results[results.length - 1]
-   ;; results.push with
-   ;;    #ws{last, last, 0, 1, 0}
-   ;; results
-
-
-;; piece_together{elements, src} =
-;;    ;; var curpos = 0
-;;    ;; var last = .OP
-
-;;    results = {}
-;;    0..[elements.length // 2 - 1] each i ->
-;;       idx = 2*i + 1
-;;       {wsb, main, wsa} = elements.slice{idx - 1, idx + 2}
-
-;;       #ws{bstart, bend, _, bl, bw} = wsb
-;;       {type, start, end, text} = main
-;;       #ws{astart, aend, aw, al, _} = wsa
-
-;;       loc = Location{src, start, end}
-
-;;       match type:
-;;          .OP ->
-;;             line = bl and al
-;;             pfx = if{line, .L, ""}
-;;             if line:
-;;                results[results.length - 1].silent = true
-;;                elements[idx + 2].silent = true
-;;             results.push with
-;;                #OP{"?FX", pfx + text} &: {
-;;                   location = loc
-;;                   wsb = if{line, bl - 1, bw}
-;;                   wsa = if{line, al - 1, aw}
-;;                }                  
-;;          else ->
-;;             results.push with
-;;                {type, text} &: {
-;;                   location = loc
-;;                   wsb = bw
-;;                   wsa = aw
-;;                   silent = main.silent
-;;                }
-;;             curpos = aend
-;;       last = type
-;;    results
-
-
 
 indent_tracker{} =
    ;; This returns a function that tracks indentation levels
@@ -159,11 +114,8 @@ indent_tracker{} =
 
       #INDENT{match new_indent} ->
          when [curr === false] ->
-            ;; This is the first line break, we produce "NL"
+            ;; This is the first line break
             set curr = new_indent
-            ;; if token.silent:
-            ;;    then: {}
-            ;;    else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
             {}
 
          [> curr] ->
@@ -171,13 +123,9 @@ indent_tracker{} =
             ;; and produce "I("
             stack.push{curr}
             set curr = new_indent
-            {#OP{.PFX, "I("} & {wsb = true, wsa = true}}
+            {#OP{"?FX", "I("} & {wsb = true, wsa = true}}
 
          [=== curr] ->
-            ;; Same as before, "NL"
-            ;; if token.silent:
-            ;;    then: {}
-            ;;    else: {#OP{.IFX, "NL"} & {wsb = true, wsa = true}}
             {}
 
          [< curr] ->
@@ -193,24 +141,6 @@ indent_tracker{} =
             rval
 
       #ID{*stuff} -> {token}
-
-      ;; #OP{fixity, "[" or "{"} ->
-      ;;    ;; We restart indent calculation inside each []/{} that
-      ;;    ;; we find.
-      ;;    stack.push{curr}
-      ;;    stacks.push{stack}
-      ;;    set stack = {}
-      ;;    set curr = false
-      ;;    {token}
-
-      ;; #OP{fixity, "]" or "}"} ->
-      ;;    ;; We close all indented blocks with every closing bracket
-      ;;    rval = stack each _ ->
-      ;;       #OP{.SFX, "]"} & {wsb = true, wsa = true}
-      ;;    set stack = stacks.pop{}
-      ;;    set curr = stack.pop{}
-      ;;    rval.push{token}
-      ;;    rval
 
       #EOF ->
          stack each _ ->
@@ -241,12 +171,16 @@ disambiguate_fixity{stream} =
          {}
 
       {true?, true?} ->
-         match buffer:
-            {token and #OP{fixity, name}} ->
-               {#ID{name} <<<: token}
-            longer ->
-               throw E.syntax.nullary{msg, {operators = buffer}} where
-                  msg = "Too many consecutive operators were found here."
+         buffer each token and #OP{_, name} ->
+            r = #OP{.PFX, name}
+            r.wsb and r.wsa = 1
+            r <<: token
+         ;; match buffer:
+         ;;    {token and #OP{fixity, name}} ->
+         ;;       {#ID{name} <<<: token}
+         ;;    longer ->
+         ;;       throw E.syntax.nullary{msg, {operators = buffer}} where
+         ;;          msg = "Too many consecutive operators were found here."
 
       {true?, _} ->
          buffer each token and #OP{_, name} ->
@@ -277,7 +211,7 @@ disambiguate_fixity{stream} =
    var buffer = {}
    var pfx = true
 
-   collapse{sfx} =
+   let collapse{sfx} =
       rval = collapse_operators{buffer, pfx, sfx}
       set buffer = {}
       rval
@@ -309,6 +243,36 @@ disambiguate_fixity{stream} =
 
    results ++ collapse{true}
 
+
+;; float_indent{stream} =
+;;    var target = 0
+;;    var curline = 0
+;;    var found = false
+
+;;    enumerate{stream} each {i, match token} ->
+;;       do:
+;;          loc = token.location
+;;          if loc:
+;;             {line, _} = loc.source.linecol{loc.start}
+;;             if [line > curline]:
+;;                curline = line
+;;                target = i
+;;                found = false
+
+;;       #PFX{_, "I("} ->
+;;          prev = stream[i - 1]
+;;          stream.splice{i - 1, 2}
+;;          stream.splice{target, 0, prev, token}
+
+;;       #PFX{.wide, _} or #IFX{.wide, _} ->
+;;          if [not found]:
+;;             target = i + 1
+;;             found = true
+
+;;       other ->
+;;          pass
+
+;;    stream
 
 
 alternate_operators{stream, white} =
@@ -367,11 +331,14 @@ alternate_operators{stream, white} =
 produce_line{src, line, start} =
    var ws = 0
    results = {}
-   fullsplit{start, line, R.g" +"} each
+   fullsplit{start, line, "[ ~]+"} each
       #sep{s, e, white} ->
-         results[results.length - 1].wsa and ws = white.length
+         ws = white.length
+         ;; if results.length:
+         results[results.length - 1].wsa = ws
       #word{s, e, w} ->
-         fullsplit{s, w, R.g"[!@#$%^&*_\\-+=<>?;:`]+|[()\\[\\],.]"} each
+         var prod = false
+         fullsplit{s, w, "[!@#$%^&*_\\-+=<>?;:`|]+|[(){}\\[\\],.]"} each
             {match type, s2, e2, w2} ->
                do:
                   info = {
@@ -381,6 +348,7 @@ produce_line{src, line, start} =
                   }
 
                .sep ->
+                  prod = true
                   results.push with
                      #OP{inherent_fixity{w2}, w2} &: info
                   ws = 0
@@ -389,10 +357,18 @@ produce_line{src, line, start} =
                   match w2:
                      "" -> pass
                      w2 ->
+                        prod = true
                         results.push with
                            #ID{w2} &: info
                         ws = 0
+         if [not prod]:
+            results.push with
+               #ID{""} &: {location = Location{src, s, e}
+                           wsb = ws
+                           wsa = 0}
+
    results
+
 
 
 tokenize{src} =
@@ -400,37 +376,546 @@ tokenize{src} =
       produce{@}
       process_indent{@}
       disambiguate_fixity{@}
-      alternate_operators{@, .NL}
+      alternate_operators{@, "NL"}
       [++] | [@] each
               #LINE{l} and {location => loc} ->
-                 chain produce_line{loc.src, l, loc.start}:
+                 chain produce_line{loc.source, l, loc.start}:
                     disambiguate_fixity{@}
-                    alternate_operators{@, .WHITE}
+                    alternate_operators{@, "JUXT"}
               other ->
                  {other}
+      ;; float_indent{@}
       fill_locations{src, @}
 
 
+MAX = 1/0
 
-var text = "Hello
-=====
-    
-My god this_is  exciting!  
-
-   yay !+- [ bob ] sop
-
-"
-
-text = "
-A
-    B
-  C
-"
-
-res = tokenize{Source{text}}
-
-res each x ->
-   x.slice{0}
-   ;; {a, b, x.wsb > 0, x.wsa > 0}
+fxm{fx, w, re}{match} =
+   {==fx, ==w, re?} -> true
+   else -> false
 
 
+q_order = SimplePriority{q_groups, q_prio} where
+
+   q_groups = OperatorGroups{{...}} with
+
+      sh_ifx = with fxm{.IFX, .short, R"^[^L]"}
+      sh_pfx = with fxm{.PFX, .short, R"^[^L]"}
+      sh_sfx = with fxm{.SFX, .short, R"^[^L]"}
+
+      wi_ifx = with fxm{.IFX, .wide, R"^[^L]"}
+      wi_pfx = with fxm{.PFX, .wide, R"^[^L]"}
+      wi_sfx = with fxm{.SFX, .wide, R"^[^L]"}
+
+      lsh_ifx = with fxm{.IFX, .short, R"^L"}
+      lsh_pfx = with fxm{.PFX, .short, R"^L"}
+      lsh_sfx = with fxm{.SFX, .short, R"^L"}
+
+      lwi_ifx = with fxm{.IFX, .wide, R"^L"}
+      lwi_pfx = with fxm{.PFX, .wide, R"^L"}
+      lwi_sfx = with fxm{.SFX, .wide, R"^L"}
+
+      sjuxt = {"XJUXTY"}
+      wjuxt = {"X JUXT Y"}
+
+      snl = {"XNLY"}
+      wnl = {"X NL Y"}
+
+      obrack = {"(_Y", "[_Y", "{_Y"}
+      cbrack = {"X_)", "X_]", "X_}"}
+
+      oindent = {"X_I(_Y"}
+      oindentp = {"I(_Y"}
+      cindent = {"X_)I"}
+
+
+   q_prio = {...} with
+      oindent  = {#all{114}, #all{1}}
+      oindentp  = {#all{MAX}, #all{1}}
+      cindent  = {#all{1}, #all{MAX}}
+
+      obrack  = {#all{MAX}, #all{2}}
+      cbrack  = {#all{2}, #all{MAX}}
+
+      lwi_pfx = {#all{MAX}, #all{10}}
+      lwi_ifx = {#all{12}, #all{11}}
+      lwi_sfx = {#all{13}, #all{MAX}}
+      wnl = {#all{15}, #all{15}}
+
+      lsh_pfx = {#all{MAX}, #all{20}}
+      lsh_ifx = {#all{22}, #all{21}}
+      lsh_sfx = {#all{23}, #all{MAX}}
+      snl = {#all{25}, #all{25}}
+
+      wi_pfx = {#all{MAX}, #all{110}}
+      wi_ifx = {#all{112}, #all{111}}
+      wi_sfx = {#all{113}, #all{MAX}}
+      wjuxt = {#all{115}, #all{115}}
+
+      sh_pfx = {#all{MAX}, #all{120}}
+      sh_ifx = {#all{122}, #all{121}}
+      sh_sfx = {#all{123}, #all{MAX}}
+      sjuxt = {#all{125}, #all{125}}
+
+
+
+finalize{match x} =
+
+   #ID{text} ->
+      #text{text} <<: x
+
+   #VOID{} ->
+      ;; TODO: this is not ideal. For instance, in
+      ;; "a + [b]" the whitespace after "+" will go with
+      ;; "[" because that whitespace corresponds to the dummy
+      ;; that serves as "["'s left hand side, but it would
+      ;; be more intuitive to give it to "+"
+      ;; In other words, sometimes use .at_start{}, other
+      ;; times, use at_end{}
+      #text{""} <<: x.location.at_start{}
+
+   {ops, *args} ->
+
+      var sumloc = ops[0].location
+      ops.slice{1} each op ->
+         set sumloc = sumloc ++: op
+      args each arg ->
+         set sumloc = sumloc ++: arg
+
+      var rval = #seq{}
+      var left = 0
+      enumerate{args} each
+         {0, arg} ->
+            rval.push with arg
+            left = arg.location.end
+         {i, arg} ->
+            o and {_, _, name} = ops[i - 1]
+            l = arg.location
+            rval.push with
+               #oper{name} &: {
+                  location = Location{l.source, left, l.start}
+               }
+               arg
+            left = arg.location.end
+
+      match rval:
+         #seq{pre, inds and #oper{"I("}, var mid, inde and #oper{")I"}, _} ->
+            width = match [inds.location.text{}.split{"\n"}.length - 1]:
+               > 1 -> .wide
+               else -> .short
+
+            _insert{m, v} =
+               m.shift{}
+               m.unshift{#oper{"NL"} <<: inds}
+               m.unshift{v}
+               m.unshift{.seq}
+               m <<: [v.location ++: m.location]
+
+            match mid:
+               {operator => .NL, width => w} ->
+                  match {width, w}:
+                     {.wide, .wide} or {.short, .short} ->
+                        _insert{mid, pre}
+                     {.wide, .short} ->
+                        mid = #seq{pre, #oper{.NL} <<: inds, mid}
+                        mid.operator = "NL"
+                        mid.width = width
+                     {.short, .wide} ->
+                        match mid[1]:
+                           {operator => .NL, width => .short} ->
+                              _insert{mid[1], pre}
+                           else ->
+                              mid2 = #seq{pre, #oper{.NL} <<: inds, mid[1]}
+                              mid2.operator = "NL"
+                              mid2.width = width
+                              mid2 <<: [pre.location ++: mid[1].location]
+                              mid[1] = mid2
+               else ->
+                  mid = #seq{pre, #oper{.NL} <<: inds, mid}
+                  mid.operator = "NL"
+                  mid.width = width
+
+            mid <<: sumloc
+
+            start = pre.location.at_start{}
+            end = pre.location.at_start{}
+            rval = #seq{#text{""} <<: start
+                        #oper{"I("} <<: start
+                        mid
+                        inde
+                        #text{""} <<: inde.location.at_end{}}
+
+            ;; console.log with rval
+               
+         else ->
+            pass
+
+      {_, rval.width, rval.operator} = ops[0]
+
+      rval <<: sumloc
+
+      ;; match [ops each o -> o[2]]:
+      ;;    {"I(", ")I"} ->
+      ;;       {pre, contents, _} = args
+      ;;       match pre:
+      ;;          #oper{oper, *mid, last} ->
+      ;;             nl = #oper{.NL, last, contents} <<:
+      ;;                last.location ++: contents
+      ;;             ind = #bracket{.INDENT, nl} <<: nl
+      ;;             #oper{oper, *mid, ind} <<:
+      ;;                pre.location ++: nl
+      ;;          else ->
+      ;;             nl = #oper{.NL, pre, contents} <<: sumloc
+      ;;             #bracket{.INDENT, nl} <<: nl
+      ;;    {"[", "]"} ->
+      ;;       {_, contents, _} = args
+      ;;       #bracket{"[]", contents} <<: sumloc
+      ;;    {oper, *} ->
+      ;;       #oper{oper, *args} <<: sumloc
+
+
+parse{tokens} =
+   next{} = tokens.shift{}
+   order{*match} =
+      ;; {a and #PFX{_, "["}, b and #IFX{_, "I("}} ->
+      ;;    ;; console.log with
+      ;;    ;;    q_order.compare{a, b}
+      ;;    ;; q_order.compare{a, b}
+      ;;    1
+      {a, b} ->
+         q_order.compare{a, b}
+   oparse{next, order, finalize}
+
+
+
+
+extract{match} =
+   #seq{*args} ->
+      #seq{args[1][1], *newargs} where newargs =
+         enumerate{args} each
+            {i, arg} when i mod 2 == 0 ->
+               arg
+   other ->
+      other
+
+parse_spec{match} =
+   String? spec ->
+      let tokens = tokenize with Source{spec}
+      ast = parse{tokens}
+      var top = null
+      rval = helper{ast, {shed = true}} where helper{match, opts} =
+         extract! #seq{"JUXT", *tags, pattern} ->
+            helper{pattern} with
+               opts &
+                  object with tags each #text{tag} -> {tag, true}
+         ast when opts.wide ->
+            #iswide{helper{ast, opts & {wide = false}}}
+         ast when opts.short ->
+            #isshort{helper{ast, opts & {short = false}}}
+         #text{""} ->
+            #eq{#text{""}}
+         #text{v} ->
+            #put{v, opts.maybe === true}
+         #oper{op} ->
+            #eq{#oper{op}}
+         #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
+            helper{contents, opts & {shed = false}}
+         ;; #seq{*} when opts.rest ->
+         ;;    #restarg{helper{args, opts & {multi = false}}}
+         #seq{*args} and {=> operator} ->
+            if [not top]:
+               top = operator
+            #seq{*[args each arg -> helper{arg, opts}]}
+      {top, rval}
+   {top, rval} ->
+      {top, rval}
+
+
+make_extractor{parse_spec! {top, spec}} =
+   {top} with {node} ->
+      helper{spec, node} where
+         helper{match, node} =
+            #iswide{subspec} ->
+               [node.width == .wide] and
+                  helper{subspec, node}
+            #isshort{subspec} ->
+               [node.width == .short] and
+                  helper{subspec, node}
+            #put{v, maybe} ->
+               match node:
+                  #text{""} when not maybe ->
+                     false
+                  else ->
+                     {v => node}
+            #eq{== node} ->
+               {=}
+            #eq ->
+               false
+            #seq{*subspecs} ->
+               match node:
+                  #seq{*args} when subspecs.length == args.length ->
+                     rval = {=}
+                     zip{subspecs, args} each {subspec, arg} ->
+                        match helper{subspec, arg}:
+                           false? ->
+                              return false
+                           vars ->
+                              rval &: vars
+                     rval
+                  other ->
+                     false
+            #fn{f} ->
+               f{node}
+
+
+
+class Dispatcher:
+
+   constructor{} =
+      @dispatch = {}
+
+   handler{node} =
+      ;; key = node.width + " " + node.operator
+      key = node.operator
+      match @dispatch[key]:
+         undefined? ->
+            false
+         candidates ->
+            candidates each c ->
+               match node:
+                  c! parts ->
+                     return {parts, c}
+                  else ->
+                     pass
+               ;; {null?, f} ->
+               ;;    return f
+               ;; {filt, f} when filt{node} ->
+               ;;    return f
+               ;; f when f? node ->
+               ;;    return f
+               ;; else ->
+               ;;    pass
+            false
+
+   register{handler} =
+      key = handler.operator
+      l = [@dispatch[key] or= {}]
+      l.unshift with handler
+
+   ;; register{spec, handler, filter = null} =
+   ;;    keys = match spec.split{" "}:
+   ;;       {width, op} -> {spec}
+   ;;       {op} -> {w, s} where
+   ;;          w = "wide " + op
+   ;;          s = "short " + op
+   ;;    keys each key ->
+   ;;       l = [@dispatch[key] or= {}]
+   ;;       l.unshift with {filter, handler}
+
+
+class Engine:
+
+   constructor{@dispatch} =
+      pass
+
+   run{match} =
+      String? text ->
+         @run{Source{text}}
+      Source? src ->
+         tokens = tokenize{src}
+         parsed = parse{tokens}
+         @_run{parsed}
+      node ->
+         @_run{node}
+
+   _run{match node} =
+      #text{t} or #oper{t} ->
+         l = node.location
+         node.location.text{}.replace{R.g"~|\\\\."} with {match} ->
+            "~" -> ""
+            s -> s[1]
+      #seq{*parts} ->
+         ;; console.log with
+         ;;    node
+         ;;    @dispatch.handler{node}
+         match @dispatch.handler{node}:
+            false? ->
+               span %
+                  parts each part -> @run{part}
+            {values, handler} ->
+               handler.run{@, node, values}
+
+   eval{code} =
+      eval{code}
+
+
+
+class Spec:
+   constructor{make_extractor! {@operator, @extractor}, @run} =
+      pass
+   ":::project"{@extractor! match} =
+      false? ->
+         {false, null}
+      values ->
+         {true, values}
+
+
+dispatch = Dispatcher{}
+
+;; dispatch.register with Spec{"_ x", fn} where
+;;    fn{engine, node, {=> x}} =
+;;       i % engine.run{x}
+
+
+
+mergeable{tag, child} =
+   merge{match node} =
+      [^tag %]! {tags, props, children} ->
+         this.children ++= children
+         this
+      other ->
+         false
+   node = ^tag % child
+   node.merge = merge
+   node
+
+
+collapse{operator, match} =
+   ;; TODO: take width into account
+   extract! #seq{=== operator, l, r} ->
+      {l} ++ collapse{operator, r}
+   node ->
+      {node}
+
+
+shed{match, n = 1} =
+   #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
+      if n > 1:
+         then: shed{mid, n - 1}
+         else:
+            lw = ob.location.text{}.split{"["}.pop{}
+            rw = cb.location.text{}.split{"]"}.shift{}
+            loc = mid.location
+            mid & {
+               location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
+            }
+   node ->
+      node
+
+shed_all{node} = shed{node, 1/0}
+
+
+
+
+components = {...} with
+
+   "[[x]]"{engine, #seq{_, o, x, c, _}, _} =
+      span %
+         o.location.text{}.replace{"[", ""}
+         engine.run{x}
+         c.location.text{}.replace{"]", ""}
+
+   "{x}"{engine, node, {=> x}} =
+      engine.eval{x.location.text{}}
+
+   "_ x"{engine, node, {=> x}} =
+      i % engine.run{x}
+
+   "__ x"{engine, node, {=> x}} =
+      b % engine.run{x}
+
+   "` x"{engine, node, {x => shed! x}} =
+      code % x.location.text{}
+
+   "wide [= x]"{engine, node, {=> x}} =
+      h1 % engine.run{x}
+   "wide [== x]"{engine, node, {=> x}} =
+      h2 % engine.run{x}
+   "wide [=== x]"{engine, node, {=> x}} =
+      h3 % engine.run{x}
+   "wide [==== x]"{engine, node, {=> x}} =
+      h4 % engine.run{x}
+   "wide [===== x]"{engine, node, {=> x}} =
+      h5 % engine.run{x}
+   "wide [====== x]"{engine, node, {=> x}} =
+      h6 % engine.run{x}
+
+   "wide [# x]"{engine, node, {=> x}} =
+      mergeable{.ol, li % engine.run{x}}
+
+   "wide [* x]"{engine, node, {=> x}} =
+      mergeable{.ul, li % engine.run{x}}
+
+   "wide [+ x]"{engine, node, {=> x}} =
+      args = collapse{"+", x}
+      mergeable{.table} with
+         tr %
+            args each arg ->
+               th % engine.run{arg}
+
+   "wide [| x]"{engine, node, {=> x}} =
+      args = collapse{"|", x}
+      mergeable{.table} with
+         tr %
+            args each arg ->
+               td % engine.run{arg}
+
+
+items{components} each {spec, fn} ->
+   dispatch.register with Spec{spec, fn}
+
+
+dispatch.register{Spec{spec, fn}} where
+
+   filter{match node} =
+      extract! #seq{"NL", *args} ->
+         {args = args}
+      else ->
+         false
+
+   spec = {"NL", #fn{filter}}
+
+   fn{engine, node and #seq{*elems}, {=> args}} =
+      results = {}
+      wide = node.width == .wide
+      var last = null
+      run = engine.run.bind{engine}
+      var i = -3
+      add{} =
+         results.push with
+            match last:
+               [div.paragraph %]? ->
+                  last
+               when wide ->
+                  div.paragraph % last
+               else ->
+                  last
+      args each [run! match] ->
+         do:
+            i += 2
+         first x ->
+            last = x
+         x when last and last.merge ->
+            match last.merge{x}:
+               false? ->
+                  add{}
+                  results.push with
+                     elems[i].location.text{}
+                  last = x
+               newx ->
+                  last = newx
+         x ->
+            add{}
+            results.push with
+               elems[i].location.text{}
+            last = x
+      i += 2
+      if last:
+         add{}
+         ;; results.push with
+         ;;    last
+            ;; elems[i].location.text{}
+      div.paragraph % results
+
+
+Quaint = Engine{dispatch}
