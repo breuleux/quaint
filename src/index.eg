@@ -9,9 +9,21 @@ require:
       OperatorGroups
       SimplePriority
       oparse
+   "earl-grey/earl-grey" ->
+      Generator
+   "earl-grey/stdenv" ->
+      topscope
 
 provide:
    Quaint
+   Engine
+   Spec
+   dispatch
+   shed
+   shed_all
+   shed_indent
+   collapse
+   mergeable
 
 
 fixity_table = {
@@ -22,6 +34,8 @@ fixity_table = {
    ")" => .SFX
    "]" => .SFX
    "}" => .SFX
+
+   "," => .IFX
 }
 
 inherent_fixity{op} =
@@ -52,7 +66,7 @@ fullsplit{pos0, text, _re} =
 
 
 produce{src} =
-   lineop_re = R"^[!@#$%^&*_\\-+=<>?;:`|]{3,}$"
+   lineop_re = R"^[!@#$%^&*_\\-+=<>/?;:.`|]{3,}$"
    text = src.text
    url = src.url
    results = {}
@@ -148,7 +162,7 @@ disambiguate_fixity{stream} =
    collapse_operators{buffer, *match} =
       do: n = buffer.length
 
-      when not buffer.length ->
+      when n == 0 ->
          {}
 
       {true?, true?} ->
@@ -319,7 +333,7 @@ produce_line{src, line, start} =
          results[results.length - 1].wsa = ws
       #word{s, e, w} ->
          var prod = false
-         fullsplit{s, w, "[!@#$%^&*_\\-+=<>?;:`|]+|[(){}\\[\\],.]"} each
+         fullsplit{s, w, "[!@#$%^&*_\\-+=<>/?;:.`|]+|[(){}\\[\\],.]"} each
             {match type, s2, e2, w2} ->
                do:
                   info = {
@@ -351,6 +365,20 @@ produce_line{src, line, start} =
    results
 
 
+dirty_hacks{tokens} =
+   enumerate{tokens} each {i, match token} ->
+      #SFX{.wide, oper} ->
+         match tokens[i + 2]:
+            #IFX{.wide, "I("} ->
+               token[0] = "IFX"
+               tokens[i + 1].splice{0, 1, .ID, ""}
+            else ->
+               pass
+      else ->
+         pass
+   tokens
+
+
 
 tokenize{src} =
    chain src:
@@ -366,6 +394,7 @@ tokenize{src} =
               other ->
                  {other}
       ;; float_indent{@}
+      dirty_hacks{@}
       fill_locations{src, @}
 
 
@@ -409,6 +438,9 @@ q_order = SimplePriority{q_groups, q_prio} where
       oindentp = {"I(_Y"}
       cindent = {"X_)I"}
 
+      period = {"X."}
+      comma = {"X_,_Y"}
+
 
    q_prio = {...} with
       oindent  = {#all{114}, #all{1}}
@@ -429,9 +461,12 @@ q_order = SimplePriority{q_groups, q_prio} where
       snl = {#all{25}, #all{25}}
 
       wi_pfx = {#all{MAX}, #all{110}}
+      comma  = {#all{112}, #all{111}}
       wi_ifx = {#all{112}, #all{111}}
       wi_sfx = {#all{113}, #all{MAX}}
       wjuxt = {#all{115}, #all{115}}
+
+      period = {#all{119}, #all{MAX}}
 
       sh_pfx = {#all{MAX}, #all{120}}
       sh_ifx = {#all{122}, #all{121}}
@@ -453,9 +488,22 @@ finalize{match x} =
       ;; be more intuitive to give it to "+"
       ;; In other words, sometimes use .at_start{}, other
       ;; times, use at_end{}
-      #text{""} <<: x.location.at_start{}
+      ;; #text{""} <<: x.location.at_start{}
+      #text{""} <<: x
 
    {ops, *args} ->
+
+      arg0 = args[0]
+      match arg0:
+         #text{""} ->
+            arg0.location = arg0.location.at_end{}
+         else -> pass
+
+      arg1 = args[args.length - 1]
+      match arg1:
+         #text{""} ->
+            arg1.location = arg1.location.at_start{}
+         else -> pass
 
       var sumloc = ops[0].location
       ops.slice{1} each op ->
@@ -654,11 +702,26 @@ class Dispatcher:
       l = [@dispatch[key] or= {}]
       l.unshift with handler
 
+   clone{} =
+      d = Dispatcher{}
+      d.dispatch = object with items{@dispatch} each {key, l} ->
+         {key, l.slice{0}}
+      d
+
 
 class Engine:
 
-   constructor{@dispatch} =
-      pass
+   constructor{@dispatch, var env = {=}} =
+      @gen = Generator{true}
+      @glob = @gen.evaluate{Source{"globals: global, global", "<quaint>"}}
+      env = env & {engine = [@]}
+      items{env} each {k, v} ->
+         @setenv{k, v}
+
+   setenv{v, value} =
+      @gen.env.bind{topscope, v, #variable{v}}
+      @glob[v] = value
+      null
 
    run{match} =
       String? text ->
@@ -673,7 +736,8 @@ class Engine:
    _run{match node} =
       #text{t} or #oper{t} ->
          l = node.location
-         node.location.text{}.replace{R.g"~|\\\\."} with {match} ->
+         r = R.g"~|\\\\[!@#$%^&*_\\-+=<>/?;:.`|(){}\\[\\],.]"
+         node.location.text{}.replace{r} with {match} ->
             "~" -> ""
             s -> s[1]
       #seq{*parts} ->
@@ -688,7 +752,7 @@ class Engine:
                handler.run{@, node, values}
 
    eval{code} =
-      eval{code}
+      @gen.evaluate{Source{code, "<quaint>"}}
 
 
 
@@ -742,6 +806,16 @@ shed{match, n = 1} =
 
 shed_all{node} = shed{node, 1/0}
 
+shed_indent{match} =
+   #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
+      match mid:
+         #seq{#text{""}, #oper{"NL"}, x} ->
+            x
+         else ->
+            mid
+   node ->
+      node
+
 
 
 
@@ -764,6 +838,26 @@ components = {...} with
 
    "` x"{engine, node, {x => shed! x}} =
       code % x.location.text{}
+
+   "label :: url"{engine, node, {=> label, url => shed! url}} =
+      a %
+         href = url.location.text{}.trim{}
+         engine.run{label}
+
+   "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
+      parts = descr.location.text{}.split{R"[ +]|(?=\\.|#)"}
+      var id = null
+      tags = {}
+      parts each
+         "" ->
+            pass
+         R"^#(.*)"! {_, _id} ->
+            id = _id
+         tag ->
+            tags.push with tag
+      props = {=}
+      if id: props.id = id
+      Node{tags, props, {engine.run{shed_indent{contents}}}}
 
    "wide [= x]"{engine, node, {=> x}} =
       h1 % engine.run{x}
@@ -798,6 +892,11 @@ components = {...} with
             args each arg ->
                td % engine.run{arg}
 
+   "v <- value"{engine, node, {=> v, => value}} =
+      engine.setenv{v.location.text{}} with
+         engine.run{value}
+      ""
+
 
 items{components} each {spec, fn} ->
    dispatch.register with Spec{spec, fn}
@@ -819,15 +918,20 @@ dispatch.register{Spec{spec, fn}} where
       var last = null
       run = engine.run.bind{engine}
       var i = -3
-      add{} =
+
+      add{addblank = true} =
          results.push with
             match last:
-               [div.paragraph %]? ->
+               [div %]? ->
                   last
                when wide ->
-                  div.paragraph % last
+                  div % last
                else ->
                   last
+         if addblank:
+            results.push with
+               elems[i].location.text{}
+
       args each [run! match] ->
          do:
             i += 2
@@ -837,23 +941,25 @@ dispatch.register{Spec{spec, fn}} where
             match last.merge{x}:
                false? ->
                   add{}
-                  results.push with
-                     elems[i].location.text{}
                   last = x
                newx ->
                   last = newx
          x ->
             add{}
-            results.push with
-               elems[i].location.text{}
             last = x
       i += 2
       if last:
-         add{}
+         add{false}
          ;; results.push with
          ;;    last
             ;; elems[i].location.text{}
-      div.paragraph % results
+
+      if wide:
+         then:
+            div.blocks % results
+         else:
+            span % results
 
 
 Quaint = Engine{dispatch}
+
