@@ -24,6 +24,9 @@ provide:
    shed_indent
    collapse
    mergeable
+   parse
+   tokenize
+   Source
 
 
 fixity_table = {
@@ -493,16 +496,35 @@ finalize{match x} =
 
    {ops, *args} ->
 
+      ;; Prefix operators, suffix operators, and brackets
+      ;; have void first/last arguments that contain the
+      ;; whitespace before/after them. We want this whitespace
+      ;; to be taken by the operator tokens in the parent, so
+      ;; we adjust their location so that it doesn't cover the
+      ;; whitespace.
+
+      ;; The one exception is indented blocks (represented
+      ;; by the "I(" ")I" operator), which *do* contain
+      ;; the whitespace.
+
+      {left_push, right_push} =
+         match ops:
+            {{_, _, "I("}, {_, _, ")I"}} ->
+               {.at_start, .at_end}
+            else ->
+               {.at_end, .at_start}
+
       arg0 = args[0]
       match arg0:
          #text{""} ->
-            arg0.location = arg0.location.at_end{}
+            ;; there's a bug in EG currently that forces the .bind
+            arg0.location = arg0.location[left_push].bind{arg0.location}{}
          else -> pass
 
       arg1 = args[args.length - 1]
       match arg1:
          #text{""} ->
-            arg1.location = arg1.location.at_start{}
+            arg1.location = arg1.location[right_push].bind{arg1.location}{}
          else -> pass
 
       var sumloc = ops[0].location
@@ -924,7 +946,7 @@ dispatch.register{Spec{spec, fn}} where
             match last:
                [div %]? ->
                   last
-               when wide ->
+               when wide and last !== "" ->
                   div % last
                else ->
                   last
