@@ -1,17 +1,17 @@
 
 require:
-   "earl-grey/location" ->
+   "earl-grey/lib/location" ->
       Source, Location
       <<:, ++:
-   "earl-grey/lex" ->
+   "earl-grey/lib/lex" ->
       fill_locations
-   "earl-grey/parse" ->
+   "earl-grey/lib/parse" ->
       OperatorGroups
       SimplePriority
       oparse
-   "earl-grey/earl-grey" ->
+   "earl-grey" ->
       Generator
-   "earl-grey/stdenv" ->
+   "earl-grey/lib/stdenv" ->
       topscope
 
 provide:
