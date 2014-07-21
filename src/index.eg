@@ -69,7 +69,7 @@ fullsplit{pos0, text, _re} =
 
 
 produce{src} =
-   lineop_re = R"^[!@#$%^&*_\\-+=<>/?;:.`|]{3,}$"
+   lineop_re = R"^[!@#$%^&*_\-+=<>/?;:.`|]{3,}$"
    text = src.text
    url = src.url
    results = {}
@@ -747,7 +747,7 @@ class Engine:
 
    run{match} =
       String? text ->
-         @run{Source{text}}
+         @run{Source{text, "<quaint>"}}
       Source? src ->
          tokens = tokenize{src}
          parsed = parse{tokens}
@@ -758,7 +758,7 @@ class Engine:
    _run{match node} =
       #text{t} or #oper{t} ->
          l = node.location
-         r = R.g"~|\\\\[!@#$%^&*_\\-+=<>/?;:.`|(){}\\[\\],.]"
+         r = R.g"~|\\[!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
          node.location.text{}.replace{r} with {match} ->
             "~" -> ""
             s -> s[1]
@@ -867,7 +867,7 @@ components = {...} with
          engine.run{label}
 
    "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
-      parts = descr.location.text{}.split{R"[ +]|(?=\\.|#)"}
+      parts = descr.location.text{}.split{R"[ +]|(?=\.|#)"}
       var id = null
       tags = {}
       parts each
