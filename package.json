@@ -1,0 +1,18 @@
+{
+  "name": "quaint",
+  "version": "0.0.0",
+  "description": "Extensible markup language.",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breuleux/eg-quaint"
+  },
+  "keywords": [
+    "Markup language"
+  ],
+  "author": "Olivier Breuleux",
+  "license": "BSD-3-Clause"
+}

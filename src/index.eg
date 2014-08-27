@@ -1,17 +1,17 @@
 
 require:
-   "earl-grey/lib/location" ->
+   "earlgrey/lib/location" ->
       Source, Location
       <<:, ++:
-   "earl-grey/lib/lex" ->
+   "earlgrey/lib/lex" ->
       fill_locations
-   "earl-grey/lib/parse" ->
+   "earlgrey/lib/parse" ->
       OperatorGroups
       SimplePriority
       oparse
-   "earl-grey" ->
+   "earlgrey" ->
       Generator
-   "earl-grey/lib/stdenv" ->
+   "earlgrey/lib/stdenv" ->
       topscope
 
 provide:
@@ -735,7 +735,8 @@ class Engine:
 
    constructor{@dispatch, var env = {=}} =
       @gen = Generator{true}
-      @glob = @gen.evaluate{Source{"globals: global, global", "<quaint>"}}
+      @glob = @gen.evaluate{Source{s, "<quaint>"}} where
+         s = "globals: [global, window], if{typeof{global} === .undefined, window, global}"
       env = env & {engine = [@]}
       items{env} each {k, v} ->
          @setenv{k, v}
