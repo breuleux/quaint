@@ -11,7 +11,7 @@ require:
       oparse
    "earlgrey" ->
       Generator
-   "earlgrey/lib/stdenv" ->
+   "earlgrey/lib/expand" ->
       topscope
 
 provide:
@@ -39,6 +39,7 @@ fixity_table = {
    "}" => .SFX
 
    "," => .IFX
+   ":" => .IFX
 }
 
 inherent_fixity{op} =
@@ -370,10 +371,11 @@ produce_line{src, line, start} =
 
 dirty_hacks{tokens} =
    enumerate{tokens} each {i, match token} ->
-      #SFX{.wide, oper} ->
+      #SFX{.wide, oper} or #IFX{.short, oper} ->
          match tokens[i + 2]:
             #IFX{.wide, "I("} ->
                token[0] = "IFX"
+               token[1] = .wide
                tokens[i + 1].splice{0, 1, .ID, ""}
             else ->
                pass
@@ -492,6 +494,7 @@ finalize{match x} =
       ;; In other words, sometimes use .at_start{}, other
       ;; times, use at_end{}
       ;; #text{""} <<: x.location.at_start{}
+      ;; I think I fixed it but didn't delete the TODO
       #text{""} <<: x
 
    {ops, *args} ->
@@ -759,7 +762,7 @@ class Engine:
    _run{match node} =
       #text{t} or #oper{t} ->
          l = node.location
-         r = R.g"~|\\[!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
+         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
          node.location.text{}.replace{r} with {match} ->
             "~" -> ""
             s -> s[1]
@@ -776,6 +779,10 @@ class Engine:
 
    eval{code} =
       @gen.evaluate{Source{code, "<quaint>"}}
+
+   register{spec, dispatcher} =
+      @dispatch.register{Spec{spec, dispatcher}}
+      undefined
 
 
 
@@ -851,7 +858,15 @@ components = {...} with
          c.location.text{}.replace{"]", ""}
 
    "{x}"{engine, node, {=> x}} =
-      engine.eval{x.location.text{}}
+      try:
+         engine.eval{x.location.text{}} or ""
+         e -> span.error % String{e}
+
+   "{fn} : body"{engine, node, {=> fn, => body}} =
+      try:
+         f = engine.eval{fn.location.text{}}
+         f{engine, body} or ""
+         e -> span.error % String{e}
 
    "_ x"{engine, node, {=> x}} =
       i % engine.run{x}
@@ -955,10 +970,12 @@ dispatch.register{Spec{spec, fn}} where
             results.push with
                elems[i].location.text{}
 
+      var isFirst = true
       args each [run! match] ->
          do:
             i += 2
-         first x ->
+         x when isFirst ->
+            isFirst = false
             last = x
          x when last and last.merge ->
             match last.merge{x}:
