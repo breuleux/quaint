@@ -1,10 +1,15 @@
 
 require:
+   "./location" ->
+      Source, Location, <<:
    opg ->
       tokenize ->
          SimpleTokenizer, indentTracker, inferLocation
-      parse ->
+      parse as _parse ->
          Parser, TokenGroups, PriorityOrder
+
+provide:
+   Quaint, QuaintFor, Location, Source
 
 
 tok = new SimpleTokenizer with {
@@ -19,6 +24,7 @@ tok = new SimpleTokenizer with {
 
    post = {
       indentTracker{calcSize}
+      inferLocation
       addDefaults
       tuckWhitespace
       classifyOperators
@@ -171,4 +177,439 @@ prio = new PriorityOrder{tokgrp, priorities} where
 
 
 parser = new Parser{tok, prio.getOrder{}}
+
+finalize{src}{match node} =
+   {null?, mid and {=> token, => start, => end}, null?} ->
+      ;; #text{token} &: {{=> start, => end} = mid}
+      #text{token} <<: Location{src, mid.start, mid.end}
+
+   {*parts} ->
+      newparts = enumerate{parts} each {match i, part} ->
+         match is part when i mod 2 == 0 ->
+            null? ->
+               #text{""} <<: Location{src, s, e} where {s, e} =
+                  if [p = parts[i + 1]]:
+                     {p.start, p.start}
+                  else:
+                     {p.end, p.end} where p = parts[i - 1]
+            else ->
+               part
+         else ->
+            loc = Location{
+               src
+               if{let p = parts[i - 1], p.location.end, part.start}
+               if{let p = parts[i + 1], p.location.start, part.end}
+            }
+            {let rval, width} = match part.type:
+               .indent  -> {#oper{"I("}, .wide}
+               .dedent  -> {#oper{")I"}, .wide}
+               .sh_nl   -> {#oper{"NL"}, .short}
+               .nl      -> {#oper{"NL"}, .wide}
+               .sh_ws   -> {#oper{"J"}, .short}
+               .ws      -> {#oper{"J"}, .wide}
+               R"^sh_"? -> {#oper{part.token}, .short}
+               R"^wi_"? -> {#oper{part.token}, .wide}
+               else     -> {#oper{part.token}, .wide}
+            rval.width = width
+            rval <<: loc
+
+      rval = #seq{*newparts} <<: Location{
+         src
+         newparts[0].location.start
+         newparts[newparts.length - 1].location.end
+      }
+      rval &: {
+         operator = newparts[1][1]
+         width = newparts[1].width
+      }
+      adjust{rval}
+   else ->
+      print node
+
+adjust{match node} =
+   #seq{pre, inds and #oper{"I("}, mid, inde and #oper{")I"}, tail} ->
+      findTarget{match x} =
+         #seq{pre, #oper{"NL"}, *} ->
+            findTarget{pre} or x
+         else ->
+            false
+      target = findTarget{mid}
+      loc = pre.location.at_start{}
+      target.location.start = loc.start
+      node.location.start = loc.start
+      inds.location = loc
+      node[1] = #text{""} <<: loc
+      target[1] = pre
+      node
+   else ->
+      node
+
+parse{src} =
+   parser.parse{src.text, finalize{src}}
+
+
+;; ============= ;;
+
+
+extract{match} =
+   #seq{*args} ->
+      #seq{args[1][1], *newargs} where newargs =
+         enumerate{args} each
+            {i, arg} when i mod 2 == 0 ->
+               arg
+   other ->
+      other
+
+parse_spec{match} =
+   String? spec ->
+      let ast = parse{Source{spec}}
+      var top = null
+      rval = helper{ast, {shed = true}} where helper{match, opts} =
+         extract! #seq{"J", *tags, pattern} ->
+            helper{pattern} with
+               opts &
+                  object with tags each #text{tag} -> {tag, true}
+         ast when opts.wide ->
+            #iswide{helper{ast, opts & {wide = false}}}
+         ast when opts.short ->
+            #isshort{helper{ast, opts & {short = false}}}
+         #text{""} ->
+            #eq{#text{""}}
+         #text{v} ->
+            #put{v, opts.maybe === true}
+         #oper{op} ->
+            #eq{#oper{op}}
+         #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
+            helper{contents, opts & {shed = false}}
+         #seq{*args} and {=> operator} ->
+            if [not top]:
+               top = operator
+            #seq{*[args each arg -> helper{arg, opts}]}
+      {top, rval}
+   {top, rval} ->
+      {top, rval}
+
+
+make_extractor{parse_spec! {top, spec}} =
+   {top} with {node} ->
+      helper{spec, node} where
+         helper{match, node} =
+            #iswide{subspec} ->
+               [node.width == .wide] and
+                  helper{subspec, node}
+            #isshort{subspec} ->
+               [node.width == .short] and
+                  helper{subspec, node}
+            #put{v, maybe} ->
+               match node:
+                  #text{""} when not maybe ->
+                     false
+                  else ->
+                     {v => node}
+            #eq{== node} ->
+               {=}
+            #eq ->
+               false
+            #seq{*subspecs} ->
+               match node:
+                  #seq{*args} when subspecs.length == args.length ->
+                     rval = {=}
+                     zip{subspecs, args} each {subspec, arg} ->
+                        match helper{subspec, arg}:
+                           false? ->
+                              return false
+                           vars ->
+                              rval &: vars
+                     rval
+                  other ->
+                     false
+            #fn{f} ->
+               f{node}
+
+
+
+class Dispatcher:
+
+   constructor{} =
+      @dispatch = {}
+
+   handler{node} =
+      ;; key = node.width + " " + node.operator
+      key = node.operator
+      match @dispatch[key]:
+         undefined? ->
+            false
+         candidates ->
+            candidates each c ->
+               match node:
+                  c! parts ->
+                     return {parts, c}
+                  else ->
+                     pass
+            false
+
+   register{handler} =
+      key = handler.operator
+      l = [@dispatch[key] or= {}]
+      l.unshift with handler
+
+   clone{} =
+      d = Dispatcher{}
+      d.dispatch = object with items{@dispatch} each {key, l} ->
+         {key, l.slice{0}}
+      d
+
+
+class Engine:
+
+   constructor{@dispatch, @eval} =
+      pass
+
+   run{match} =
+      String? text ->
+         @run{Source{text, "<quaint>"}}
+      Source? src ->
+         parsed = parse{src}
+         @_run{parsed}
+      node ->
+         @_run{node}
+
+   _run{match node} =
+      #text{t} or #oper{t} ->
+         l = node.location
+         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
+         node.location.text{}.replace{r} with {match} ->
+            "~" -> ""
+            s -> s[1]
+      #seq{*parts} ->
+         match @dispatch.handler{node}:
+            false? ->
+               span %
+                  parts each part -> @run{part}
+            {values, handler} ->
+               handler.run{@, node, values}
+
+   register{spec, dispatcher} =
+      @dispatch.register{Spec{spec, dispatcher}}
+      @
+
+
+
+class Spec:
+   constructor{make_extractor! {@operator, @extractor}, @run} =
+      pass
+   ":::project"{@extractor! match} =
+      false? ->
+         {false, null}
+      values ->
+         {true, values}
+
+
+mergeable{tag, child} =
+   merge{match node} =
+      [^tag %]! {tags, props, children} ->
+         this.children ++= children
+         this
+      other ->
+         false
+   node = ^tag % child
+   node.merge = merge
+   node
+
+
+collapse{operator, match} =
+   ;; TODO: take width into account
+   extract! #seq{=== operator, l, r} ->
+      {l} ++ collapse{operator, r}
+   node ->
+      {node}
+
+
+shed{match, n = 1} =
+   #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
+      if n > 1:
+         then: shed{mid, n - 1}
+         else:
+            lw = ob.location.text{}.split{"["}.pop{}
+            rw = cb.location.text{}.split{"]"}.shift{}
+            loc = mid.location
+            mid & {
+               location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
+            }
+   node ->
+      node
+
+shed_all{node} = shed{node, 1/0}
+
+shed_indent{match} =
+   #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
+      match mid:
+         #seq{#text{""}, #oper{"NL"}, x} ->
+            x
+         else ->
+            mid
+   node ->
+      node
+
+
+
+defaultComponents{Node} = {
+
+   "[[x]]"{engine, #seq{_, o, x, c, _}, _} =
+      span %
+         o.location.text{}.replace{"[", ""}
+         engine.run{x}
+         c.location.text{}.replace{"]", ""}
+
+   "{x}"{engine, node, {=> x}} =
+      try:
+         engine.eval{x.location} or ""
+      catch e:
+         span.error % String{e}
+
+   "{fn} : body"{engine, node, {=> fn, => body}} =
+      try:
+         f = engine.eval{fn.location}
+         f{engine, body} or ""
+      catch e:
+         span.error % String{e}
+
+   "_ x"{engine, node, {=> x}} =
+      i % engine.run{x}
+
+   "__ x"{engine, node, {=> x}} =
+      b % engine.run{x}
+
+   "` x"{engine, node, {x => shed! x}} =
+      code % x.location.text{}
+
+   "label :: url"{engine, node, {=> label, url => shed! url}} =
+      a %
+         href = url.location.text{}.trim{}
+         engine.run{label}
+
+   "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
+      parts = descr.location.text{}.split{R"[ +]|(?=\.|#)"}
+      var id = null
+      tags = {}
+      parts each
+         "" ->
+            pass
+         R"^#(.*)"! {_, _id} ->
+            id = _id
+         tag ->
+            tags.push with tag
+      props = {=}
+      if id: props.id = id
+      Node{tags, props, {engine.run{shed_indent{contents}}}}
+
+   "wide [= x]"{engine, node, {=> x}} =
+      h1 % engine.run{x}
+   "wide [== x]"{engine, node, {=> x}} =
+      h2 % engine.run{x}
+   "wide [=== x]"{engine, node, {=> x}} =
+      h3 % engine.run{x}
+   "wide [==== x]"{engine, node, {=> x}} =
+      h4 % engine.run{x}
+   "wide [===== x]"{engine, node, {=> x}} =
+      h5 % engine.run{x}
+   "wide [====== x]"{engine, node, {=> x}} =
+      h6 % engine.run{x}
+
+   "wide [# x]"{engine, node, {=> x}} =
+      mergeable{.ol, li % engine.run{x}}
+
+   "wide [* x]"{engine, node, {=> x}} =
+      mergeable{.ul, li % engine.run{x}}
+
+   "wide [+ x]"{engine, node, {=> x}} =
+      args = collapse{"+", x}
+      mergeable{.table} with
+         tr %
+            args each arg ->
+               th % engine.run{arg}
+
+   "wide [| x]"{engine, node, {=> x}} =
+      args = collapse{"|", x}
+      mergeable{.table} with
+         tr %
+            args each arg ->
+               td % engine.run{arg}
+
+   "v <- value"{engine, node, {=> v, => value}} =
+      engine.setenv{v.location.text{}} with
+         engine.run{value}
+      ""
+
+}
+
+defaultDispatcher{Node} =
+   dispatch = Dispatcher{}
+   items{defaultComponents{Node}} each {spec, fn} ->
+      dispatch.register with Spec{spec, fn}
+
+   dispatch.register{Spec{spec, fn}} where
+
+      filter{match node} =
+         extract! #seq{"NL", *args} ->
+            {args = args}
+         else ->
+            false
+
+      spec = {"NL", #fn{filter}}
+
+      fn{engine, node and #seq{*elems}, {=> args}} =
+         results = {}
+         wide = node.width == .wide
+         var last = null
+         run = engine.run.bind{engine}
+         var i = -3
+
+         add{addblank = true} =
+            results.push with
+               match last:
+                  [div %]? ->
+                     last
+                  when wide and last !== "" ->
+                     div % last
+                  else ->
+                     last
+            if addblank:
+               results.push with
+                  elems[i].location.text{}
+
+         var isFirst = true
+         args each [run! match] ->
+            do:
+               i += 2
+            x when isFirst ->
+               isFirst = false
+               last = x
+            x when last and last.merge ->
+               match last.merge{x}:
+                  false? ->
+                     add{}
+                     last = x
+                  newx ->
+                     last = newx
+            x ->
+               add{}
+               last = x
+         i += 2
+         if last:
+            add{false}
+
+         if wide:
+            then:
+               div.blocks % results
+            else:
+               span % results
+
+   dispatch
+
+
+QuaintFor{Node} =
+   Engine{defaultDispatcher{Node}, null}
+
+Quaint = QuaintFor{Node}
 
