@@ -1,8 +1,7 @@
 
 require:
-   "./location" ->
-      Source, Location, <<:
    opg ->
+      Source, Location, transferLocation as [<<:]
       tokenize ->
          SimpleTokenizer, indentTracker, inferLocation
       parse as _parse ->
@@ -12,13 +11,13 @@ provide:
    Quaint, QuaintFor, Location, Source
 
 
-tok = new SimpleTokenizer with {
+tok = SimpleTokenizer with {
 
    regexps = {
       {.nl, " *(?:\n *)+"}
-      {.ws, " +"}
+      {.ws, "[ ~]+"}
       {.op, "[!@#$%^&*_\\-+=<>/?;:.`|]+|[(){}\\[\\],.]"}
-      {.word, "[^\n!@#$%^&*_\\-+=<>/?;:.`|\\[\\](){},. ]+"}
+      {.word, "[^\n!@#$%^&*_\\-+=<>/?;:.`|\\[\\](){},. ~]+"}
       {.unknown, "."} ;; should never happen
    }
 
@@ -62,7 +61,7 @@ tok = new SimpleTokenizer with {
                if sfx:
                   padder = tuck or {
                      type = .sh_ws, token = ""
-                     start = tok.start, end = tok.end
+                     start = tok.location.start, end = tok.location.end
                   }
                   {padder, tok}
                else:
@@ -119,9 +118,9 @@ tok = new SimpleTokenizer with {
 }
 
 
-prio = new PriorityOrder{tokgrp, priorities} where
+prio = PriorityOrder{tokgrp, priorities} where
 
-   tokgrp = new TokenGroups with {
+   tokgrp = TokenGroups with {
       sh_pfx = {.sh_pfx}
       sh_ifx = {.sh_ifx}
       sh_sfx = {.sh_sfx}
@@ -176,29 +175,28 @@ prio = new PriorityOrder{tokgrp, priorities} where
    }
 
 
-parser = new Parser{tok, prio.getOrder{}}
+parser = Parser{tok, prio.getOrder{}}
 
 finalize{src}{match node} =
-   {null?, mid and {=> token, => start, => end}, null?} ->
-      ;; #text{token} &: {{=> start, => end} = mid}
-      #text{token} <<: Location{src, mid.start, mid.end}
+   {null?, mid and {=> token, => location}, null?} ->
+      #text{token} <<: location
 
    {*parts} ->
       newparts = enumerate{parts} each {match i, part} ->
          match is part when i mod 2 == 0 ->
             null? ->
-               #text{""} <<: Location{src, s, e} where {s, e} =
+               #text{""} <<:
                   if [p = parts[i + 1]]:
-                     {p.start, p.start}
+                     p.location.at_start{}
                   else:
-                     {p.end, p.end} where p = parts[i - 1]
+                     parts[i - 1].location.at_end{}
             else ->
                part
          else ->
             loc = Location{
                src
-               if{let p = parts[i - 1], p.location.end, part.start}
-               if{let p = parts[i + 1], p.location.start, part.end}
+               if{let p = parts[i - 1], p.location.end, part.location.start}
+               if{let p = parts[i + 1], p.location.start, part.location.end}
             }
             {let rval, width} = match part.type:
                .indent  -> {#oper{"I("}, .wide}
@@ -245,7 +243,7 @@ adjust{match node} =
       node
 
 parse{src} =
-   parser.parse{src.text, finalize{src}}
+   parser.parse{src, finalize{src}}
 
 
 ;; ============= ;;
