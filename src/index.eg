@@ -3,7 +3,7 @@ require:
    opg ->
       Source, Location, transferLocation as [<<:]
       tokenize ->
-         SimpleTokenizer, indentTracker, inferLocation
+         Tokenizer, indentTracker, inferLocation
       parse as _parse ->
          Parser, TokenGroups, PriorityOrder
 
@@ -11,7 +11,7 @@ provide:
    Quaint, QuaintFor, Location, Source
 
 
-tok = SimpleTokenizer with {
+tok = Tokenizer with {
 
    regexps = {
       {.nl, " *(?:\n *)+"}
@@ -61,7 +61,11 @@ tok = SimpleTokenizer with {
                if sfx:
                   padder = tuck or {
                      type = .sh_ws, token = ""
-                     start = tok.location.start, end = tok.location.end
+                     location = Location{
+                        tok.location.source
+                        tok.location.start
+                        tok.location.start
+                     }
                   }
                   {padder, tok}
                else:
@@ -175,9 +179,7 @@ prio = PriorityOrder{tokgrp, priorities} where
    }
 
 
-parser = Parser{tok, prio.getOrder{}}
-
-finalize{src}{match node} =
+finalize{match node} =
    {null?, mid and {=> token, => location}, null?} ->
       #text{token} <<: location
 
@@ -194,7 +196,7 @@ finalize{src}{match node} =
                part
          else ->
             loc = Location{
-               src
+               part.location.source
                if{let p = parts[i - 1], p.location.end, part.location.start}
                if{let p = parts[i + 1], p.location.start, part.location.end}
             }
@@ -212,7 +214,7 @@ finalize{src}{match node} =
             rval <<: loc
 
       rval = #seq{*newparts} <<: Location{
-         src
+         newparts[0].location.source
          newparts[0].location.start
          newparts[newparts.length - 1].location.end
       }
@@ -222,7 +224,8 @@ finalize{src}{match node} =
       }
       adjust{rval}
    else ->
-      print node
+      throw E.syntax.unknown_node{node}
+
 
 adjust{match node} =
    #seq{pre, inds and #oper{"I("}, mid, inde and #oper{")I"}, tail} ->
@@ -242,8 +245,11 @@ adjust{match node} =
    else ->
       node
 
+
+parser = Parser{tok, prio.getOrder{}, finalize}
+
 parse{src} =
-   parser.parse{src, finalize{src}}
+   parser.parse{src}
 
 
 ;; ============= ;;
