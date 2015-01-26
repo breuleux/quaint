@@ -8,7 +8,7 @@ require:
          Parser, TokenGroups, PriorityOrder
 
 provide:
-   Quaint, QuaintFor, Location, Source
+   Quaint, QuaintFor, Location, Source, create
 
 
 tok = Tokenizer with {
@@ -46,8 +46,11 @@ tok = Tokenizer with {
             prev.wsa and next.wsb = token.length
             next.tucked = tok
             {}
-         {type => .indent} ->
-            prev.wsa = 1
+         {type => .op, token => "]" or "}" or ")"} ->
+            prev.wsa and prev.wsb = 1
+            {tok}
+         {type => [.indent or .nl]} ->
+            prev.wsa and prev.wsb = 1
             {tok}
          else ->
             {tok}
@@ -366,7 +369,7 @@ class Dispatcher:
 
 class Engine:
 
-   constructor{@dispatch, @eval} =
+   constructor{@dispatch, @evaluator} =
       pass
 
    run{match} =
@@ -396,6 +399,12 @@ class Engine:
    register{spec, dispatcher} =
       @dispatch.register{Spec{spec, dispatcher}}
       @
+
+   eval{src} =
+      @evaluator.eval{src}
+
+   setenv{name, value} =
+      @evaluator.setenv{name, value}
 
 
 
@@ -459,7 +468,7 @@ shed_indent{match} =
 
 defaultComponents{Node} = {
 
-   "[[x]]"{engine, #seq{_, o, x, c, _}, _} =
+   "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
       span %
          o.location.text{}.replace{"[", ""}
          engine.run{x}
@@ -544,7 +553,6 @@ defaultComponents{Node} = {
       engine.setenv{v.location.text{}} with
          engine.run{value}
       ""
-
 }
 
 defaultDispatcher{Node} =
@@ -616,4 +624,7 @@ QuaintFor{Node} =
    Engine{defaultDispatcher{Node}, null}
 
 Quaint = QuaintFor{Node}
+
+create{evaluator} =
+   Engine{defaultDispatcher{Node}, evaluator}
 
