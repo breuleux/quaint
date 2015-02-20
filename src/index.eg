@@ -466,7 +466,7 @@ shed_indent{match} =
 
 
 
-defaultComponents{Node} = {
+defaultComponents{ENode} = {
 
    "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
       span %
@@ -514,7 +514,7 @@ defaultComponents{Node} = {
             tags.push with tag
       props = {=}
       if id: props.id = id
-      Node{tags, props, {engine.run{shed_indent{contents}}}}
+      ENode{tags, props, {engine.run{shed_indent{contents}}}}
 
    "wide [= x]"{engine, node, {=> x}} =
       h1 % engine.run{x}
@@ -555,9 +555,9 @@ defaultComponents{Node} = {
       ""
 }
 
-defaultDispatcher{Node} =
+defaultDispatcher{ENode} =
    dispatch = Dispatcher{}
-   items{defaultComponents{Node}} each {spec, fn} ->
+   items{defaultComponents{ENode}} each {spec, fn} ->
       dispatch.register with Spec{spec, fn}
 
    dispatch.register{Spec{spec, fn}} where
@@ -620,11 +620,11 @@ defaultDispatcher{Node} =
    dispatch
 
 
-QuaintFor{Node} =
-   Engine{defaultDispatcher{Node}, null}
+QuaintFor{ENode} =
+   Engine{defaultDispatcher{ENode}, null}
 
-Quaint = QuaintFor{Node}
+Quaint = QuaintFor{ENode}
 
 create{evaluator} =
-   Engine{defaultDispatcher{Node}, evaluator}
+   Engine{defaultDispatcher{ENode}, evaluator}
 
