@@ -8,7 +8,10 @@ require:
          Parser, TokenGroups, PriorityOrder
 
 provide:
-   Quaint, QuaintFor, Location, Source, create
+   Location, Source
+   Quaint, QuaintFor
+   create
+   toENode, toHTML
 
 
 tok = Tokenizer with {
@@ -391,7 +394,7 @@ class Engine:
       #seq{*parts} ->
          match @dispatch.handler{node}:
             false? ->
-               span %
+               %
                   parts each part -> @run{part}
             {values, handler} ->
                handler.run{@, node, values}
@@ -469,7 +472,7 @@ shed_indent{match} =
 defaultComponents{ENode} = {
 
    "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
-      span %
+      %
          o.location.text{}.replace{"[", ""}
          engine.run{x}
          c.location.text{}.replace{"]", ""}
@@ -615,9 +618,10 @@ defaultDispatcher{ENode} =
             then:
                div.blocks % results
             else:
-               span % results
+               % results
 
    dispatch
+
 
 
 QuaintFor{ENode} =
@@ -627,4 +631,12 @@ Quaint = QuaintFor{ENode}
 
 create{evaluator} =
    Engine{defaultDispatcher{ENode}, evaluator}
+
+defaultEngine = create{null}
+
+toENode{text} =
+   defaultEngine.run{text}
+
+toHTML{text} =
+   toENode{text}.toHTML{}
 
