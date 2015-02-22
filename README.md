@@ -16,4 +16,3 @@ Simple usage:
     var quaint = require("quaint");
     quaint.toHTML("Hello _italic __[bold words].");
     // ==> "Hello <i>italic</i> <b>bold words</b>"
-
