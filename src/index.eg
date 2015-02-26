@@ -403,6 +403,11 @@ class Engine:
       @dispatch.register{Spec{spec, dispatcher}}
       @
 
+   registerAll{entries} =
+      items{entries} each {spec, dispatcher} ->
+         @register{spec, dispatcher}
+      @
+
    eval{src} =
       @evaluator.eval{src}
 
