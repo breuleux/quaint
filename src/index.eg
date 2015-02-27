@@ -242,12 +242,13 @@ adjust{match node} =
          else ->
             false
       target = findTarget{mid}
-      loc = pre.location.at_start{}
-      target.location.start = loc.start
-      node.location.start = loc.start
-      inds.location = loc
-      node[1] = #text{""} <<: loc
-      target[1] = pre
+      if target:
+         loc = pre.location.at_start{}
+         target.location.start = loc.start
+         node.location.start = loc.start
+         inds.location = loc
+         node[1] = #text{""} <<: loc
+         target[1] = pre
       node
    else ->
       node
@@ -345,8 +346,10 @@ class Dispatcher:
       @dispatch = {}
 
    handler{node} =
-      ;; key = node.width + " " + node.operator
-      key = node.operator
+      key = node.operator or ""
+      if not key:
+         console.error with
+            "Node lacks an operator key. That may be indicative of a bug."
       match @dispatch[key]:
          undefined? ->
             false
@@ -489,13 +492,13 @@ shed{match, n = 1} =
 
 shed_all{node} = shed{node, 1/0}
 
-shed_indent{match} =
+shed_indent{match node} =
    #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
       match mid:
          #seq{#text{""}, #oper{"NL"}, x} ->
             x
          #seq{#text{""}, #oper{"NL"}, *rest} ->
-            #seq{*rest}
+            #seq{*rest} &: {operator = node.operator}
          else ->
             mid
    node ->
@@ -674,9 +677,9 @@ processDocuments{x, documents} =
       [genfor %]? ->
          docname = node.props.document
          match documents[docname]:
-            undefined? ->
+            undefined? when node.props.important ->
                throw E.no_document{docname}
-            null? ->
+            false? ->
                ""
             {delay => true?} ->
                node
