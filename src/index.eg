@@ -663,30 +663,44 @@ processDocuments{x, documents} =
    forges = {}
 
    populate{match node, parent, idx, documents} =
+
       [redoc %]? ->
          {child} = node.children
          populate{child, parent, idx, newdocs} where newdocs =
             match node.props.documents:
                Function? f -> f{documents}
                docs -> documents & docs
+
       [genfor %]? ->
-         doc = documents[node.props.document]
-         doc.add.apply{doc, node.children}
-         ""
+         docname = node.props.document
+         match documents[docname]:
+            undefined? ->
+               throw E.no_document{docname}
+            null? ->
+               ""
+            {delay => true?} ->
+               node
+            doc ->
+               doc.add.apply{doc, node.children}
+               ""
+
       [genfrom %]? ->
          forges.push{{parent, idx, node, documents}}
          "PLACEHOLDER"
+
       ENode? ->
          rval = ENode{node.tags, node.props}
          rval.children =
             enumerate{node.children} each {i, c} ->
                populate{c, rval, i, documents}
          rval
+
       Array? ->
          rval = {}
          enumerate{node} each {i, c} ->
             rval.push{populate{c, rval, i, documents}}
          rval
+
       else ->
          node
 
