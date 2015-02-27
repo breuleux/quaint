@@ -12,6 +12,7 @@ provide:
    Quaint, QuaintFor
    create
    toENode, toHTML
+   processDocuments
 
 
 tok = Tokenizer with {
@@ -415,6 +416,32 @@ class Engine:
       @evaluator.setenv{name, value}
 
 
+   getText{match x} =
+      {=> location} -> location.text{}
+      else -> throw E.nosource{"Cannot get source code for node."}
+
+   shed{x, n} =
+      shed{x, n}
+
+   shedAll{x} =
+      shed_all{x}
+
+   shedIndent{x} =
+      shed_indent{x}
+
+   getStatements{node} =
+      match @shedIndent{node}:
+         #seq{_, #oper{"NL"}, *} ->
+            [xs.reduce{++}] where xs =
+               enumerate{node.slice{1}} each
+                  {i, x} when i mod 2 == 0 ->
+                     @getStatements{x}
+         #text{""} ->
+            {}
+         else ->
+            {node}
+
+
 
 class Spec:
    constructor{make_extractor! {@operator, @extractor}, @run} =
@@ -467,6 +494,8 @@ shed_indent{match} =
       match mid:
          #seq{#text{""}, #oper{"NL"}, x} ->
             x
+         #seq{#text{""}, #oper{"NL"}, *rest} ->
+            #seq{*rest}
          else ->
             mid
    node ->
@@ -626,6 +655,49 @@ defaultDispatcher{ENode} =
                % results
 
    dispatch
+
+
+
+processDocuments{x, documents} =
+
+   forges = {}
+
+   populate{match node, parent, idx, documents} =
+      [redoc %]? ->
+         {child} = node.children
+         populate{child, parent, idx, newdocs} where newdocs =
+            match node.props.documents:
+               Function? f -> f{documents}
+               docs -> documents & docs
+      [genfor %]? ->
+         doc = documents[node.props.document]
+         doc.add.apply{doc, node.children}
+         ""
+      [genfrom %]? ->
+         forges.push{{parent, idx, node, documents}}
+         "PLACEHOLDER"
+      ENode? ->
+         rval = ENode{node.tags, node.props}
+         rval.children =
+            enumerate{node.children} each {i, c} ->
+               populate{c, rval, i, documents}
+         rval
+      Array? ->
+         rval = {}
+         enumerate{node} each {i, c} ->
+            rval.push{populate{c, rval, i, documents}}
+         rval
+      else ->
+         node
+
+   res = populate{% x, null, null, documents}
+
+   while forges.length:
+      {parent, i, node, docs} = forges.shift{}
+      gene = node.props.generate
+      parent.children[i] = populate{gene{docs}, parent, i, docs}
+
+   res.children[0] or res
 
 
 
