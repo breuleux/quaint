@@ -397,12 +397,19 @@ class Engine:
             "~" -> ""
             s -> s[1]
       #seq{*parts} ->
-         match @dispatch.handler{node}:
+         result = match @dispatch.handler{node}:
             false? ->
                %
                   parts each part -> @run{part}
             {values, handler} ->
                handler.run{@, node, values}
+         match result:
+            ENode? {tags => {}, props => == {=}, => children} or Array? children
+            \ when children.every{x -> String? x} ->
+               r = children.join{""}
+               if{result.block, % r, r}
+            else ->
+               result
 
    register{spec, dispatcher} =
       @dispatch.register{Spec{spec, dispatcher}}
@@ -445,6 +452,8 @@ class Engine:
          else ->
             {node}
 
+   collapse{op, node} =
+      collapse{op, node}
 
 
 class Spec:
@@ -548,7 +557,17 @@ defaultComponents{ENode} = {
 
    "label :: url"{engine, node, {=> label, url => shed! url}} =
       a %
-         href = url.location.text{}.trim{}
+         href =
+            match url:
+               do:
+                  print url
+               #seq{_, #oper{"{"}, x, #oper{"}"}, _} ->
+                  try:
+                     [engine.eval{x.location} or ""].toString{}
+                  catch e:
+                     span.error % String{e}
+               else ->
+                  engine.getText{url}.trim{}
          engine.run{label}
 
    "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
