@@ -117,11 +117,12 @@ tok = Tokenizer with {
                   {true?,  0  , 0}     -> {.sh_ifx, false, {tok}}
                   {true?,  > 0, > 0}   -> {.wi_ifx, false, {tok}}
                   {true?,  _  , 0}     -> {.sh_pfx, false, pad{tok}}
-                  {true?,  0  , _}     -> {if{never_sfx, .wi_ifx, .sh_sfx}, false, {tok}}
-                  {false?, 0  , 0}     -> {.sh_pfx, true,  {tok}}
-                  {false?, > 0, > 0}   -> {.wi_pfx, true,  {tok}}
-                  {false?, _  , 0}     -> {.sh_pfx, true,  {tok}}
-                  {false?, 0  , _}     -> {.wi_pfx, true,  {tok}}
+                  {true?,  0  , _}     -> {if{never_sfx, .wi_ifx, .sh_sfx}
+                                           not never_sfx, {tok}}
+                  {false?, 0  , 0}     -> {.sh_pfx, false,  {tok}}
+                  {false?, > 0, > 0}   -> {.wi_pfx, false,  {tok}}
+                  {false?, _  , 0}     -> {.sh_pfx, false,  {tok}}
+                  {false?, 0  , _}     -> {.wi_pfx, false,  {tok}}
 
          else ->
             throw E.unknown_token_type{String{tok}}
@@ -499,7 +500,7 @@ shed_indent{match node} =
          #seq{#text{""}, #oper{"NL"}, x} ->
             x
          #seq{#text{""}, #oper{"NL"}, *rest} ->
-            #seq{*rest} &: {operator = node.operator}
+            #seq{*rest} &: mid
          else ->
             mid
    node ->
@@ -566,17 +567,17 @@ defaultComponents{ENode} = {
       ENode{tags, props, {engine.run{shed_indent{contents}}}}
 
    "wide [= x]"{engine, node, {=> x}} =
-      h1 % engine.run{x}
+      [h1 % engine.run{x}] &: {block = true}
    "wide [== x]"{engine, node, {=> x}} =
-      h2 % engine.run{x}
+      [h2 % engine.run{x}] &: {block = true}
    "wide [=== x]"{engine, node, {=> x}} =
-      h3 % engine.run{x}
+      [h3 % engine.run{x}] &: {block = true}
    "wide [==== x]"{engine, node, {=> x}} =
-      h4 % engine.run{x}
+      [h4 % engine.run{x}] &: {block = true}
    "wide [===== x]"{engine, node, {=> x}} =
-      h5 % engine.run{x}
+      [h5 % engine.run{x}] &: {block = true}
    "wide [====== x]"{engine, node, {=> x}} =
-      h6 % engine.run{x}
+      [h6 % engine.run{x}] &: {block = true}
 
    "wide [# x]"{engine, node, {=> x}} =
       mergeable{.ol, li % engine.run{x}}
