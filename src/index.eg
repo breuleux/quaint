@@ -456,7 +456,7 @@ class Spec:
          {true, values}
 
 
-mergeable{tag, child} =
+mergeable{tag, child, block = true} =
    merge{match node} =
       [^tag %]! {tags, props, children} ->
          this.children ++= children
@@ -464,6 +464,7 @@ mergeable{tag, child} =
       other ->
          false
    node = ^tag % child
+   node.block = block
    node.merge = merge
    node
 
@@ -509,10 +510,18 @@ shed_indent{match node} =
 defaultComponents{ENode} = {
 
    "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
-      %
-         o.location.text{}.replace{"[", ""}
-         engine.run{x}
-         c.location.text{}.replace{"]", ""}
+      beg = o.location.text{}.replace{"[", ""}
+      middle = engine.run{x}
+      end = c.location.text{}.replace{"]", ""}
+      res =
+         if beg and end:
+            %
+               o.location.text{}.replace{"[", ""}
+               middle
+               c.location.text{}.replace{"]", ""}
+         else:
+            middle
+      res &: {block = middle.block}
 
    "{x}"{engine, node, {=> x}} =
       try:
@@ -528,10 +537,10 @@ defaultComponents{ENode} = {
          span.error % String{e}
 
    "_ x"{engine, node, {=> x}} =
-      i % engine.run{x}
+      em % engine.run{x}
 
    "__ x"{engine, node, {=> x}} =
-      b % engine.run{x}
+      strong % engine.run{x}
 
    "` x"{engine, node, {x => shed! x}} =
       code % x.location.text{}
@@ -620,12 +629,18 @@ defaultDispatcher{ENode} =
          add{addblank = true} =
             results.push with
                match last:
-                  [div %]? ->
+                  [div %]? or {block => true?} ->
                      last
-                  when wide and last !== "" ->
-                     div % last
+                  != "" when wide ->
+                     p % last
                   else ->
                      last
+                  ;; [div %]? ->
+                  ;;    last
+                  ;; when wide and last !== "" ->
+                  ;;    div % last
+                  ;; else ->
+                  ;;    last
             if addblank:
                results.push with
                   elems[i].location.text{}
@@ -651,11 +666,17 @@ defaultDispatcher{ENode} =
          if last:
             add{false}
 
-         if wide:
-            then:
-               div.blocks % results
-            else:
-               % results
+         ;; if wide:
+         ;;    then:
+         ;;       div % results
+         ;;    else:
+         ;;       % results
+
+         match results:
+            {result} ->
+               result
+            else ->
+               [% results] &: {block = Boolean! wide}
 
    dispatch
 
