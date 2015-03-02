@@ -375,16 +375,29 @@ class Engine:
    constructor{@dispatch, @evaluator} =
       pass
 
-   run{match} =
-      String? text ->
-         @run{Source{text, "<quaint>"}}
-      Source? src ->
-         parsed = parse{src}
-         @_run{parsed}
-      node ->
-         @_run{node}
 
-   _run{match node} =
+   run{src, documents = undefined} =
+
+      generated =
+         match src:
+            String? text ->
+               @run{Source{text, "<quaint>"}}
+            Source? src ->
+               parsed = parse{src}
+               @gen{parsed}
+            node ->
+               @gen{node}
+
+      match documents:
+         undefined? ->
+            processDocuments{generated, {=}}
+         null? ->
+            generated
+         else ->
+            processDocuments{generated, documents}
+
+
+   .gen{match node} =
       #text{t} or #oper{t} ->
          l = node.location
          r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
@@ -395,9 +408,9 @@ class Engine:
          result = match @dispatch.handler{node}:
             false? ->
                %
-                  parts each part -> @run{part}
+                  parts each part -> @gen{part}
             {values, handler} ->
-               handler.run{@, node, values}
+               handler.gen{@, node, values}
          match result:
             ENode? {tags => {}, props => == {=}, => children} or Array? children
             \ when children.every{x -> String? x} ->
@@ -442,7 +455,7 @@ class Engine:
 
 
 class Spec:
-   constructor{make_extractor! {@operator, @extractor}, @run} =
+   constructor{make_extractor! {@operator, @extractor}, @gen} =
       pass
    ":::project"{@extractor! match} =
       false? ->
@@ -455,7 +468,7 @@ defaultComponents{ENode} = {
 
    "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
       beg = raw{o}.replace{"[", ""}
-      middle = engine.run{x}
+      middle = engine.gen{x}
       end = raw{c}.replace{"]", ""}
       res =
          if beg and end:
@@ -481,10 +494,10 @@ defaultComponents{ENode} = {
          span.error % String{e}
 
    "_ x"{engine, node, {=> x}} =
-      em % engine.run{x}
+      em % engine.gen{x}
 
    "__ x"{engine, node, {=> x}} =
-      strong % engine.run{x}
+      strong % engine.gen{x}
 
    "` x"{engine, node, {x => shed! x}} =
       code % raw{x}
@@ -502,7 +515,7 @@ defaultComponents{ENode} = {
                      span.error % String{e}
                else ->
                   engine.getText{url}.trim{}
-         engine.run{label}
+         engine.gen{label}
 
    "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
       parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
@@ -517,44 +530,44 @@ defaultComponents{ENode} = {
             tags.push with tag
       props = {=}
       if id: props.id = id
-      ENode{tags, props, {engine.run{shedIndent{contents}}}}
+      ENode{tags, props, {engine.gen{shedIndent{contents}}}}
 
    "wide [= x]"{engine, node, {=> x}} =
-      [h1 % engine.run{x}] &: {block = true}
+      [h1 % engine.gen{x}] &: {block = true}
    "wide [== x]"{engine, node, {=> x}} =
-      [h2 % engine.run{x}] &: {block = true}
+      [h2 % engine.gen{x}] &: {block = true}
    "wide [=== x]"{engine, node, {=> x}} =
-      [h3 % engine.run{x}] &: {block = true}
+      [h3 % engine.gen{x}] &: {block = true}
    "wide [==== x]"{engine, node, {=> x}} =
-      [h4 % engine.run{x}] &: {block = true}
+      [h4 % engine.gen{x}] &: {block = true}
    "wide [===== x]"{engine, node, {=> x}} =
-      [h5 % engine.run{x}] &: {block = true}
+      [h5 % engine.gen{x}] &: {block = true}
    "wide [====== x]"{engine, node, {=> x}} =
-      [h6 % engine.run{x}] &: {block = true}
+      [h6 % engine.gen{x}] &: {block = true}
 
    "wide [# x]"{engine, node, {=> x}} =
-      mergeable{.ol, li % engine.run{x}}
+      mergeable{.ol, li % engine.gen{x}}
 
    "wide [* x]"{engine, node, {=> x}} =
-      mergeable{.ul, li % engine.run{x}}
+      mergeable{.ul, li % engine.gen{x}}
 
    "wide [+ x]"{engine, node, {=> x}} =
       args = collapse{"+", x}
       mergeable{.table} with
          tr %
             args each arg ->
-               th % engine.run{arg}
+               th % engine.gen{arg}
 
    "wide [| x]"{engine, node, {=> x}} =
       args = collapse{"|", x}
       mergeable{.table} with
          tr %
             args each arg ->
-               td % engine.run{arg}
+               td % engine.gen{arg}
 
    "v <- value"{engine, node, {=> v, => value}} =
       engine.setenv{raw{v}} with
-         engine.run{value}
+         engine.gen{value}
       ""
 }
 
@@ -577,7 +590,7 @@ defaultDispatcher{ENode} =
          results = {}
          wide = node.width == .wide
          var last = null
-         run = engine.run.bind{engine}
+         _gen = engine.gen.bind{engine}
          var i = -3
 
          add{addblank = true} =
@@ -601,7 +614,7 @@ defaultDispatcher{ENode} =
                   ;; elems[i].location.text{}
 
          var isFirst = true
-         args each [run! match] ->
+         args each [_gen! match] ->
             do:
                i += 2
             x when isFirst ->
@@ -705,7 +718,7 @@ create{evaluator} =
 defaultEngine = create{null}
 
 toENode{text} =
-   defaultEngine.run{text}
+   defaultEngine.gen{text}
 
 toHTML{text} =
    toENode{text}.toHTML{}
