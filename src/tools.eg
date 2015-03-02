@@ -4,13 +4,13 @@ require:
       Location
 
 provide:
-   extract, collapse, statements
+   raw, extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
 
 
 
-text{match x} =
+raw{match x} =
    {=> location} -> location.text{}
    String? -> x
    else -> throw E.nosource{"Cannot get source code for node."}
@@ -51,8 +51,8 @@ shed{match, n = 1} =
       if n > 1:
          then: shed{mid, n - 1}
          else:
-            lw = ob.location.text{}.split{"["}.pop{}
-            rw = cb.location.text{}.split{"]"}.shift{}
+            lw = raw{ob}.split{"["}.pop{}
+            rw = raw{cb}.split{"]"}.shift{}
             loc = mid.location
             mid & {
                location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}

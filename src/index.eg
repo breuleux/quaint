@@ -7,7 +7,7 @@ require:
       parse as _parse ->
          Parser, TokenGroups, PriorityOrder
    "./tools" as tools ->
-      extract, collapse, statements
+      raw, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
 
@@ -422,9 +422,8 @@ class Engine:
       @evaluator.setenv{name, value}
 
 
-   getText{match x} =
-      {=> location} -> location.text{}
-      else -> throw E.nosource{"Cannot get source code for node."}
+   getText{x} =
+      raw{x}
 
    shed{x, n} =
       shed{x, n}
@@ -455,15 +454,15 @@ class Spec:
 defaultComponents{ENode} = {
 
    "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
-      beg = o.location.text{}.replace{"[", ""}
+      beg = raw{o}.replace{"[", ""}
       middle = engine.run{x}
-      end = c.location.text{}.replace{"]", ""}
+      end = raw{c}.replace{"]", ""}
       res =
          if beg and end:
             %
-               o.location.text{}.replace{"[", ""}
+               raw{o}.replace{"[", ""}
                middle
-               c.location.text{}.replace{"]", ""}
+               raw{c}.replace{"]", ""}
          else:
             middle
       res &: {block = middle.block}
@@ -488,7 +487,7 @@ defaultComponents{ENode} = {
       strong % engine.run{x}
 
    "` x"{engine, node, {x => shed! x}} =
-      code % x.location.text{}
+      code % raw{x}
 
    "label :: url"{engine, node, {=> label, url => shed! url}} =
       a %
@@ -506,7 +505,7 @@ defaultComponents{ENode} = {
          engine.run{label}
 
    "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
-      parts = descr.location.text{}.split{R"[ +]|(?=\.|#)"}
+      parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
       var id = null
       tags = {}
       parts each
@@ -554,7 +553,7 @@ defaultComponents{ENode} = {
                td % engine.run{arg}
 
    "v <- value"{engine, node, {=> v, => value}} =
-      engine.setenv{v.location.text{}} with
+      engine.setenv{raw{v}} with
          engine.run{value}
       ""
 }
@@ -598,7 +597,8 @@ defaultDispatcher{ENode} =
                   ;;    last
             if addblank:
                results.push with
-                  elems[i].location.text{}
+                  raw{elems[i]}
+                  ;; elems[i].location.text{}
 
          var isFirst = true
          args each [run! match] ->
