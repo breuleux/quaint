@@ -6,6 +6,10 @@ require:
          Tokenizer, indentTracker, inferLocation
       parse as _parse ->
          Parser, TokenGroups, PriorityOrder
+   "./tools" as tools ->
+      extract, collapse, statements
+      shed, shedAll, shedIndent
+      mergeable
 
 provide:
    Location, Source
@@ -13,6 +17,7 @@ provide:
    create
    toENode, toHTML
    processDocuments
+   tools
 
 
 tok = Tokenizer with {
@@ -263,16 +268,6 @@ parse{src} =
 
 ;; ============= ;;
 
-
-extract{match} =
-   #seq{*args} ->
-      #seq{args[1][1], *newargs} where newargs =
-         enumerate{args} each
-            {i, arg} when i mod 2 == 0 ->
-               arg
-   other ->
-      other
-
 parse_spec{match} =
    String? spec ->
       let ast = parse{Source{spec}}
@@ -435,22 +430,13 @@ class Engine:
       shed{x, n}
 
    shedAll{x} =
-      shed_all{x}
+      shedAll{x}
 
    shedIndent{x} =
-      shed_indent{x}
+      shedIndent{x}
 
    getStatements{node} =
-      match @shedIndent{node}:
-         #seq{_, #oper{"NL"}, *} ->
-            [xs.reduce{++}] where xs =
-               enumerate{node.slice{1}} each
-                  {i, x} when i mod 2 == 0 ->
-                     @getStatements{x}
-         #text{""} ->
-            {}
-         else ->
-            {node}
+      statements{node}
 
    collapse{op, node} =
       collapse{op, node}
@@ -464,57 +450,6 @@ class Spec:
          {false, null}
       values ->
          {true, values}
-
-
-mergeable{tag, child, block = true} =
-   merge{match node} =
-      [^tag %]! {tags, props, children} ->
-         this.children ++= children
-         this
-      other ->
-         false
-   node = ^tag % child
-   node.block = block
-   node.merge = merge
-   node
-
-
-collapse{operator, match} =
-   ;; TODO: take width into account
-   extract! #seq{=== operator, l, r} ->
-      {l} ++ collapse{operator, r}
-   node ->
-      {node}
-
-
-shed{match, n = 1} =
-   #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
-      if n > 1:
-         then: shed{mid, n - 1}
-         else:
-            lw = ob.location.text{}.split{"["}.pop{}
-            rw = cb.location.text{}.split{"]"}.shift{}
-            loc = mid.location
-            mid & {
-               location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
-            }
-   node ->
-      node
-
-shed_all{node} = shed{node, 1/0}
-
-shed_indent{match node} =
-   #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
-      match mid:
-         #seq{#text{""}, #oper{"NL"}, x} ->
-            x
-         #seq{#text{""}, #oper{"NL"}, *rest} ->
-            #seq{*rest} &: mid
-         else ->
-            mid
-   node ->
-      node
-
 
 
 defaultComponents{ENode} = {
@@ -583,7 +518,7 @@ defaultComponents{ENode} = {
             tags.push with tag
       props = {=}
       if id: props.id = id
-      ENode{tags, props, {engine.run{shed_indent{contents}}}}
+      ENode{tags, props, {engine.run{shedIndent{contents}}}}
 
    "wide [= x]"{engine, node, {=> x}} =
       [h1 % engine.run{x}] &: {block = true}

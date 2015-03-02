@@ -1,0 +1,90 @@
+
+require:
+   opg ->
+      Location
+
+provide:
+   extract, collapse, statements
+   shed, shedAll, shedIndent
+   mergeable
+
+
+
+text{match x} =
+   {=> location} -> location.text{}
+   String? -> x
+   else -> throw E.nosource{"Cannot get source code for node."}
+
+
+
+extract{match} =
+   #seq{*args} ->
+      #seq{args[1][1], *newargs} where newargs =
+         enumerate{args} each
+            {i, arg} when i mod 2 == 0 ->
+               arg
+   other ->
+      other
+
+collapse{operator, match} =
+   ;; TODO: take width into account
+   extract! #seq{=== operator, l, r} ->
+      {l} ++ collapse{operator, r}
+   node ->
+      {node}
+
+statements{shedIndent! match node} =
+   #seq{_, #oper{"NL"}, *} ->
+      [xs.reduce{++}] where xs =
+         enumerate{node.slice{1}} each
+            {i, x} when i mod 2 == 0 ->
+               statements{x}
+   #text{""} ->
+      {}
+   else ->
+      {node}
+
+
+
+shed{match, n = 1} =
+   #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
+      if n > 1:
+         then: shed{mid, n - 1}
+         else:
+            lw = ob.location.text{}.split{"["}.pop{}
+            rw = cb.location.text{}.split{"]"}.shift{}
+            loc = mid.location
+            mid & {
+               location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
+            }
+   node ->
+      node
+
+shedAll{node} =
+   shed{node, 1/0}
+
+shedIndent{match node} =
+   #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
+      match mid:
+         #seq{#text{""}, #oper{"NL"}, x} ->
+            x
+         #seq{#text{""}, #oper{"NL"}, *rest} ->
+            #seq{*rest} &: mid
+         else ->
+            mid
+   node ->
+      node
+
+
+
+mergeable{tag, child, block = true} =
+   merge{match node} =
+      [^tag %]! {tags, props, children} ->
+         this.children ++= children
+         this
+      other ->
+         false
+   node = ^tag % child
+   node.block = block
+   node.merge = merge
+   node
