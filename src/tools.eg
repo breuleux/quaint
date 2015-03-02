@@ -4,17 +4,37 @@ require:
       Location
 
 provide:
-   raw, extract, collapse, statements
+   raw, code, rawOrCode
+   extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
 
 
 
-raw{match x} =
+raw{match x, operate = {x} -> x} =
    {=> location} -> location.text{}
-   String? -> x
-   else -> throw E.nosource{"Cannot get source code for node."}
+   String? -> operate{x}
+   [genfrom %]? ->
+      genfrom %
+         generate{docs} =
+            raw{x.props.generate{docs}}
+   else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
 
+code{engine, x} =
+   genfrom %
+      generate{documents} =
+         try:
+            engine.setenv{.doc, documents}
+            engine.setenv{.documents, documents}
+            engine.eval{x.location} or ""
+         catch e:
+            span.error % String{e}
+
+rawOrCode{engine, match x, operate = {x} -> x} =
+   #seq{_, #oper{"{"}, x, #oper{"}"}, _} ->
+      raw{code{engine, x}, operate}
+   else ->
+      raw{x, operate}
 
 
 extract{match} =
@@ -49,14 +69,14 @@ statements{shedIndent! match node} =
 shed{match, n = 1} =
    #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
       if n > 1:
-         then: shed{mid, n - 1}
-         else:
-            lw = raw{ob}.split{"["}.pop{}
-            rw = raw{cb}.split{"]"}.shift{}
-            loc = mid.location
-            mid & {
-               location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
-            }
+         shed{mid, n - 1}
+      else:
+         lw = raw{ob}.split{"["}.pop{}
+         rw = raw{cb}.split{"]"}.shift{}
+         loc = mid.location
+         mid & {
+            location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
+         }
    node ->
       node
 
@@ -88,3 +108,5 @@ mergeable{tag, child, block = true} =
    node.block = block
    node.merge = merge
    node
+
+

@@ -381,7 +381,7 @@ class Engine:
       generated =
          match src:
             String? text ->
-               @run{Source{text, "<quaint>"}}
+               @run{Source{text, "<quaint>"}, documents}
             Source? src ->
                parsed = parse{src}
                @gen{parsed}
@@ -481,10 +481,7 @@ defaultComponents{ENode} = {
       res &: {block = middle.block}
 
    "{x}"{engine, node, {=> x}} =
-      try:
-         engine.eval{x.location} or ""
-      catch e:
-         span.error % String{e}
+      tools.code{engine, x}
 
    "{fn} : body"{engine, node, {=> fn, => body}} =
       try:
@@ -504,17 +501,7 @@ defaultComponents{ENode} = {
 
    "label :: url"{engine, node, {=> label, url => shed! url}} =
       a %
-         href =
-            match url:
-               do:
-                  print url
-               #seq{_, #oper{"{"}, x, #oper{"}"}, _} ->
-                  try:
-                     [engine.eval{x.location} or ""].toString{}
-                  catch e:
-                     span.error % String{e}
-               else ->
-                  engine.getText{url}.trim{}
+         href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
          engine.gen{label}
 
    "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
@@ -566,8 +553,11 @@ defaultComponents{ENode} = {
                td % engine.gen{arg}
 
    "v <- value"{engine, node, {=> v, => value}} =
-      engine.setenv{raw{v}} with
-         engine.gen{value}
+      result =
+         match engine.gen{value}:
+            ENode? x -> x
+            x -> [% x]
+      engine.setenv{raw{v}, result <<: value}
       ""
 }
 
@@ -650,15 +640,17 @@ defaultDispatcher{ENode} =
 
 
 
-processDocuments{x, documents} =
 
-   forges = {}
+processDocuments{x, documents, maxiter = 10} =
 
-   populate{match node, parent, idx, documents} =
+   var forges = new Set{}
+   deps = new Map{}
+
+   populate{match node, documents, replace, path} =
 
       [redoc %]? ->
          {child} = node.children
-         populate{child, parent, idx, newdocs} where newdocs =
+         populate{child, newdocs, replace, path} where newdocs =
             match node.props.documents:
                Function? f -> f{documents}
                docs -> documents & docs
@@ -673,37 +665,122 @@ processDocuments{x, documents} =
             {delay => true?} ->
                node
             doc ->
-               doc.add.apply{doc, node.children}
+               doc.add.apply{doc, {path} ++ node.children}
                ""
 
       [genfrom %]? ->
-         forges.push{{parent, idx, node, documents}}
+         forges.add{{node, documents, replace, path}}
          "PLACEHOLDER"
 
       ENode? ->
-         rval = ENode{node.tags, node.props}
-         rval.children =
-            enumerate{node.children} each {i, c} ->
-               populate{c, rval, i, documents}
+         rval = ENode{tags, props, children} where
+            tags = node.tags
+            props = object with items{node.props} each {k, match v} ->
+               [genfrom %]? ->
+                  forges.add{{v, documents, replace, path ++ {k}}} where
+                     replace{x} = rval.props[k] = x
+                  {k, "PLACEHOLDER"}
+               else ->
+                  {k, v}
+            children =
+               enumerate{node.children} each {i, c} ->
+                  populate{c, documents, replace, path ++ {i}} where
+                     replace{x} = rval.children[i] = x
          rval
 
       Array? ->
-         rval = {}
-         enumerate{node} each {i, c} ->
-            rval.push{populate{c, rval, i, documents}}
+         rval =
+            enumerate{node} each {i, c} ->
+               populate{c, documents, replace, path ++ {i}} where
+                  replace{x} = rval[i] = x
          rval
 
       else ->
          node
 
-   res = populate{% x, null, null, documents}
+   var res = populate{% x, documents, replace, {}} where
+      replace{x} = res = x
 
-   while forges.length:
-      {parent, i, node, docs} = forges.shift{}
-      gene = node.props.generate
-      parent.children[i] = populate{gene{docs}, parent, i, docs}
+   var niter = 0
+   while forges.size != 0 and niter < maxiter:
+
+      {_forges, forges} = {forges, new Set{}}
+      niter += 1
+
+      _forges each forge and {node, docs, replace, path} ->
+
+         gene = node.props.generate
+         items{docs} each {_, doc} when doc._reset ->
+            doc._reset{}
+         replace with populate{gene{docs}, docs, replace, path}
+
+         items{docs} each {_, doc} when doc._modified ->
+            [deps.get{doc} or {}] each
+               forge -> forges.add{forge}
+            deps.set{doc, {}}
+
+         items{docs} each {_, doc} when doc._accessed ->
+            if not deps.has{doc}: deps.set{doc, {}}
+            deps.get{doc}.push with forge
 
    res.children[0] or res
+
+
+
+;; processDocuments{x, documents} =
+
+;;    forges = {}
+
+;;    populate{match node, parent, idx, documents} =
+
+;;       [redoc %]? ->
+;;          {child} = node.children
+;;          populate{child, parent, idx, newdocs} where newdocs =
+;;             match node.props.documents:
+;;                Function? f -> f{documents}
+;;                docs -> documents & docs
+
+;;       [genfor %]? ->
+;;          docname = node.props.document
+;;          match documents[docname]:
+;;             undefined? when node.props.important ->
+;;                throw E.no_document{docname}
+;;             false? ->
+;;                ""
+;;             {delay => true?} ->
+;;                node
+;;             doc ->
+;;                doc.add.apply{doc, node.children}
+;;                ""
+
+;;       [genfrom %]? ->
+;;          forges.push{{parent, idx, node, documents}}
+;;          "PLACEHOLDER"
+
+;;       ENode? ->
+;;          rval = ENode{node.tags, node.props}
+;;          rval.children =
+;;             enumerate{node.children} each {i, c} ->
+;;                populate{c, rval, i, documents}
+;;          rval
+
+;;       Array? ->
+;;          rval = {}
+;;          enumerate{node} each {i, c} ->
+;;             rval.push{populate{c, rval, i, documents}}
+;;          rval
+
+;;       else ->
+;;          node
+
+;;    res = populate{% x, null, null, documents}
+
+;;    while forges.length:
+;;       {parent, i, node, docs} = forges.shift{}
+;;       gene = node.props.generate
+;;       parent.children[i] = populate{gene{docs}, parent, i, docs}
+
+;;    res.children[0] or res
 
 
 
