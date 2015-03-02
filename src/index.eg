@@ -665,7 +665,7 @@ processDocuments{x, documents, maxiter = 10} =
             {delay => true?} ->
                node
             doc ->
-               doc.add.apply{doc, {path} ++ node.children}
+               doc.register.apply{doc, {path} ++ node.children}
                ""
 
       [genfrom %]? ->
@@ -709,79 +709,30 @@ processDocuments{x, documents, maxiter = 10} =
 
       _forges each forge and {node, docs, replace, path} ->
 
-         gene = node.props.generate
+         ;; Reset accessed/modified flags for all documents
          items{docs} each {_, doc} when doc._reset ->
             doc._reset{}
-         replace with populate{gene{docs}, docs, replace, path}
 
+         ;; Execute generator, process new node, perform the replacement.
+         replace with populate{newnode, docs, replace, path} where
+            newnode = node.props.generate{docs}
+
+         ;; For all modified documents, every process that accessed
+         ;; them is put back in the queue for reprocessing
          items{docs} each {_, doc} when doc._modified ->
             [deps.get{doc} or {}] each
                forge -> forges.add{forge}
             deps.set{doc, {}}
 
+         ;; For all documents it accessed, the current generator is
+         ;; put in the dependencies for that document. Since we do this
+         ;; after checking for modifications, a generator may modify
+         ;; a document it accesses without causing an infinite loop.
          items{docs} each {_, doc} when doc._accessed ->
             if not deps.has{doc}: deps.set{doc, {}}
             deps.get{doc}.push with forge
 
    res.children[0] or res
-
-
-
-;; processDocuments{x, documents} =
-
-;;    forges = {}
-
-;;    populate{match node, parent, idx, documents} =
-
-;;       [redoc %]? ->
-;;          {child} = node.children
-;;          populate{child, parent, idx, newdocs} where newdocs =
-;;             match node.props.documents:
-;;                Function? f -> f{documents}
-;;                docs -> documents & docs
-
-;;       [genfor %]? ->
-;;          docname = node.props.document
-;;          match documents[docname]:
-;;             undefined? when node.props.important ->
-;;                throw E.no_document{docname}
-;;             false? ->
-;;                ""
-;;             {delay => true?} ->
-;;                node
-;;             doc ->
-;;                doc.add.apply{doc, node.children}
-;;                ""
-
-;;       [genfrom %]? ->
-;;          forges.push{{parent, idx, node, documents}}
-;;          "PLACEHOLDER"
-
-;;       ENode? ->
-;;          rval = ENode{node.tags, node.props}
-;;          rval.children =
-;;             enumerate{node.children} each {i, c} ->
-;;                populate{c, rval, i, documents}
-;;          rval
-
-;;       Array? ->
-;;          rval = {}
-;;          enumerate{node} each {i, c} ->
-;;             rval.push{populate{c, rval, i, documents}}
-;;          rval
-
-;;       else ->
-;;          node
-
-;;    res = populate{% x, null, null, documents}
-
-;;    while forges.length:
-;;       {parent, i, node, docs} = forges.shift{}
-;;       gene = node.props.generate
-;;       parent.children[i] = populate{gene{docs}, parent, i, docs}
-
-;;    res.children[0] or res
-
 
 
 QuaintFor{ENode} =
