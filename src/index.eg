@@ -435,25 +435,6 @@ class Engine:
       @evaluator.setenv{name, value}
 
 
-   getText{x} =
-      raw{x}
-
-   shed{x, n} =
-      shed{x, n}
-
-   shedAll{x} =
-      shedAll{x}
-
-   shedIndent{x} =
-      shedIndent{x}
-
-   getStatements{node} =
-      statements{node}
-
-   collapse{op, node} =
-      collapse{op, node}
-
-
 class Spec:
    constructor{make_extractor! {@operator, @extractor}, @gen} =
       pass
