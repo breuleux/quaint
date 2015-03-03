@@ -410,7 +410,7 @@ class Engine:
                %
                   parts each part -> @gen{part}
             {values, handler} ->
-               handler.gen{@, node, values}
+               handler.gen{@, {node = node} & values}
          match result:
             ENode? {tags => {}, props => == {=}, => children} or Array? children
             \ when children.every{x -> String? x} ->
@@ -466,7 +466,7 @@ class Spec:
 
 defaultComponents{ENode} = {
 
-   "[[maybe x]]"{engine, #seq{_, o, x, c, _}, _} =
+   "[[maybe x]]"{engine, {node => #seq{_, o, x, c, _}}} =
       beg = raw{o}.replace{"[", ""}
       middle = engine.gen{x}
       end = raw{c}.replace{"]", ""}
@@ -480,31 +480,31 @@ defaultComponents{ENode} = {
             middle
       res &: {block = middle.block}
 
-   "{x}"{engine, node, {=> x}} =
+   "{x}"{engine, {=> x}} =
       tools.code{engine, x}
 
-   "{fn} : body"{engine, node, {=> fn, => body}} =
+   "{fn} : body"{engine, {=> fn, => body}} =
       try:
          f = engine.eval{fn.location}
          f{engine, body} or ""
       catch e:
          span.error % String{e}
 
-   "_ x"{engine, node, {=> x}} =
+   "_ x"{engine, {=> x}} =
       em % engine.gen{x}
 
-   "__ x"{engine, node, {=> x}} =
+   "__ x"{engine, {=> x}} =
       strong % engine.gen{x}
 
-   "` x"{engine, node, {x => shed! x}} =
+   "` x"{engine, {x => shed! x}} =
       code % raw{x}
 
-   "label :: url"{engine, node, {=> label, url => shed! url}} =
+   "label :: url"{engine, {=> label, url => shed! url}} =
       a %
          href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
          engine.gen{label}
 
-   "descr .. maybe contents"{engine, node, {=> descr, => contents}} =
+   "descr .. maybe contents"{engine, {=> descr, => contents}} =
       parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
       var id = null
       tags = {}
@@ -519,40 +519,40 @@ defaultComponents{ENode} = {
       if id: props.id = id
       ENode{tags, props, {engine.gen{shedIndent{contents}}}}
 
-   "wide [= x]"{engine, node, {=> x}} =
+   "wide [= x]"{engine, {=> x}} =
       [h1 % engine.gen{x}] &: {block = true}
-   "wide [== x]"{engine, node, {=> x}} =
+   "wide [== x]"{engine, {=> x}} =
       [h2 % engine.gen{x}] &: {block = true}
-   "wide [=== x]"{engine, node, {=> x}} =
+   "wide [=== x]"{engine, {=> x}} =
       [h3 % engine.gen{x}] &: {block = true}
-   "wide [==== x]"{engine, node, {=> x}} =
+   "wide [==== x]"{engine, {=> x}} =
       [h4 % engine.gen{x}] &: {block = true}
-   "wide [===== x]"{engine, node, {=> x}} =
+   "wide [===== x]"{engine, {=> x}} =
       [h5 % engine.gen{x}] &: {block = true}
-   "wide [====== x]"{engine, node, {=> x}} =
+   "wide [====== x]"{engine, {=> x}} =
       [h6 % engine.gen{x}] &: {block = true}
 
-   "wide [# x]"{engine, node, {=> x}} =
+   "wide [# x]"{engine, {=> x}} =
       mergeable{.ol, li % engine.gen{x}}
 
-   "wide [* x]"{engine, node, {=> x}} =
+   "wide [* x]"{engine, {=> x}} =
       mergeable{.ul, li % engine.gen{x}}
 
-   "wide [+ x]"{engine, node, {=> x}} =
+   "wide [+ x]"{engine, {=> x}} =
       args = collapse{"+", x}
       mergeable{.table} with
          tr %
             args each arg ->
                th % engine.gen{arg}
 
-   "wide [| x]"{engine, node, {=> x}} =
+   "wide [| x]"{engine, {=> x}} =
       args = collapse{"|", x}
       mergeable{.table} with
          tr %
             args each arg ->
                td % engine.gen{arg}
 
-   "v <- value"{engine, node, {=> v, => value}} =
+   "v <- value"{engine, {=> v, => value}} =
       result =
          match engine.gen{value}:
             ENode? x -> x
@@ -576,7 +576,7 @@ defaultDispatcher{ENode} =
 
       spec = {"NL", #fn{filter}}
 
-      fn{engine, node and #seq{*elems}, {=> args}} =
+      fn{engine, {node => node and #seq{*elems}, => args}} =
          results = {}
          wide = node.width == .wide
          var last = null
