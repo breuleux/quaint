@@ -1,0 +1,46 @@
+
+requireMacros:
+   "grey-mocha" ->
+      describe, it, before, after
+      assert, asserts
+
+require:
+   "grey-mocha"
+   "../src/index" ->
+      toHTML as q
+
+
+describe "fundamentals":
+
+   asserts "sanity checks":
+      q{"hello world"} == "hello world"
+      q{"there is NOTHING to do here!"} == "there is NOTHING to do here!"
+
+   asserts "square brackets are stripped out":
+      q{"the [circle] of life"} == "the circle of life"
+      q{"the[ circle ]of life"} == "the circle of life"
+      q{"the[ circle] of life"} == "the circle of life"
+      q{"the [circle ]of life"} == "the circle of life"
+      q{"the circle[ ]of life"} == "the circle of life"
+      q{"the []circle of life"} == "the circle of life"
+      q{"[[the circle of] life]"} == "the circle of life"
+      q{"[[the circle of life]]"} == "the circle of life"
+      q{"the  [   circle  ]   of life"} == "the     circle     of life"
+
+   asserts "operator characters may be escaped":
+      q{"the \\[circle\\] of life"} == "the [circle] of life"
+      q{"the \\_circle of \\{life\\}"} == "the _circle of {life}"
+      q{"a \\/\\/ b"} == "a // b"
+      q{"\\a\\bcd"} == "\\a\\bcd"
+      q{"_\\_xyz"} == "<em>_xyz</em>"
+
+   asserts "application of prefix operator":
+      q{"the _tiger pounces"} == "the <em>tiger</em> pounces"
+      q{"the _ tiger pounces"} == "the _ tiger pounces"
+      q{"the _[tiger pounces]"} == "the <em>tiger pounces</em>"
+      q{"_ the tiger pounces"} == "<em>the tiger pounces</em>"
+      q{"the~_tiger~pounces"} == "the<em>tiger</em>pounces"
+
+   asserts "application of infix operator":
+      q{"the banana::is delicious"} == "the <a href=\"is\">banana</a> delicious"
+      q{"the banana :: is delicious"} == "<a href=\"is delicious\">the banana</a>"
