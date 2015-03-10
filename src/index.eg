@@ -12,6 +12,8 @@ require:
       mergeable
 
 provide:
+   Source, Location
+   tok as tokenizer
    Location, Source
    Quaint, QuaintFor
    create
@@ -26,7 +28,7 @@ tok = Tokenizer with {
       {.nl, " *(?:\n *)+"}
       {.ws, "[ ~]+"}
       {.op, "[!@#$%^&*_\\-+=<>/?;:.`|]+|[(){}\\[\\],.]"}
-      {.word, "[^\n!@#$%^&*_\\-+=<>/?;:.`|\\[\\](){},. ~]+"}
+      {.word, "(?:\\\\.|[^\n!@#$%^&*_\\-+=<>/?;:.`|\\[\\](){},. ~])+"}
       {.unknown, "."} ;; should never happen
    }
 
@@ -36,6 +38,7 @@ tok = Tokenizer with {
       addDefaults
       tuckWhitespace
       classifyOperators
+      padLocations
    } where
 
       calcSize{match token} =
@@ -130,7 +133,12 @@ tok = Tokenizer with {
                   {false?, 0  , _}     -> {.wi_pfx, false,  {tok}}
 
          else ->
-            throw E.unknown_token_type{String{tok}}
+            throw E.unknown_token_type{tok.type + " " + tok.token}
+
+      padLocations{tok, i, toks} =
+         ;; if toks[i - 1]:
+         ;;    tok.location.start = toks[i - 1].location.end
+         tok
 
 }
 
@@ -201,10 +209,16 @@ finalize{match node} =
          match is part when i mod 2 == 0 ->
             null? ->
                #text{""} <<:
-                  if [p = parts[i + 1]]:
-                     p.location.at_start{}
-                  else:
-                     parts[i - 1].location.at_end{}
+                  Location{if{p0, p0.location.source, p1.location.source}, s, e} where
+                     p0 = parts[i - 1]
+                     p1 = parts[i + 1]
+                     s = if{p0, p0.location.end, p1.location.start}
+                     e = if{p1, p1.location.start, p0.location.end}
+
+                  ;; if [p = parts[i + 1]]:
+                  ;;    p.location.at_start{}
+                  ;; else:
+                  ;;    parts[i - 1].location.at_end{}
             else ->
                part
          else ->
@@ -398,6 +412,7 @@ class Engine:
 
 
    .gen{match node} =
+      
       #text{t} or #oper{t} ->
          l = node.location
          r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
@@ -451,12 +466,10 @@ defaultComponents{ENode} = {
       beg = raw{o}.replace{"[", ""}
       middle = engine.gen{x}
       end = raw{c}.replace{"]", ""}
+      ;; print {beg, middle, end, raw{middle}}
       res =
-         if beg and end:
-            %
-               raw{o}.replace{"[", ""}
-               middle
-               raw{c}.replace{"]", ""}
+         if beg or end:
+            % [beg, middle, end]
          else:
             middle
       res &: {block = middle.block}
@@ -727,8 +740,9 @@ create{evaluator} =
 defaultEngine = create{null}
 
 toENode{text} =
-   defaultEngine.gen{text}
+   defaultEngine.run{text}
 
-toHTML{text} =
-   toENode{text}.toHTML{}
+toHTML{toENode! match} =
+   String? s -> s
+   e -> e.toHTML{}
 
