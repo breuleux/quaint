@@ -89,8 +89,6 @@ class Engine:
                @gen{node}
 
       match documents:
-         ;; undefined? ->
-         ;;    processDocuments{generated, {=}}
          null? ->
             generated
          else ->
@@ -381,8 +379,8 @@ processDocuments{x, documents, maxiter = 10} =
       _forges each forge and {node, docs, replace, path} ->
 
          ;; Reset accessed/modified flags for all documents
-         items{docs} each {_, doc} when doc._reset ->
-            doc._reset{}
+         items{docs} each {_, doc} when doc.resetFlags ->
+            doc.resetFlags{}
 
          ;; Execute generator, process new node, perform the replacement.
          replace with populate{newnode, docs, replace, path} where
@@ -390,7 +388,7 @@ processDocuments{x, documents, maxiter = 10} =
 
          ;; For all modified documents, every process that accessed
          ;; them is put back in the queue for reprocessing
-         items{docs} each {_, doc} when doc._modified ->
+         items{docs} each {_, doc} when doc.modified ->
             [deps.get{doc} or {}] each
                forge -> forges.add{forge}
             deps.set{doc, {}}
@@ -399,7 +397,7 @@ processDocuments{x, documents, maxiter = 10} =
          ;; put in the dependencies for that document. Since we do this
          ;; after checking for modifications, a generator may modify
          ;; a document it accesses without causing an infinite loop.
-         items{docs} each {_, doc} when doc._accessed ->
+         items{docs} each {_, doc} when doc.accessed ->
             if not deps.has{doc}: deps.set{doc, {}}
             deps.get{doc}.push with forge
 

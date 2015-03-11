@@ -10,6 +10,42 @@ require:
       parse
    "../src/tools" ->
       extractor
+   "../src/doc" ->
+      insertSorted, comparePaths
+
+
+describe "misc":
+
+   compare{match a, b} =
+      > b -> 1
+      < b -> -1
+      else -> 0
+
+   assertSorted{neighbours! xs each {x, y}} =
+      assert x <= y
+
+   it "insert sorted":
+      xs = {}
+      1..100 each i -> insertSorted{xs, Math.random{} * 10, compare}
+      assertSorted{xs}
+      ;; could fail if two random numbers come up the same. I'd like to see that happen
+      assert xs.length == 100
+
+   it "insert sorted (duplicates)":
+      xs = consume{0..9}
+      1..100 each i -> insertSorted{xs, [Math.random{} * 10] // 1, compare}
+      assert xs == consume{0..9}
+
+   asserts "compare paths":
+      comparePaths{{1}, {2}} == -1
+      comparePaths{{2}, {1}} == 1
+      comparePaths{{1}, {1}} == 0
+      comparePaths{{1, 2}, {1}} == 1
+      comparePaths{{10}, {9}} == 1
+      comparePaths{{93, 8, 4, 11}, {93, 9, 3, 10, 73}} == -1
+      comparePaths{{93, 8, 4, 11}, {93, 8, 4, 11}} == 0
+
+
 
 
 describe "extractor":

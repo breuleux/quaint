@@ -1,0 +1,97 @@
+
+requireMacros:
+   "grey-mocha" ->
+      describe, it, before, after, beforeEach
+      assert, asserts
+
+require:
+   "grey-mocha"
+   "../src/doc" ->
+      BasicDocument, MapDocument, SeqDocument
+
+
+flagTests{doctype, getters, setters} =
+
+   describe "correctly sets and resets flags":
+      items{getters} each {name, _get} ->
+         it S'accessed via {name}':
+            assert not @d.accessed and not @d.modified
+            _get{@d}
+            assert not @d.modified
+            assert @d.accessed
+      items{setters} each {name, _set} ->
+         it S'modified via {name}':
+            assert not @d.accessed and not @d.modified
+            _set{@d}
+            assert not @d.accessed
+            assert @d.modified
+      it "resetFlags":
+         assert not @d.accessed and not @d.modified
+         items{setters}[0][1]{@d}
+         items{getters}[0][1]{@d}
+         assert @d.accessed and @d.modified
+         @d.resetFlags{}
+         assert not @d.modified and not @d.accessed
+
+
+describe "MapDocument":
+
+   beforeEach:
+      @d = MapDocument{}
+
+   flagTests{MapDocument, getters, setters} where
+      getters = {
+         .get{d} = d.get{.blah}
+         .entries{d} = d.entries{}
+      }
+      setters = {
+         .set{d} = d.set{.blah, 2r101010}
+         .delete{d} = d.delete{.blah}
+      }
+
+   it "basic usage":
+      @d.set{.hello, 123}
+      @d.set{.world, 999}
+      assert @d.get{.hello} == 123
+      assert @d.get{.world} == 999
+      assert object{consume{@d.entries{}}} == {hello = 123, world = 999}
+      @d.delete{.hello}
+      assert object{consume{@d.entries{}}} == {world = 999}
+
+
+
+describe "SeqDocument":
+
+   beforeEach:
+      @d = SeqDocument{}
+
+   flagTests{SeqDocument, getters, setters} where
+      getters = {
+         .entries{d} = d.entries{}
+      }
+      setters = {
+         .register{d} = d.register{{0}, .quack}
+         .delete{d} = d.delete{{0}}
+      }
+
+   it "basic usage":
+      expect{*xs} =
+         assert @d.entries{} == xs
+      @d.register{{1}, 1}
+      expect{1}
+      @d.register{{4, 6, 1}, 2}
+      expect{1, 2}
+      @d.register{{10, 3}, 3}
+      expect{1, 2, 3}
+      @d.register{{}, 0}
+      expect{0, 1, 2, 3}
+      @d.register{{4, 6, 1}, 2.1} ;; replaces previous entry
+      expect{0, 1, 2.1, 3}
+      @d.register{{2}, 1.5}
+      expect{0, 1, 1.5, 2.1, 3}
+      @d.delete{{10, 3}}
+      expect{0, 1, 1.5, 2.1}
+      @d.register{{10, 3}, 71}
+      expect{0, 1, 1.5, 2.1, 71}
+
+
