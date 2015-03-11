@@ -8,6 +8,7 @@ require:
    "grey-mocha"
    "../src/index" ->
       toHTML as q
+      defaultEngine as eng
 
 
 describe "basic rules":
@@ -37,6 +38,53 @@ describe "basic rules":
       q{"_ the tiger pounces"} == "<em>the tiger pounces</em>"
       q{"the~_tiger~pounces"} == "the<em>tiger</em>pounces"
 
-   asserts "application of infix operator":
-      q{"the banana::is delicious"} == "the <a href=\"is\">banana</a> delicious"
-      q{"the banana :: is delicious"} == "<a href=\"is delicious\">the banana</a>"
+   asserts "operators":
+      q{"_quack"} == "<em>quack</em>"
+      q{"__quack"} == "<strong>quack</strong>"
+      q{"= quack"} == "<h1>quack</h1>"
+      q{"== quack"} == "<h2>quack</h2>"
+      q{"=== quack"} == "<h3>quack</h3>"
+      q{"==== quack"} == "<h4>quack</h4>"
+      q{"===== quack"} == "<h5>quack</h5>"
+      q{"====== quack"} == "<h6>quack</h6>"
+      q{"quack::quaaack"} == "<a href=\"quaaack\">quack</a>"
+
+   describe "sections document":
+      getSections{docs} =
+         docs.sections.entries{} each {l, match x} ->
+            String? -> {l, x}
+            else -> {l, x.toHTML{}}
+      it "trivial case":
+         {node, docs} = eng.run{"= quack"}
+         assert getSections{docs} == {{1, "quack"}}
+      it "preserve markup":
+         {node, docs} = eng.run{"= _quack"}
+         assert getSections{docs} == {{1, "<em>quack</em>"}}
+      it "complex document":
+         src = """
+         = one
+         Once upon a time...
+         == two
+         there was a queen
+         [
+            === three
+            who was really not nice at all
+         ]
+         = four
+         thankfully, she died
+         == five
+         and the nice princess replaced her
+         == six
+         the end
+         """
+         {node, docs} = eng.run{src}
+         assert getSections{docs} == {
+            {1, "one"}
+            {2, "two"}
+            {3, "three"}
+            {1, "four"}
+            {2, "five"}
+            {2, "six"}
+         }
+
+

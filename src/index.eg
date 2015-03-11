@@ -10,12 +10,15 @@ require:
       raw, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
+   "./doc" ->
+      SeqDocument
 
 provide:
    parse
    Location, Source
    Engine
    create
+   defaultEngine
    toENode, toHTML
    processDocuments
    tools
@@ -90,10 +93,10 @@ class Engine:
 
       match documents:
          null? ->
-            generated
+            {generated, null}
          else ->
             docs = @makeDocuments{} & documents
-            processDocuments{generated, docs}
+            {processDocuments{generated, docs}, docs}
 
 
    .gen{match node} =
@@ -146,9 +149,21 @@ class Spec:
          {true, values}
 
 
+headerRule{level}{engine, {=> x}} =
+   gx = engine.gen{x}
+   rval =
+      ^[S'h{level}'] %
+         gx
+         genfor %
+            document = .sections
+            {level, gx}
+   rval &: {block = true}
+
+
 basicPlugin = {
 
    makeDocuments{} = {
+      sections = SeqDocument{}
    }
 
    regexps = {
@@ -207,18 +222,12 @@ basicPlugin = {
          if id: props.id = id
          ENode{tags, props, {engine.gen{shedIndent{contents}}}}
 
-      "wide [= x]"{engine, {=> x}} =
-         [h1 % engine.gen{x}] &: {block = true}
-      "wide [== x]"{engine, {=> x}} =
-         [h2 % engine.gen{x}] &: {block = true}
-      "wide [=== x]"{engine, {=> x}} =
-         [h3 % engine.gen{x}] &: {block = true}
-      "wide [==== x]"{engine, {=> x}} =
-         [h4 % engine.gen{x}] &: {block = true}
-      "wide [===== x]"{engine, {=> x}} =
-         [h5 % engine.gen{x}] &: {block = true}
-      "wide [====== x]"{engine, {=> x}} =
-         [h6 % engine.gen{x}] &: {block = true}
+      "wide [= x]" = headerRule{1}
+      "wide [== x]" = headerRule{2}
+      "wide [=== x]" = headerRule{3}
+      "wide [==== x]" = headerRule{4}
+      "wide [===== x]" = headerRule{5}
+      "wide [====== x]" = headerRule{6}
 
       "wide [# x]"{engine, {=> x}} =
          mergeable{.ol, li % engine.gen{x}}
@@ -410,7 +419,7 @@ create{opts = {=}} =
 defaultEngine = create{}
 
 toENode{text} =
-   defaultEngine.run{text}
+   {get node, docs} = defaultEngine.run{text}
 
 toHTML{toENode! match} =
    String? s -> s
