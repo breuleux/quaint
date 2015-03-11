@@ -81,7 +81,7 @@ class Engine:
       generated =
          match src:
             String? text ->
-               @run{Source{text, "<quaint>"}, documents}
+               return @run{Source{text, "<quaint>"}, documents}
             Source? src ->
                parsed = parse{src}
                @gen{parsed}
@@ -94,7 +94,8 @@ class Engine:
          null? ->
             generated
          else ->
-            processDocuments{generated, @makeDocuments{} & documents}
+            docs = @makeDocuments{} & documents
+            processDocuments{generated, docs}
 
 
    .gen{match node} =
@@ -105,6 +106,7 @@ class Engine:
          node.location.text{}.replace{r} with {match} ->
             "~" -> ""
             s -> s[1]
+
       #seq{*parts} ->
          result = match @dispatch.handler{node}:
             false? ->
@@ -401,7 +403,7 @@ processDocuments{x, documents, maxiter = 10} =
             if not deps.has{doc}: deps.set{doc, {}}
             deps.get{doc}.push with forge
 
-   res.children[0] or res
+   res.children[0]
 
 
 create{opts = {=}} =

@@ -24,18 +24,28 @@ tr{x, y} =
    ;; 2. [x] translates to [y]
    q{x} == y and q{S'[{x}]'} == S'[{y}]'
 
+same{x} =
+   tr{x, x}
+
 
 describe "basic rules":
+
+   asserts "sanity checks":
+      same{""}, same{"   "}, same{"\n\n"}
+      same{"hello world"}
+      same{"there is __NOTHING to do here!"}
+
+   asserts "which operators whitespace goes to":
+      tr{"a | [b] | c", "<a|<[b]|c>>"}
+      tr{"a|[ b | c ]", "<a|[ <b|c> ]>"}
 
    asserts "whitespace-based priority":
       tr{"a + b|c", "a + <b|c>"}
       tr{"a|b + c", "<a|b> + c"}
 
-   asserts "prefix and suffix":
-      tr{"| a", "<|a>"}
-      tr{"a |", "<a|>"}
-      tr{"x |a", "x <|a>"}
-      tr{"a| x", "<a|> x"}
+   asserts "indent":
+      q{"a |\n b"} == "<a|\n b>"
+      q{"a|\n b"} == "<a|\n b>"
 
    describe "associativity":
       asserts "wide":
@@ -49,6 +59,12 @@ describe "basic rules":
          tr{"a|b|c", "<a|<b|c>>"}
          tr{"a|b|c+d", "<a|<b|c+d>>"}
 
+   asserts "prefix and suffix":
+      tr{"| a", "<|a>"}
+      tr{"a |", "<a|>"}
+      tr{"x |a", "x <|a>"}
+      tr{"a| x", "<a|> x"}
+
    asserts "priority between prefix, infix and suffix":
       tr{"a|b+", "<a|b+>"}
       tr{"|b+c", "<|b+c>"}
@@ -57,6 +73,4 @@ describe "basic rules":
    asserts "special case for period":
       tr{"a|b.", "<a|b>."}
       tr{"a | b.", "<a|b.>"}
-
-
 

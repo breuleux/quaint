@@ -12,10 +12,6 @@ require:
 
 describe "basic rules":
 
-   asserts "sanity checks":
-      q{"hello world"} == "hello world"
-      q{"there is NOTHING to do here!"} == "there is NOTHING to do here!"
-
    asserts "square brackets are stripped out":
       q{"the [circle] of life"} == "the circle of life"
       q{"the[ circle ]of life"} == "the circle of life"
