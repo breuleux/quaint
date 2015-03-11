@@ -6,6 +6,7 @@ require:
    "./lang" ->
       parse
    "./tools" as tools ->
+      makeExtractor
       raw, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
@@ -13,78 +14,11 @@ require:
 provide:
    parse
    Location, Source
-   Quaint, QuaintFor
    create
    toENode, toHTML
    processDocuments
    tools
 
-
-parse_spec{match} =
-   String? spec ->
-      let ast = parse{Source{spec}}
-      var top = null
-      rval = helper{ast, {shed = true}} where helper{match, opts} =
-         extract! #seq{"J", *tags, pattern} ->
-            helper{pattern} with
-               opts &
-                  object with tags each #text{tag} -> {tag, true}
-         ast when opts.wide ->
-            #iswide{helper{ast, opts & {wide = false}}}
-         ast when opts.short ->
-            #isshort{helper{ast, opts & {short = false}}}
-         #text{""} ->
-            #eq{#text{""}}
-         #text{v} ->
-            #put{v, opts.maybe === true}
-         #oper{op} ->
-            #eq{#oper{op}}
-         #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
-            helper{contents, opts & {shed = false}}
-         #seq{*args} and {=> operator} ->
-            if [not top]:
-               top = operator
-            #seq{*[args each arg -> helper{arg, opts}]}
-      {top, rval}
-   {top, rval} ->
-      {top, rval}
-
-
-make_extractor{parse_spec! {top, spec}} =
-   {top} with {node} ->
-      helper{spec, node} where
-         helper{match, node} =
-            #iswide{subspec} ->
-               [node.width == .wide] and
-                  helper{subspec, node}
-            #isshort{subspec} ->
-               [node.width == .short] and
-                  helper{subspec, node}
-            #put{v, maybe} ->
-               match node:
-                  #text{""} when not maybe ->
-                     false
-                  else ->
-                     {v => node}
-            #eq{== node} ->
-               {=}
-            #eq ->
-               false
-            #seq{*subspecs} ->
-               match node:
-                  #seq{*args} when subspecs.length == args.length ->
-                     rval = {=}
-                     zip{subspecs, args} each {subspec, arg} ->
-                        match helper{subspec, arg}:
-                           false? ->
-                              return false
-                           vars ->
-                              rval &: vars
-                     rval
-                  other ->
-                     false
-            #fn{f} ->
-               f{node}
 
 
 
@@ -124,11 +58,24 @@ class Dispatcher:
 
 class Engine:
 
-   constructor{@dispatch, @evaluator} =
-      pass
+   constructor{@plugins, @evaluator} =
+      @dispatch = Dispatcher{}
+      @plugins each p -> @plug{p}
 
+   plug{p} =
+      items{p.rules or {=}} each {rule, match} ->
+         Function? handler ->
+            @dispatch.register{Spec{rule, handler}}
+         {rule, handler} ->
+            @dispatch.register{Spec{rule, handler}}
 
-   run{src, documents = undefined} =
+   makeDocuments{} =
+      acc = {=}
+      @plugins each p when p.makeDocuments ->
+         acc &: p.makeDocuments{}
+      acc
+
+   run{src, documents = {=}} =
 
       generated =
          match src:
@@ -141,12 +88,12 @@ class Engine:
                @gen{node}
 
       match documents:
-         undefined? ->
-            processDocuments{generated, {=}}
+         ;; undefined? ->
+         ;;    processDocuments{generated, {=}}
          null? ->
             generated
          else ->
-            processDocuments{generated, documents}
+            processDocuments{generated, @makeDocuments{} & documents}
 
 
    .gen{match node} =
@@ -172,14 +119,14 @@ class Engine:
             else ->
                result
 
-   register{spec, dispatcher} =
-      @dispatch.register{Spec{spec, dispatcher}}
-      @
+   ;; register{spec, dispatcher} =
+   ;;    @dispatch.register{Spec{spec, dispatcher}}
+   ;;    @
 
-   registerAll{entries} =
-      items{entries} each {spec, dispatcher} ->
-         @register{spec, dispatcher}
-      @
+   ;; registerAll{entries} =
+   ;;    items{entries} each {spec, dispatcher} ->
+   ;;       @register{spec, dispatcher}
+   ;;    @
 
    eval{src} =
       @evaluator.eval{src}
@@ -189,7 +136,7 @@ class Engine:
 
 
 class Spec:
-   constructor{make_extractor! {@operator, @extractor}, @gen} =
+   constructor{makeExtractor! {@operator, @extractor}, @gen} =
       pass
    ":::project"{@extractor! match} =
       false? ->
@@ -198,179 +145,168 @@ class Spec:
          {true, values}
 
 
-defaultComponents{ENode} = {
+basicPlugin = {
 
-   "[[maybe x]]"{engine, {node => #seq{_, o, x, c, _}}} =
-      beg = raw{o}.replace{"[", ""}
-      middle = engine.gen{x}
-      end = raw{c}.replace{"]", ""}
-      ;; print {beg, middle, end, raw{middle}}
-      res =
-         if beg or end:
-            % [beg, middle, end]
-         else:
-            middle
-      res &: {block = middle.block}
+   makeDocuments{} = {
+   }
 
-   "{x}"{engine, {=> x}} =
-      tools.code{engine, x}
+   regexps = {
+   }
 
-   "{fn} : body"{engine, {=> fn, => body}} =
-      try:
-         f = engine.eval{fn.location}
-         f{engine, body} or ""
-      catch e:
-         span.error % String{e}
+   rules = {
 
-   "_ x"{engine, {=> x}} =
-      em % engine.gen{x}
+      "[[maybe x]]"{engine, {node => #seq{_, o, x, c, _}}} =
+         beg = raw{o}.replace{"[", ""}
+         middle = engine.gen{x}
+         end = raw{c}.replace{"]", ""}
+         ;; print {beg, middle, end, raw{middle}}
+         res =
+            if beg or end:
+               % [beg, middle, end]
+            else:
+               middle
+         res &: {block = middle.block}
 
-   "__ x"{engine, {=> x}} =
-      strong % engine.gen{x}
+      "{x}"{engine, {=> x}} =
+         tools.code{engine, x}
 
-   "` x"{engine, {x => shed! x}} =
-      code % raw{x}
+      "{fn} : body"{engine, {=> fn, => body}} =
+         try:
+            f = engine.eval{fn.location}
+            f{engine, body} or ""
+         catch e:
+            span.error % String{e}
 
-   "label :: url"{engine, {=> label, url => shed! url}} =
-      a %
-         href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
-         engine.gen{label}
+      "_ x"{engine, {=> x}} =
+         em % engine.gen{x}
 
-   "descr .. maybe contents"{engine, {=> descr, => contents}} =
-      parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
-      var id = null
-      tags = {}
-      parts each
-         "" ->
-            pass
-         R"^#(.*)"! {_, _id} ->
-            id = _id
-         tag ->
-            tags.push with tag
-      props = {=}
-      if id: props.id = id
-      ENode{tags, props, {engine.gen{shedIndent{contents}}}}
+      "__ x"{engine, {=> x}} =
+         strong % engine.gen{x}
 
-   "wide [= x]"{engine, {=> x}} =
-      [h1 % engine.gen{x}] &: {block = true}
-   "wide [== x]"{engine, {=> x}} =
-      [h2 % engine.gen{x}] &: {block = true}
-   "wide [=== x]"{engine, {=> x}} =
-      [h3 % engine.gen{x}] &: {block = true}
-   "wide [==== x]"{engine, {=> x}} =
-      [h4 % engine.gen{x}] &: {block = true}
-   "wide [===== x]"{engine, {=> x}} =
-      [h5 % engine.gen{x}] &: {block = true}
-   "wide [====== x]"{engine, {=> x}} =
-      [h6 % engine.gen{x}] &: {block = true}
+      "` x"{engine, {x => shed! x}} =
+         code % raw{x}
 
-   "wide [# x]"{engine, {=> x}} =
-      mergeable{.ol, li % engine.gen{x}}
+      "label :: url"{engine, {=> label, url => shed! url}} =
+         a %
+            href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
+            engine.gen{label}
 
-   "wide [* x]"{engine, {=> x}} =
-      mergeable{.ul, li % engine.gen{x}}
+      "descr .. maybe contents"{engine, {=> descr, => contents}} =
+         parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+         var id = null
+         tags = {}
+         parts each
+            "" ->
+               pass
+            R"^#(.*)"! {_, _id} ->
+               id = _id
+            tag ->
+               tags.push with tag
+         props = {=}
+         if id: props.id = id
+         ENode{tags, props, {engine.gen{shedIndent{contents}}}}
 
-   "wide [+ x]"{engine, {=> x}} =
-      args = collapse{"+", x}
-      mergeable{.table} with
-         tr %
-            args each arg ->
-               th % engine.gen{arg}
+      "wide [= x]"{engine, {=> x}} =
+         [h1 % engine.gen{x}] &: {block = true}
+      "wide [== x]"{engine, {=> x}} =
+         [h2 % engine.gen{x}] &: {block = true}
+      "wide [=== x]"{engine, {=> x}} =
+         [h3 % engine.gen{x}] &: {block = true}
+      "wide [==== x]"{engine, {=> x}} =
+         [h4 % engine.gen{x}] &: {block = true}
+      "wide [===== x]"{engine, {=> x}} =
+         [h5 % engine.gen{x}] &: {block = true}
+      "wide [====== x]"{engine, {=> x}} =
+         [h6 % engine.gen{x}] &: {block = true}
 
-   "wide [| x]"{engine, {=> x}} =
-      args = collapse{"|", x}
-      mergeable{.table} with
-         tr %
-            args each arg ->
-               td % engine.gen{arg}
+      "wide [# x]"{engine, {=> x}} =
+         mergeable{.ol, li % engine.gen{x}}
 
-   "v <- value"{engine, {=> v, => value}} =
-      result =
-         match engine.gen{value}:
-            ENode? x -> x
-            x -> [% x]
-      engine.setenv{raw{v}, result <<: value}
-      ""
-}
+      "wide [* x]"{engine, {=> x}} =
+         mergeable{.ul, li % engine.gen{x}}
 
-defaultDispatcher{ENode} =
-   dispatch = Dispatcher{}
-   items{defaultComponents{ENode}} each {spec, fn} ->
-      dispatch.register with Spec{spec, fn}
+      "wide [+ x]"{engine, {=> x}} =
+         args = collapse{"+", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  th % engine.gen{arg}
 
-   dispatch.register{Spec{spec, fn}} where
+      "wide [| x]"{engine, {=> x}} =
+         args = collapse{"|", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  td % engine.gen{arg}
 
-      filter{match node} =
-         extract! #seq{"NL", *args} ->
-            {args = args}
-         else ->
-            false
+      "v <- value"{engine, {=> v, => value}} =
+         result =
+            match engine.gen{value}:
+               ENode? x -> x
+               x -> [% x]
+         engine.setenv{raw{v}, result <<: value}
+         ""
 
-      spec = {"NL", #fn{filter}}
+      newlineRule = {spec, fn} where
 
-      fn{engine, {node => node and #seq{*elems}, => args}} =
-         results = {}
-         wide = node.width == .wide
-         var last = null
-         _gen = engine.gen.bind{engine}
-         var i = -3
-
-         add{addblank = true} =
-            results.push with
-               match last:
-                  [div %]? or {block => true?} ->
-                     last
-                  != "" when wide ->
-                     p % last
-                  else ->
-                     last
-                  ;; [div %]? ->
-                  ;;    last
-                  ;; when wide and last !== "" ->
-                  ;;    div % last
-                  ;; else ->
-                  ;;    last
-            if addblank:
-               results.push with
-                  raw{elems[i]}
-                  ;; elems[i].location.text{}
-
-         var isFirst = true
-         args each [_gen! match] ->
-            do:
-               i += 2
-            x when isFirst ->
-               isFirst = false
-               last = x
-            x when last and last.merge ->
-               match last.merge{x}:
-                  false? ->
-                     add{}
-                     last = x
-                  newx ->
-                     last = newx
-            x ->
-               add{}
-               last = x
-         i += 2
-         if last:
-            add{false}
-
-         ;; if wide:
-         ;;    then:
-         ;;       div % results
-         ;;    else:
-         ;;       % results
-
-         match results:
-            {result} ->
-               result
+         filter{match node} =
+            extract! #seq{"NL", *args} ->
+               {args = args}
             else ->
-               [% results] &: {block = Boolean! wide}
+               false
 
-   dispatch
+         spec = {"NL", #fn{filter}}
 
+         fn{engine, {node => node and #seq{*elems}, => args}} =
+            results = {}
+            wide = node.width == .wide
+            var last = null
+            _gen = engine.gen.bind{engine}
+            var i = -3
 
+            add{addblank = true} =
+               results.push with
+                  match last:
+                     [div %]? or {block => true?} ->
+                        last
+                     != "" when wide ->
+                        p % last
+                     else ->
+                        last
+               if addblank:
+                  results.push with
+                     raw{elems[i]}
+
+            var isFirst = true
+            args each [_gen! match] ->
+               do:
+                  i += 2
+               x when isFirst ->
+                  isFirst = false
+                  last = x
+               x when last and last.merge ->
+                  match last.merge{x}:
+                     false? ->
+                        add{}
+                        last = x
+                     newx ->
+                        last = newx
+               x ->
+                  add{}
+                  last = x
+            i += 2
+            if last:
+               add{false}
+
+            match results:
+               {result} ->
+                  result
+               else ->
+                  [% results] &: {block = Boolean! wide}
+
+   }
+
+}
 
 
 processDocuments{x, documents, maxiter = 10} =
@@ -467,15 +403,10 @@ processDocuments{x, documents, maxiter = 10} =
    res.children[0] or res
 
 
-QuaintFor{ENode} =
-   Engine{defaultDispatcher{ENode}, null}
+create{opts = {=}} =
+   Engine{{basicPlugin, *[opts.plugins or {}]}, opts.evaluator}
 
-Quaint = QuaintFor{ENode}
-
-create{evaluator} =
-   Engine{defaultDispatcher{ENode}, evaluator}
-
-defaultEngine = create{null}
+defaultEngine = create{}
 
 toENode{text} =
    defaultEngine.run{text}
