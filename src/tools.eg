@@ -6,10 +6,10 @@ require:
 
 provide:
    raw, code, rawOrCode
+   parseSpec, makeExtractor, extractor
    extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
-   parseSpec, makeExtractor
 
 
 
@@ -104,6 +104,22 @@ makeExtractor{parseSpec! {top, spec}} =
                      false
             #fn{f} ->
                f{node}
+
+rules = {=}
+
+extractor{*rules} =
+   extractors = rules each
+      rule when rules[rule] -> rules[rule]
+      rule ->
+         {_, ex} = makeExtractor{rule}
+         rules[rule] = ex
+         ex
+   {node} ->
+      extractors each ex ->
+         if [res = ex{node}]:
+            return res
+      return false
+
 
 extract{match} =
    #seq{*args} ->
