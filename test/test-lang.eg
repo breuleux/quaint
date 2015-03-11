@@ -1,0 +1,62 @@
+
+requireMacros:
+   "grey-mocha" ->
+      describe, it, before, after
+      assert, asserts
+
+require:
+   "grey-mocha"
+   "../src/index" ->
+      Engine
+   "../src/lang" ->
+      parse, tokenize
+
+
+eng = Engine{= rules} where rules = {
+   "maybe a | maybe b"{engine, {=> a, => b}} =
+      % ["<", engine.gen{a}, "|", engine.gen{b}, ">"]
+}
+
+q{txt} = eng.run{txt}
+
+tr{x, y} =
+   ;; 1. x translates to y
+   ;; 2. [x] translates to [y]
+   q{x} == y and q{S'[{x}]'} == S'[{y}]'
+
+
+describe "basic rules":
+
+   asserts "whitespace-based priority":
+      tr{"a + b|c", "a + <b|c>"}
+      tr{"a|b + c", "<a|b> + c"}
+
+   asserts "prefix and suffix":
+      tr{"| a", "<|a>"}
+      tr{"a |", "<a|>"}
+      tr{"x |a", "x <|a>"}
+      tr{"a| x", "<a|> x"}
+
+   describe "associativity":
+      asserts "wide":
+         tr{"a + b | c", "a + <b|c>"}
+         tr{"a | b + c", "<a|b + c>"}
+         tr{"a | b | c", "<a|<b|c>>"}
+         tr{"a | b | c + d", "<a|<b|c + d>>"}
+      asserts "short":
+         tr{"a+b|c", "a+<b|c>"}
+         tr{"a|b+c", "<a|b+c>"}
+         tr{"a|b|c", "<a|<b|c>>"}
+         tr{"a|b|c+d", "<a|<b|c+d>>"}
+
+   asserts "priority between prefix, infix and suffix":
+      tr{"a|b+", "<a|b+>"}
+      tr{"|b+c", "<|b+c>"}
+      tr{"|b+", "<|b+>"}
+
+   asserts "special case for period":
+      tr{"a|b.", "<a|b>."}
+      tr{"a | b.", "<a|b.>"}
+
+
+

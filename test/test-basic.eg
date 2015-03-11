@@ -10,7 +10,7 @@ require:
       toHTML as q
 
 
-describe "fundamentals":
+describe "basic rules":
 
    asserts "sanity checks":
       q{"hello world"} == "hello world"
