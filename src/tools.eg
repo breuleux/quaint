@@ -1,13 +1,15 @@
 
 require:
    opg ->
-      Location
+      Source, Location
+   "./lang" -> parse
 
 provide:
    raw, code, rawOrCode
    extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
+   parseSpec, makeExtractor
 
 
 
@@ -36,6 +38,72 @@ rawOrCode{engine, match x, operate = {x} -> x} =
    else ->
       raw{x, operate}
 
+
+
+parseSpec{match} =
+   String? spec ->
+      let ast = parse{Source{spec}}
+      var top = null
+      rval = helper{ast, {shed = true}} where helper{match, opts} =
+         extract! #seq{"J", *tags, pattern} ->
+            helper{pattern} with
+               opts &
+                  object with tags each #text{tag} -> {tag, true}
+         ast when opts.wide ->
+            #iswide{helper{ast, opts & {wide = false}}}
+         ast when opts.short ->
+            #isshort{helper{ast, opts & {short = false}}}
+         #text{""} ->
+            #eq{#text{""}}
+         #text{v} ->
+            #put{v, opts.maybe === true}
+         #oper{op} ->
+            #eq{#oper{op}}
+         #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
+            helper{contents, opts & {shed = false}}
+         #seq{*args} and {=> operator} ->
+            if [not top]:
+               top = operator
+            #seq{*[args each arg -> helper{arg, opts}]}
+      {top, rval}
+   {top, rval} ->
+      {top, rval}
+
+makeExtractor{parseSpec! {top, spec}} =
+   {top} with {node} ->
+      helper{spec, node} where
+         helper{match, node} =
+            #iswide{subspec} ->
+               [node.width == .wide] and
+                  helper{subspec, node}
+            #isshort{subspec} ->
+               [node.width == .short] and
+                  helper{subspec, node}
+            #put{v, maybe} ->
+               match node:
+                  #text{""} when not maybe ->
+                     false
+                  else ->
+                     {v => node}
+            #eq{== node} ->
+               {=}
+            #eq ->
+               false
+            #seq{*subspecs} ->
+               match node:
+                  #seq{*args} when subspecs.length == args.length ->
+                     rval = {=}
+                     zip{subspecs, args} each {subspec, arg} ->
+                        match helper{subspec, arg}:
+                           false? ->
+                              return false
+                           vars ->
+                              rval &: vars
+                     rval
+                  other ->
+                     false
+            #fn{f} ->
+               f{node}
 
 extract{match} =
    #seq{*args} ->
