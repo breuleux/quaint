@@ -49,10 +49,15 @@ tokenizer = Tokenizer with {
             next.tucked = tok
             {}
          {type => .op, token => "]" or "}" or ")"} ->
-            prev.wsa and prev.wsb = 1
+            ;; prev.wsa and prev.wsb = 1
+            prev.wsa = 1
             {tok}
          {type => [.indent or .nl]} ->
             prev.wsa and prev.wsb = 1
+            {tok}
+         {type => .boundary} when prev ->
+            ;; prev.wsa and prev.wsb = 1
+            prev.wsa = 1
             {tok}
          else ->
             {tok}
