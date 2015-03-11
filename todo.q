@@ -6,7 +6,6 @@
   `[[xy]z].
 * Apply regular expressions to contiguous strings
 * `genfor multiple documents at the same time
-* plugin system
 * MAYBE: suffix `[!] and `[?] behave like suffix `[.]. Also `[...],
   `[?!?] and so on.
 
@@ -17,6 +16,8 @@
 * Specify document generation order
   * In fact, the process now tracks document access and modification
     and reruns code when needed.
+* plugin system
+* Order candidates by pattern specificity
 
 
 == ABANDONED

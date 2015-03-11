@@ -9,7 +9,7 @@ require:
    "../src/lang" ->
       parse
    "../src/tools" ->
-      extractor
+      extractor, parseSpec
    "../src/doc" ->
       insertSorted, comparePaths
 
@@ -51,7 +51,7 @@ describe "misc":
 describe "extractor":
 
    it "simple extractor":
-      ex = extractor{"x = y"}
+      ex = extractor{"\\x = \\y"}
       assert ex{parse{"hello = world"}} ==
          {x = #text{"hello"}, y = #text{"world"}}
       assert ex{parse{"hello=world"}} ==
@@ -61,20 +61,62 @@ describe "extractor":
       assert not ex{parse{"hello ++ world"}}
 
    it "multiple matchers":
-      ex = extractor{"x = y", "zz ++ qq"}
+      ex = extractor{"\\x = \\y", "\\zz ++ \\qq"}
       assert ex{parse{"hello = world"}} ==
          {x = #text{"hello"}, y = #text{"world"}}
       assert ex{parse{"hello ++ world"}} ==
          {zz = #text{"hello"}, qq = #text{"world"}}
 
    it "optional arguments":
-      ex = extractor{"[maybe x] = [maybe y]"}
+      ex = extractor{"\\maybe\\x = \\maybe\\y"}
       assert ex{parse{"hello = world"}} ==
          {x = #text{"hello"}, y = #text{"world"}}
       assert ex{parse{"hello="}} ==
          {x = #text{"hello"}, y = #text{""}}
       assert ex{parse{"=world"}} ==
          {x = #text{""}, y = #text{"world"}}
+
+   it "literals":
+      ex = extractor{"zazz :: \\x"}
+      assert not ex{parse{"a :: b"}}
+      assert ex{parse{"zazz :: b"}} == {x = #text{"b"}}
+
+   moreSpecific{parseSpec! {_, _, s1}, parseSpec! {_, _, s2}} =
+      s1 > s2
+
+   asserts "specificity":
+      moreSpecific{"x = y", "x = \\y"}
+      moreSpecific{"x = y", "\\x = y"}
+      moreSpecific{"x = y :: z", "x = y"}
+      moreSpecific{"x = y", "\\x = \\y :: \\z"}
+      moreSpecific{"\\x = \\y :: \\z", "\\x = \\y"}
+
+
+   ;; it "simple extractor":
+   ;;    ex = extractor{"x = y"}
+   ;;    assert ex{parse{"hello = world"}} ==
+   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;    assert ex{parse{"hello=world"}} ==
+   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;    assert not ex{parse{"hello ="}}
+   ;;    assert not ex{parse{"= world"}}
+   ;;    assert not ex{parse{"hello ++ world"}}
+
+   ;; it "multiple matchers":
+   ;;    ex = extractor{"x = y", "zz ++ qq"}
+   ;;    assert ex{parse{"hello = world"}} ==
+   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;    assert ex{parse{"hello ++ world"}} ==
+   ;;       {zz = #text{"hello"}, qq = #text{"world"}}
+
+   ;; it "optional arguments":
+   ;;    ex = extractor{"[maybe x] = [maybe y]"}
+   ;;    assert ex{parse{"hello = world"}} ==
+   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;    assert ex{parse{"hello="}} ==
+   ;;       {x = #text{"hello"}, y = #text{""}}
+   ;;    assert ex{parse{"=world"}} ==
+   ;;       {x = #text{""}, y = #text{"world"}}
 
 
 ;; shed

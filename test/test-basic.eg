@@ -8,7 +8,63 @@ require:
    "grey-mocha"
    "../src/index" ->
       toHTML as q
+      Engine
       defaultEngine as eng
+   "../src/tools" as tools
+
+
+describe "engine":
+
+   describe "rules are ordered by specificity":
+      testit{eng} =
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"x + y"} == "rule 1"
+            q{"x + y -- z"} == "rule 2"
+            q{"a + y"} == "rule 3"
+            q{"a + y -- z"} == "rule 3"
+
+      describe "more specific declared first":
+         testit with Engine{= rules} where rules = {
+            "\\a + \\b"{*} = "rule 1"
+            "\\a + \\b -- \\c"{*} = "rule 2"
+            "a + \\b"{*} = "rule 3"
+         }
+      describe "more specific declared last":
+         testit with Engine{= rules} where rules = {
+            "a + \\b"{*} = "rule 3"
+            "\\a + \\b -- \\c"{*} = "rule 2"
+            "\\a + \\b"{*} = "rule 1"
+         }
+
+   describe "a rule can pass execution to the next":
+
+      describe "more specific to less specific":
+         let eng = Engine{= rules} where rules = {
+            "\\a + \\b -- \\c"{_, {a => match}} =
+               #text{"hello"} -> "rule 1"
+               else -> tools.next
+            "\\a + \\b"{*} = "rule 2"
+         }
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"hello + world -- yay"} == "rule 1"
+            q{"allo + monde -- youpi"} == "rule 2"
+
+      describe "second rule goes before first, does not replace it":
+         let eng = Engine{= rules} where rules = {
+            one = {"\\a + \\b", f} where f{*} = "rule 1"
+            two = {"\\a + \\b", f} where f{_, {a => match}} =
+               #text{"hello"} -> "rule 2"
+               else -> tools.next
+         }
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"hello + world"} == "rule 2"
+            q{"allo + monde"} == "rule 1"
 
 
 describe "basic rules":
@@ -34,20 +90,55 @@ describe "basic rules":
    asserts "application of prefix operator":
       q{"the _tiger pounces"} == "the <em>tiger</em> pounces"
       q{"the _ tiger pounces"} == "the _ tiger pounces"
+      q{"the_tiger pounces"} == "the_tiger pounces"
       q{"the _[tiger pounces]"} == "the <em>tiger pounces</em>"
       q{"_ the tiger pounces"} == "<em>the tiger pounces</em>"
       q{"the~_tiger~pounces"} == "the<em>tiger</em>pounces"
 
-   asserts "operators":
+   asserts "code":
+      q{"& quack quack"} == "<code>quack quack</code>"
+      q{"&quack"} == "<code>quack</code>"
+      q{"&[quack]"} == "<code>quack</code>"
+      q{"&[quack]quack"} == "<code>[quack]quack</code>"
+      q{"&[[quack]]"} == "<code>[quack]</code>"
+      q{"&{quack}"} == "<code>{quack}</code>"
+
+   asserts "emphasis":
       q{"_quack"} == "<em>quack</em>"
       q{"__quack"} == "<strong>quack</strong>"
+      q{"_ __ quack"} == "<em><strong>quack</strong></em>"
+
+   asserts "links":
+      q{"quack @@ quaaack"} == "<a href=\"quaaack\">quack</a>"
+      q{"quack@@quaaack"} == "<a href=\"quaaack\">quack</a>"
+
+   asserts "lists":
+      q{"* hello"} == "<ul><li>hello</li></ul>"
+      q{"* hello\n* world"} == "<ul><li>hello</li><li>world</li></ul>"
+
+   asserts "tables":
+      q{"+ a + b + c"} == "<table><tr><th>a</th><th>b</th><th>c</th></tr></table>"
+      q{"| a | b | c"} == "<table><tr><td>a</td><td>b</td><td>c</td></tr></table>"
+      q{"+ a + b + c\n| a | b | c"} ==
+         S'<table>{r1}{r2}</table>' where
+            r1 = "<tr><th>a</th><th>b</th><th>c</th></tr>"
+            r2 = "<tr><td>a</td><td>b</td><td>c</td></tr>"
+
+   asserts "headers":
       q{"= quack"} == "<h1>quack</h1>"
       q{"== quack"} == "<h2>quack</h2>"
       q{"=== quack"} == "<h3>quack</h3>"
       q{"==== quack"} == "<h4>quack</h4>"
       q{"===== quack"} == "<h5>quack</h5>"
       q{"====== quack"} == "<h6>quack</h6>"
-      q{"quack::quaaack"} == "<a href=\"quaaack\">quack</a>"
+
+   asserts "some operators must be wide":
+      q{"=quack"} == "=quack"
+      q{"==quack"} == "==quack"
+      q{"*quack"} == "*quack"
+      q{"#quack"} == "#quack"
+      q{"+quack+quack"} == "+quack+quack"
+      q{"|quack|quack"} == "|quack|quack"
 
    describe "sections document":
       getSections{docs} =
@@ -55,10 +146,10 @@ describe "basic rules":
             String? -> {l, x}
             else -> {l, x.toHTML{}}
       it "trivial case":
-         {node, docs} = eng.run{"= quack"}
+         docs = eng.run{"= quack"}
          assert getSections{docs} == {{1, "quack"}}
       it "preserve markup":
-         {node, docs} = eng.run{"= _quack"}
+         docs = eng.run{"= _quack"}
          assert getSections{docs} == {{1, "<em>quack</em>"}}
       it "complex document":
          src = """
@@ -77,7 +168,7 @@ describe "basic rules":
          == six
          the end
          """
-         {node, docs} = eng.run{src}
+         docs = eng.run{src}
          assert getSections{docs} == {
             {1, "one"}
             {2, "two"}

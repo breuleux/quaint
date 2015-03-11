@@ -5,12 +5,16 @@ require:
    "./lang" -> parse
 
 provide:
+   next
    raw, code, rawOrCode
    parseSpec, makeExtractor, extractor
+   ;; parseSpec2, makeExtractor2, extractor2
    extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
 
+
+next = Symbol{.next}
 
 
 raw{match x, operate = {x} -> x} =
@@ -28,7 +32,7 @@ code{engine, x} =
          try:
             engine.setenv{.doc, documents}
             engine.setenv{.documents, documents}
-            engine.eval{x.location} or ""
+            engine.eval{x.location.text{}, x.location} or ""
          catch e:
             span.error % String{e}
 
@@ -39,80 +43,66 @@ rawOrCode{engine, match x, operate = {x} -> x} =
       raw{x, operate}
 
 
-
-parseSpec{match} =
+parseSpec{match azza} =
    String? spec ->
       let ast = parse{Source{spec}}
       var top = null
-      rval = helper{ast, {shed = true}} where helper{match, opts} =
-         extract! #seq{"J", *tags, pattern} ->
-            helper{pattern} with
-               opts &
-                  object with tags each #text{tag} -> {tag, true}
-         ast when opts.wide ->
-            #iswide{helper{ast, opts & {wide = false}}}
-         ast when opts.short ->
-            #isshort{helper{ast, opts & {short = false}}}
-         #text{""} ->
-            #eq{#text{""}}
-         #text{v} ->
-            #put{v, opts.maybe === true}
+      var specificity = 0
+      rval = helper{ast, {shed = true}} where helper{match expr, opts} =
+         #text{R"^\\(?:([^\\]*)\\)?(.*)$"! {_, match flag, name}} ->
+            "maybe" -> #put{name, true}
+            else -> #put{name, false}
+         #text ->
+            specificity += 100
+            #eq{expr}
          #oper{op} ->
             #eq{#oper{op}}
-         #seq{_, #oper{"["}, contents, #oper{"]"}, _} when opts.shed ->
-            helper{contents, opts & {shed = false}}
          #seq{*args} and {=> operator} ->
+            specificity += 1
             if [not top]:
                top = operator
             #seq{*[args each arg -> helper{arg, opts}]}
-      {top, rval}
-   {top, rval} ->
-      {top, rval}
+      {top, rval, specificity}
+   {top, rval, specificity} ->
+      {top, rval, specificity}
 
-makeExtractor{parseSpec! {top, spec}} =
-   {top} with {node} ->
-      helper{spec, node} where
-         helper{match, node} =
-            #iswide{subspec} ->
-               [node.width == .wide] and
-                  helper{subspec, node}
-            #isshort{subspec} ->
-               [node.width == .short] and
-                  helper{subspec, node}
-            #put{v, maybe} ->
-               match node:
-                  #text{""} when not maybe ->
-                     false
-                  else ->
-                     {v => node}
-            #eq{== node} ->
-               {=}
-            #eq ->
+makeExtractor{parseSpec! {top, tree, specificity}} =
+   helper{match x, node} =
+      #put{v, maybe = true} ->
+         match node:
+            #text{""} when not maybe ->
                false
-            #seq{*subspecs} ->
-               match node:
-                  #seq{*args} when subspecs.length == args.length ->
-                     rval = {=}
-                     zip{subspecs, args} each {subspec, arg} ->
-                        match helper{subspec, arg}:
-                           false? ->
-                              return false
-                           vars ->
-                              rval &: vars
-                     rval
-                  other ->
-                     false
-            #fn{f} ->
-               f{node}
+            else ->
+               {v => node}
+      #eq{match} ->
+         == node -> {=}
+         else -> false
+      #seq{*subtrees} ->
+         match node:
+            #seq{*args} when subtrees.length == args.length ->
+               rval = {=}
+               zip{subtrees, args} each {subtree, arg} ->
+                  match helper{subtree, arg}:
+                     false? ->
+                        return false
+                     vars ->
+                        rval &: vars
+               rval
+            other ->
+               false
+      #fn{f} ->
+         f{node}
+   {top, specificity, fn} where
+      fn{node} = helper{tree, node}
 
-rules = {=}
+ruleBank = {=}
 
 extractor{*rules} =
    extractors = rules each
-      rule when rules[rule] -> rules[rule]
+      rule when ruleBank[rule] -> ruleBank[rule]
       rule ->
-         {_, ex} = makeExtractor{rule}
-         rules[rule] = ex
+         {_, _, ex} = makeExtractor{rule}
+         ruleBank[rule] = ex
          ex
    {node} ->
       extractors each ex ->

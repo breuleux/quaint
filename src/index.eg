@@ -12,6 +12,7 @@ require:
       mergeable
    "./doc" ->
       SeqDocument
+      insertSorted
 
 provide:
    parse
@@ -31,7 +32,7 @@ class Dispatcher:
    constructor{} =
       @dispatch = {}
 
-   handler{node} =
+   gen handlers{node} =
       key = node.operator or ""
       if not key:
          console.error with
@@ -43,7 +44,7 @@ class Dispatcher:
             candidates each c ->
                match node:
                   c! parts ->
-                     return {parts, c}
+                     yield {parts, c}
                   else ->
                      pass
             false
@@ -51,7 +52,11 @@ class Dispatcher:
    register{handler} =
       key = handler.operator
       l = [@dispatch[key] or= {}]
-      l.unshift with handler
+      insertSorted{l, handler} with
+         {{specificity => match s1}, {specificity => s2}} ->
+            ;; Do not return 0 because it will cause a replacement
+            > s2 -> -1
+            else -> 1
 
    clone{} =
       d = Dispatcher{}
@@ -93,10 +98,11 @@ class Engine:
 
       match documents:
          null? ->
-            {generated, null}
+            {main = generated}
          else ->
             docs = @makeDocuments{} & documents
-            {processDocuments{generated, docs}, docs}
+            main = processDocuments{generated, docs}
+            docs &: {= main}
 
 
    .gen{match node} =
@@ -109,12 +115,14 @@ class Engine:
             s -> s[1]
 
       #seq{*parts} ->
-         result = match @dispatch.handler{node}:
-            false? ->
-               %
-                  parts each part -> @gen{part}
-            {values, handler} ->
-               handler.gen{@, {node = node} & values}
+         result = f{} where f{} =
+            @dispatch.handlers{node} each {values, handler} ->
+               extra = {_node = node, _wide = node.width == .wide}
+               match handler.gen{@, extra & values}:
+                  == tools.next -> pass
+                  result -> return result
+            % [parts each part -> @gen{part}]
+
          match result:
             ENode? {tags => {}, props => == {=}, => children} or Array? children
             \ when children.every{x -> String? x} ->
@@ -132,15 +140,15 @@ class Engine:
    ;;       @register{spec, dispatcher}
    ;;    @
 
-   eval{src} =
-      @evaluator.eval{src}
+   eval{text, loc} =
+      @evaluator.eval{text, loc}
 
    setenv{name, value} =
       @evaluator.setenv{name, value}
 
 
 class Spec:
-   constructor{makeExtractor! {@operator, @extractor}, @gen} =
+   constructor{makeExtractor! {@operator, @specificity, @extractor}, @gen} =
       pass
    ":::project"{@extractor! match} =
       false? ->
@@ -148,6 +156,12 @@ class Spec:
       values ->
          {true, values}
 
+
+requireWide{f}{engine, data} =
+   if data._wide:
+      f.call{this, engine, data}
+   else:
+      tools.next
 
 headerRule{level}{engine, {=> x}} =
    gx = engine.gen{x}
@@ -171,11 +185,10 @@ basicPlugin = {
 
    rules = {
 
-      "[[maybe x]]"{engine, {node => #seq{_, o, x, c, _}}} =
+      "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
          beg = raw{o}.replace{"[", ""}
          middle = engine.gen{x}
          end = raw{c}.replace{"]", ""}
-         ;; print {beg, middle, end, raw{middle}}
          res =
             if beg or end:
                % [beg, middle, end]
@@ -183,31 +196,31 @@ basicPlugin = {
                middle
          res &: {block = middle.block}
 
-      "{x}"{engine, {=> x}} =
+      "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
 
-      "{fn} : body"{engine, {=> fn, => body}} =
+      "{\\fn} : \\body"{engine, {=> fn, => body}} =
          try:
-            f = engine.eval{fn.location}
+            f = engine.eval{fn.location.text{}, fn.location}
             f{engine, body} or ""
          catch e:
             span.error % String{e}
 
-      "_ x"{engine, {=> x}} =
+      "_ \\x"{engine, {=> x}} =
          em % engine.gen{x}
 
-      "__ x"{engine, {=> x}} =
+      "__ \\x"{engine, {=> x}} =
          strong % engine.gen{x}
 
-      "` x"{engine, {x => shed! x}} =
+      "& \\x"{engine, {x => shed! x}} =
          code % raw{x}
 
-      "label :: url"{engine, {=> label, url => shed! url}} =
+      "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
          a %
             href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
             engine.gen{label}
 
-      "descr .. maybe contents"{engine, {=> descr, => contents}} =
+      "\\descr .. \\maybe\\contents"{engine, {=> descr, => contents}} =
          parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
          var id = null
          tags = {}
@@ -222,34 +235,34 @@ basicPlugin = {
          if id: props.id = id
          ENode{tags, props, {engine.gen{shedIndent{contents}}}}
 
-      "wide [= x]" = headerRule{1}
-      "wide [== x]" = headerRule{2}
-      "wide [=== x]" = headerRule{3}
-      "wide [==== x]" = headerRule{4}
-      "wide [===== x]" = headerRule{5}
-      "wide [====== x]" = headerRule{6}
+      requireWide! "= \\x" = headerRule{1}
+      requireWide! "== \\x" = headerRule{2}
+      requireWide! "=== \\x" = headerRule{3}
+      requireWide! "==== \\x" = headerRule{4}
+      requireWide! "===== \\x" = headerRule{5}
+      requireWide! "====== \\x" = headerRule{6}
 
-      "wide [# x]"{engine, {=> x}} =
+      requireWide! "# \\x"{engine, {=> x}} =
          mergeable{.ol, li % engine.gen{x}}
 
-      "wide [* x]"{engine, {=> x}} =
+      requireWide! "* \\x"{engine, {=> x}} =
          mergeable{.ul, li % engine.gen{x}}
 
-      "wide [+ x]"{engine, {=> x}} =
+      requireWide! "+ \\x"{engine, {=> x}} =
          args = collapse{"+", x}
          mergeable{.table} with
             tr %
                args each arg ->
                   th % engine.gen{arg}
 
-      "wide [| x]"{engine, {=> x}} =
+      requireWide! "| \\x"{engine, {=> x}} =
          args = collapse{"|", x}
          mergeable{.table} with
             tr %
                args each arg ->
                   td % engine.gen{arg}
 
-      "v <- value"{engine, {=> v, => value}} =
+      "\\v <- \\value"{engine, {=> v, => value}} =
          result =
             match engine.gen{value}:
                ENode? x -> x
@@ -265,9 +278,9 @@ basicPlugin = {
             else ->
                false
 
-         spec = {"NL", #fn{filter}}
+         spec = {"NL", #fn{filter}, 1}
 
-         fn{engine, {node => node and #seq{*elems}, => args}} =
+         fn{engine, {_node => node and #seq{*elems}, => args}} =
             results = {}
             wide = node.width == .wide
             var last = null
@@ -419,7 +432,7 @@ create{opts = {=}} =
 defaultEngine = create{}
 
 toENode{text} =
-   {get node, docs} = defaultEngine.run{text}
+   defaultEngine.run{text}.main
 
 toHTML{toENode! match} =
    String? s -> s
