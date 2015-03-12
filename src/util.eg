@@ -1,0 +1,26 @@
+
+
+provide:
+   findInsert, insertSorted, deleteSorted
+
+
+findInsert{xs, x, ord} =
+   var lo = 0
+   var hi = xs.length - 1
+   while lo <= hi:
+      mid = lo + [[hi - lo] // 2]
+      match ord{xs[mid], x}:
+         < 0  -> lo = mid + 1
+         > 0  -> hi = mid - 1
+         else -> return {mid, true}
+   {lo, false}
+
+insertSorted{xs, x, ord} =
+   {idx, replace} = findInsert{xs, x, ord}
+   xs.splice{idx, if{replace, 1, 0}, x}
+
+deleteSorted{xs, x, ord} =
+   {idx, replace} = findInsert{xs, x, ord}
+   if replace:
+      xs.splice{idx, if{replace, 1, 0}}
+

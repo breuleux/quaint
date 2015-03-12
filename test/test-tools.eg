@@ -10,8 +10,10 @@ require:
       parse
    "../src/tools" ->
       extractor, parseSpec
+   "../src/util" ->
+      insertSorted
    "../src/doc" ->
-      insertSorted, comparePaths
+      comparePaths
 
 
 describe "misc":
