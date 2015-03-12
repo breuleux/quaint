@@ -30,9 +30,10 @@ code{engine, x} =
    genfrom %
       generate{documents} =
          try:
-            engine.setenv{.doc, documents}
-            engine.setenv{.documents, documents}
-            engine.eval{x.location.text{}, x.location} or ""
+            engine.eval{raw{x}, env, x.location} or "" where
+               env = {
+                  doc and documents = documents
+               }
          catch e:
             span.error % String{e}
 
@@ -43,7 +44,7 @@ rawOrCode{engine, match x, operate = {x} -> x} =
       raw{x, operate}
 
 
-parseSpec{match azza} =
+parseSpec{match} =
    String? spec ->
       let ast = parse{Source{spec}}
       var top = null

@@ -4,6 +4,7 @@ require:
    opg ->
       transferLocation as [<<:]
    "./tools" as tools ->
+      parseSpec, makeExtractor
       raw, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
@@ -11,6 +12,7 @@ require:
       SeqDocument, MapDocument
    "./util" ->
       insertSorted
+
 
 provide:
    basicPlugin
@@ -35,14 +37,26 @@ headerRule{level}{engine, {=> x}} =
 
 basicPlugin = {
 
-   makeDocuments{} = {
+   documents{} = {
       sections = SeqDocument{}
    }
 
-   regexps = {
+   evaluator{store = {=}} = {
+      eval{key, env = {=}, loc = null} =
+         s = store & env
+         if not Object.hasProperty.call{s, key}:
+            throw E.not_in_environment{key}
+         s[key]
+      setenv{key, value} =
+         store[key] = value
+      withenv{env} =
+         basicPlugin.evaluator{store & env}
    }
 
-   rules = {
+   regexps{} = {
+   }
+
+   rules{} = {
 
       "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
          beg = raw{o}.replace{"[", ""}
@@ -121,14 +135,34 @@ basicPlugin = {
                args each arg ->
                   td % engine.gen{arg}
 
-      "\\v <- \\value"{engine, {=> v, => value}} =
-         result =
-            match engine.gen{value}:
-               ENode? x -> x
-               x -> [% x]
-         engine.setenv{raw{v}, result <<: value}
+      ;; "\\v <- \\value"{engine, {=> v, => value}} =
+      ;;    result =
+      ;;       match engine.gen{value}:
+      ;;          ENode? x -> x
+      ;;          x -> [% x]
+      ;;    engine.setenv{raw{v}, result <<: value}
+      ;;    ""
+
+      "\\rule => \\body"{engine, {=> rule, => body}} =
+         spec and {top, tree, specificity} = parseSpec{raw{shed{rule}}}
+         match tree:
+            #put ->
+               throw E.too_general{rule}
+            #eq{#text{name}} ->
+               result =
+                  match engine.gen{body}:
+                     ENode? x -> x
+                     x -> [% x]
+               engine.setenv{name, result <<: body}
+            else ->
+               engine.register{spec} with {engine, values} ->
+                  env = object with items{values} each
+                     {k, v} when not k.startsWith{._} ->
+                        {k, engine.gen{v}}
+                  engine.withenv{env}.gen{body}
          ""
 
+      ;; newline rule is a bit more complicated
       newlineRule = {spec, fn} where
 
          filter{match node} =
@@ -187,5 +221,4 @@ basicPlugin = {
                   [% results] &: {block = Boolean! wide}
 
    }
-
 }

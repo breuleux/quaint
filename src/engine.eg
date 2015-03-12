@@ -60,23 +60,24 @@ class Dispatcher:
 
 class Engine:
 
-   constructor{Array! @plugins} =
+   constructor{Array! @plugins, setEvaluator = true} =
       @dispatch = Dispatcher{}
-      @plugins each p -> @plug{p}
+      @plugins each p -> @plug{p, setEvaluator}
 
-   plug{p} =
-      items{p.rules or {=}} each {rule, match} ->
+   plug{p, setEvaluator = true} =
+      rules = if{p.rules, p.rules{}, {=}}
+      items{rules} each {rule, match} ->
          Function? handler ->
             @dispatch.register{Spec{rule, handler}}
          {rule, handler} ->
             @dispatch.register{Spec{rule, handler}}
-      if p.evaluator:
-         @evaluator = p.evaluator
+      if setEvaluator and p.evaluator:
+         @evaluator = p.evaluator{}
 
    makeDocuments{} =
       acc = {=}
-      @plugins each p when p.makeDocuments ->
-         acc &: p.makeDocuments{}
+      @plugins each p when p.documents ->
+         acc &: p.documents{}
       acc
 
    run{src, documents = {=}} =
@@ -126,20 +127,27 @@ class Engine:
             else ->
                result
 
-   ;; register{spec, dispatcher} =
-   ;;    @dispatch.register{Spec{spec, dispatcher}}
-   ;;    @
+   register{spec, dispatcher} =
+      @plug with {rules{} = {rule = {spec, dispatcher}}}
+      @
 
    ;; registerAll{entries} =
    ;;    items{entries} each {spec, dispatcher} ->
    ;;       @register{spec, dispatcher}
    ;;    @
 
-   eval{text, loc} =
-      @evaluator.eval{text, loc}
+   eval{text, env, loc = null} =
+      @evaluator.eval{text, env, loc}
 
    setenv{name, value} =
       @evaluator.setenv{name, value}
+      @
+
+   withenv{env} =
+      ;; @evaluator.setenv{name, value}
+      eng = Engine{@plugins, false}
+      eng.evaluator = @evaluator.withenv{env}
+      eng
 
 
 class Spec:

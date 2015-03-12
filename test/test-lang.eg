@@ -3,6 +3,7 @@ requireMacros:
    "grey-mocha" ->
       describe, it, before, after
       assert, asserts
+      xdescribe, xit
 
 require:
    "grey-mocha"
@@ -12,7 +13,7 @@ require:
       parse, tokenize
 
 
-eng = Engine{= rules} where rules = {
+eng = Engine{= rules} where rules{} = {
    "\\maybe\\a | \\maybe\\b"{engine, {=> a, => b}} =
       % ["<", engine.gen{a}, "|", engine.gen{b}, ">"]
    "\\maybe\\a : \\maybe\\b"{engine, {=> a, => b}} =
@@ -30,6 +31,7 @@ tr{x, y} =
 
 same{x} =
    tr{x, x}
+
 
 
 describe "basic rules":
@@ -84,4 +86,8 @@ describe "basic rules":
          tr{"a :b", "a <:b>"}
          tr{"a, b", "<a,b>"}
          tr{"a ,b", "a <,b>"}
+
+   xdescribe "pending":
+      it "should preserve whitespace at beginning and end":
+         assert same{"  a  "}
 

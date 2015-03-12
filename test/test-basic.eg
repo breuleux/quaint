@@ -178,4 +178,11 @@ describe "basic rules":
             {2, "six"}
          }
 
+   describe "macros":
+      asserts:
+         q{"[duck => quack]{duck}{duck}"} == "quackquack"
+         q{"[duck => _quack]{duck}{duck}"} == "<em>quack</em><em>quack</em>"
+         q{"[[\\a + \\b] => __{b}~{a}][_zig + zag]"} ==
+            "<strong>zag</strong><em>zig</em>"
+
 
