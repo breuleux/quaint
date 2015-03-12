@@ -1,0 +1,248 @@
+
+
+require:
+   opg ->
+      Source
+   "./lang" ->
+      parse
+   "./tools" as tools ->
+      makeExtractor
+   "./doc" ->
+      SeqDocument
+   "./util" ->
+      insertSorted
+
+provide:
+   Dispatcher
+   Engine
+   Spec
+   processDocuments
+
+
+
+class Dispatcher:
+
+   constructor{} =
+      @dispatch = {}
+
+   gen handlers{node} =
+      key = node.operator or ""
+      if not key:
+         console.error with
+            "Node lacks an operator key. That may be indicative of a bug."
+      match @dispatch[key]:
+         undefined? ->
+            false
+         candidates ->
+            candidates each c ->
+               match node:
+                  c! parts ->
+                     yield {parts, c}
+                  else ->
+                     pass
+            false
+
+   register{handler} =
+      key = handler.operator
+      l = [@dispatch[key] or= {}]
+      insertSorted{l, handler} with
+         {{specificity => match s1}, {specificity => s2}} ->
+            ;; Do not return 0 because it will cause a replacement
+            > s2 -> -1
+            else -> 1
+
+   clone{} =
+      d = Dispatcher{}
+      d.dispatch = object with items{@dispatch} each {key, l} ->
+         {key, l.slice{0}}
+      d
+
+
+class Engine:
+
+   constructor{Array! @plugins} =
+      @dispatch = Dispatcher{}
+      @plugins each p -> @plug{p}
+
+   plug{p} =
+      items{p.rules or {=}} each {rule, match} ->
+         Function? handler ->
+            @dispatch.register{Spec{rule, handler}}
+         {rule, handler} ->
+            @dispatch.register{Spec{rule, handler}}
+      if p.evaluator:
+         @evaluator = p.evaluator
+
+   makeDocuments{} =
+      acc = {=}
+      @plugins each p when p.makeDocuments ->
+         acc &: p.makeDocuments{}
+      acc
+
+   run{src, documents = {=}} =
+
+      generated =
+         match src:
+            String? text ->
+               return @run{Source{text, "<quaint>"}, documents}
+            Source? src ->
+               parsed = parse{src}
+               @gen{parsed}
+            node ->
+               @gen{node}
+
+      match documents:
+         null? ->
+            {main = generated}
+         else ->
+            docs = @makeDocuments{} & documents
+            main = processDocuments{generated, docs}
+            docs &: {= main}
+
+
+   .gen{match node} =
+      
+      #text{t} or #oper{t} ->
+         l = node.location
+         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
+         node.location.text{}.replace{r} with {match} ->
+            "~" -> ""
+            s -> s[1]
+
+      #seq{*parts} ->
+         result = f{} where f{} =
+            @dispatch.handlers{node} each {values, handler} ->
+               extra = {_node = node, _wide = node.width == .wide}
+               match handler.gen{@, extra & values}:
+                  == tools.next -> pass
+                  result -> return result
+            % [parts each part -> @gen{part}]
+
+         match result:
+            ENode? {tags => {}, props => == {=}, => children} or Array? children
+            \ when children.every{x -> String? x} ->
+               r = children.join{""}
+               if{result.block, % r, r}
+            else ->
+               result
+
+   ;; register{spec, dispatcher} =
+   ;;    @dispatch.register{Spec{spec, dispatcher}}
+   ;;    @
+
+   ;; registerAll{entries} =
+   ;;    items{entries} each {spec, dispatcher} ->
+   ;;       @register{spec, dispatcher}
+   ;;    @
+
+   eval{text, loc} =
+      @evaluator.eval{text, loc}
+
+   setenv{name, value} =
+      @evaluator.setenv{name, value}
+
+
+class Spec:
+   constructor{makeExtractor! {@operator, @specificity, @extractor}, @gen} =
+      pass
+   ":::project"{@extractor! match} =
+      false? ->
+         {false, null}
+      values ->
+         {true, values}
+
+
+
+processDocuments{x, documents, maxiter = 10} =
+
+   var forges = new Set{}
+   deps = new Map{}
+
+   populate{match node, documents, replace, path} =
+
+      [redoc %]? ->
+         {child} = node.children
+         populate{child, newdocs, replace, path} where newdocs =
+            match node.props.documents:
+               Function? f -> f{documents}
+               docs -> documents & docs
+
+      [genfor %]? ->
+         docname = node.props.document
+         match documents[docname]:
+            undefined? when node.props.important ->
+               throw E.no_document{docname}
+            false? ->
+               ""
+            {delay => true?} ->
+               node
+            doc ->
+               doc.register.apply{doc, {path} ++ node.children}
+               ""
+
+      [genfrom %]? ->
+         forges.add{{node, documents, replace, path}}
+         "PLACEHOLDER"
+
+      ENode? ->
+         rval = ENode{tags, props, children} where
+            tags = node.tags
+            props = object with items{node.props} each {k, match v} ->
+               [genfrom %]? ->
+                  forges.add{{v, documents, replace, path ++ {k}}} where
+                     replace{x} = rval.props[k] = x
+                  {k, "PLACEHOLDER"}
+               else ->
+                  {k, v}
+            children =
+               enumerate{node.children} each {i, c} ->
+                  populate{c, documents, replace, path ++ {i}} where
+                     replace{x} = rval.children[i] = x
+         rval
+
+      Array? ->
+         rval =
+            enumerate{node} each {i, c} ->
+               populate{c, documents, replace, path ++ {i}} where
+                  replace{x} = rval[i] = x
+         rval
+
+      else ->
+         node
+
+   var res = populate{% x, documents, replace, {}} where
+      replace{x} = res = x
+
+   var niter = 0
+   while forges.size != 0 and niter < maxiter:
+
+      {_forges, forges} = {forges, new Set{}}
+      niter += 1
+
+      _forges each forge and {node, docs, replace, path} ->
+
+         ;; Reset accessed/modified flags for all documents
+         items{docs} each {_, doc} when doc.resetFlags ->
+            doc.resetFlags{}
+
+         ;; Execute generator, process new node, perform the replacement.
+         replace with populate{newnode, docs, replace, path} where
+            newnode = node.props.generate{docs}
+
+         ;; For all modified documents, every process that accessed
+         ;; them is put back in the queue for reprocessing
+         items{docs} each {_, doc} when doc.modified ->
+            [deps.get{doc} or {}] each
+               forge -> forges.add{forge}
+            deps.set{doc, {}}
+
+         ;; For all documents it accessed, the current generator is
+         ;; put in the dependencies for that document. Since we do this
+         ;; after checking for modifications, a generator may modify
+         ;; a document it accesses without causing an infinite loop.
+         items{docs} each {_, doc} when doc.accessed ->
+            if not deps.has{doc}: deps.set{doc, {}}
+            deps.get{doc}.push with forge
+
+   res.children[0]
+

@@ -1,0 +1,191 @@
+
+
+require:
+   opg ->
+      transferLocation as [<<:]
+   "./tools" as tools ->
+      raw, extract, collapse, statements
+      shed, shedAll, shedIndent
+      mergeable
+   "./doc" ->
+      SeqDocument, MapDocument
+   "./util" ->
+      insertSorted
+
+provide:
+   basicPlugin
+
+
+requireWide{f}{engine, data} =
+   if data._wide:
+      f.call{this, engine, data}
+   else:
+      tools.next
+
+headerRule{level}{engine, {=> x}} =
+   gx = engine.gen{x}
+   rval =
+      ^[S'h{level}'] %
+         gx
+         genfor %
+            document = .sections
+            {level, gx}
+   rval &: {block = true}
+
+
+basicPlugin = {
+
+   makeDocuments{} = {
+      sections = SeqDocument{}
+   }
+
+   regexps = {
+   }
+
+   rules = {
+
+      "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
+         beg = raw{o}.replace{"[", ""}
+         middle = engine.gen{x}
+         end = raw{c}.replace{"]", ""}
+         res =
+            if beg or end:
+               % [beg, middle, end]
+            else:
+               middle
+         res &: {block = middle.block}
+
+      "{\\x}"{engine, {=> x}} =
+         tools.code{engine, x}
+
+      "\\fn :: \\body"{engine, {=> fn, => body}} =
+         try:
+            f = engine.eval{fn.location.text{}, fn.location}
+            f{engine, body} or ""
+         catch e:
+            span.error % String{e}
+
+      "_ \\x"{engine, {=> x}} =
+         em % engine.gen{x}
+
+      "__ \\x"{engine, {=> x}} =
+         strong % engine.gen{x}
+
+      "& \\x"{engine, {x => shed! x}} =
+         code % raw{x}
+
+      "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+         a %
+            href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
+            engine.gen{label}
+
+      "\\descr .. \\maybe\\contents"{engine, {=> descr, => contents}} =
+         parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+         var id = null
+         tags = {}
+         parts each
+            "" ->
+               pass
+            R"^#(.*)"! {_, _id} ->
+               id = _id
+            tag ->
+               tags.push with tag
+         props = {=}
+         if id: props.id = id
+         ENode{tags, props, {engine.gen{shedIndent{contents}}}}
+
+      requireWide! "= \\x" = headerRule{1}
+      requireWide! "== \\x" = headerRule{2}
+      requireWide! "=== \\x" = headerRule{3}
+      requireWide! "==== \\x" = headerRule{4}
+      requireWide! "===== \\x" = headerRule{5}
+      requireWide! "====== \\x" = headerRule{6}
+
+      requireWide! "# \\x"{engine, {=> x}} =
+         mergeable{.ol, li % engine.gen{x}}
+
+      requireWide! "* \\x"{engine, {=> x}} =
+         mergeable{.ul, li % engine.gen{x}}
+
+      requireWide! "+ \\x"{engine, {=> x}} =
+         args = collapse{"+", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  th % engine.gen{arg}
+
+      requireWide! "| \\x"{engine, {=> x}} =
+         args = collapse{"|", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  td % engine.gen{arg}
+
+      "\\v <- \\value"{engine, {=> v, => value}} =
+         result =
+            match engine.gen{value}:
+               ENode? x -> x
+               x -> [% x]
+         engine.setenv{raw{v}, result <<: value}
+         ""
+
+      newlineRule = {spec, fn} where
+
+         filter{match node} =
+            extract! #seq{"NL", *args} ->
+               {args = args}
+            else ->
+               false
+
+         spec = {"NL", #fn{filter}, 1}
+
+         fn{engine, {_node => node and #seq{*elems}, => args}} =
+            results = {}
+            wide = node.width == .wide
+            var last = null
+            _gen = engine.gen.bind{engine}
+            var i = -3
+
+            add{addblank = true} =
+               results.push with
+                  match last:
+                     [div %]? or {block => true?} ->
+                        last
+                     != "" when wide ->
+                        p % last
+                     else ->
+                        last
+               if addblank:
+                  results.push with
+                     raw{elems[i]}
+
+            var isFirst = true
+            args each [_gen! match] ->
+               do:
+                  i += 2
+               x when isFirst ->
+                  isFirst = false
+                  last = x
+               x when last and last.merge ->
+                  match last.merge{x}:
+                     false? ->
+                        add{}
+                        last = x
+                     newx ->
+                        last = newx
+               x ->
+                  add{}
+                  last = x
+            i += 2
+            if last:
+               add{false}
+
+            match results:
+               {result} ->
+                  result
+               else ->
+                  [% results] &: {block = Boolean! wide}
+
+   }
+
+}
