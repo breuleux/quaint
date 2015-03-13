@@ -71,8 +71,12 @@ class Engine:
             @dispatch.register{Spec{rule, handler}}
          {rule, handler} ->
             @dispatch.register{Spec{rule, handler}}
-      if setEvaluator and p.evaluator:
-         @evaluator = p.evaluator{}
+
+      if setEvaluator:
+         if p.evaluator:
+            @evaluator = p.evaluator{}
+         env = if{p.env, p.env{}, {=}}
+         items{env} each {k, v} -> @setenv{k, v}
 
    makeDocuments{} =
       acc = {=}

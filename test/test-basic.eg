@@ -2,6 +2,7 @@
 requireMacros:
    "grey-mocha" ->
       describe, it, before, after
+      xdescribe, xit
       assert, asserts
 
 require:
@@ -178,6 +179,23 @@ describe "basic rules":
             {2, "five"}
             {2, "six"}
          }
+      xit "table of contents":
+         pass
+
+
+   describe "meta":
+      getMeta{docs} =
+         object with docs.meta.entries{} each {l, x} ->
+            match eng.gen{x}:
+               String? x -> {l, x}
+               x -> {l, x.toHTML{}}
+      it "works":
+         docs = eng.run{"meta ::\n a = X\n b = Y"}
+         assert getMeta{docs} == {a = "X", b = "Y"}
+      it "preserves markup":
+         docs = eng.run{"meta ::\n a = _zazz\n b = Y"}
+         assert getMeta{docs} == {a = "<em>zazz</em>", b = "Y"}
+
 
    describe "macros":
       asserts:

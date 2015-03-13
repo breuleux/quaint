@@ -4,7 +4,7 @@ require:
    opg ->
       transferLocation as [<<:]
    "./tools" as tools ->
-      parseSpec, makeExtractor
+      parseSpec, makeExtractor, extractor
       raw, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
@@ -71,10 +71,36 @@ litPlugin = {
 basicPlugin = {
 
    documents{} = {
+      meta = MapDocument{}
       sections = SeqDocument{}
    }
 
    evaluator = BasicEvaluator
+
+   env{} = {
+
+      toc{engine, body} =
+         genfrom %
+            generate{docs} =
+               ol % docs.sections.entries{} each
+                  {level, title} -> li % title
+
+      meta{engine, match body} =
+         #text{.dump} ->
+            genfrom %
+               generate{docs} =
+                  print consume{docs.meta.entries{}}
+                  table % docs.meta.entries{} each
+                     {k, v} -> tr %
+                        td % k
+                        td % engine.gen{v}
+         else ->
+            ex = extractor{"\\key = \\value"}
+            ENode{{.genfor}, {document = .meta}} with
+               statements{body} each ex! {=> key, => value} ->
+                  {raw{key}, value}
+
+   }
 
    regexps{} = {
    }
@@ -86,18 +112,20 @@ basicPlugin = {
          middle = engine.gen{x}
          end = raw{c}.replace{"]", ""}
          res =
-            if beg or end:
+            if beg or end or middle.block:
                % [beg, middle, end]
             else:
                middle
-         res &: {block = middle.block}
+         if middle.block:
+            res &: {block = middle.block}
+         res
 
       "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
 
-      "\\fn :: \\body"{engine, {=> fn, => body}} =
+      "\\fn :: \\maybe\\body"{engine, {=> fn, => body}} =
          try:
-            f = engine.eval{fn.location.text{}, fn.location}
+            f = engine.eval{raw{fn}, {=}, fn.location}
             f{engine, body} or ""
          catch e:
             span.error % String{e}
@@ -118,7 +146,7 @@ basicPlugin = {
             href = leng.gen{url}
             engine.gen{label}
 
-      "\\descr .. \\maybe\\contents"{engine, {=> descr, => contents}} =
+      requireWide! "\\descr % \\contents"{engine, {=> descr, => contents}} =
          parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
          var id = null
          tags = {}

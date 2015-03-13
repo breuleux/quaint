@@ -33,9 +33,10 @@ class MapDocument{BasicDocument}:
    constructor{} =
       @resetFlags{}
       @data = new Map{}
-   register{_, key, value} =
+   register{_, *pairs} =
       @modified = true
-      @data.set{key, value}
+      pairs each {key, value} ->
+         @data.set{key, value}
    .get{key} =
       @accessed = true
       @data.get{key}

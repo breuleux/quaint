@@ -45,6 +45,7 @@ describe "MapDocument":
          .entries{d} = d.entries{}
       }
       setters = {
+         .register{d} = d.register{{.blah, 2r101010}, {.bob, 10}}
          .set{d} = d.set{.blah, 2r101010}
          .delete{d} = d.delete{.blah}
       }
