@@ -10,6 +10,7 @@ require:
 provide:
    tokenizer, tokenize
    parser, parse
+   Text, Oper, Seq
 
 
 tokenizer = Tokenizer with {
@@ -194,16 +195,25 @@ prio = PriorityOrder{tokgrp, priorities} where
       boundary = {left = -1, right = -1}
    }
 
+Text{x} =
+   #text{x, qast = true}
+
+Oper{x} =
+   #oper{x, qast = true}
+
+Seq{*xs} =
+   #seq{*xs} &: {qast = true}
+
 
 finalize{match node} =
    {null?, mid and {=> token, => location}, null?} ->
-      #text{token} <<: location
+      Text{token} <<: location
 
    {*parts} ->
       newparts = enumerate{parts} each {match i, part} ->
          match is part when i mod 2 == 0 ->
             null? ->
-               #text{""} <<:
+               Text{""} <<:
                   Location{if{p0, p0.location.source, p1.location.source}, s, e} where
                      p0 = parts[i - 1]
                      p1 = parts[i + 1]
@@ -223,19 +233,19 @@ finalize{match node} =
                if{let p = parts[i + 1], p.location.start, part.location.end}
             }
             {let rval, width} = match part.type:
-               .indent  -> {#oper{"I("}, .wide}
-               .dedent  -> {#oper{")I"}, .wide}
-               .sh_nl   -> {#oper{"NL"}, .short}
-               .nl      -> {#oper{"NL"}, .wide}
-               .sh_ws   -> {#oper{"J"}, .short}
-               .ws      -> {#oper{"J"}, .wide}
-               R"^sh_"? -> {#oper{part.token}, .short}
-               R"^wi_"? -> {#oper{part.token}, .wide}
-               else     -> {#oper{part.token}, .wide}
+               .indent  -> {Oper{"I("}, .wide}
+               .dedent  -> {Oper{")I"}, .wide}
+               .sh_nl   -> {Oper{"NL"}, .short}
+               .nl      -> {Oper{"NL"}, .wide}
+               .sh_ws   -> {Oper{"J"}, .short}
+               .ws      -> {Oper{"J"}, .wide}
+               R"^sh_"? -> {Oper{part.token}, .short}
+               R"^wi_"? -> {Oper{part.token}, .wide}
+               else     -> {Oper{part.token}, .wide}
             rval.width = width
             rval <<: loc
 
-      rval = #seq{*newparts} <<: Location{
+      rval = Seq{*newparts} <<: Location{
          newparts[0].location.source
          newparts[0].location.start
          newparts[newparts.length - 1].location.end
@@ -262,7 +272,7 @@ adjust{match node} =
          target.location.start = loc.start
          node.location.start = loc.start
          inds.location = loc
-         node[1] = #text{""} <<: loc
+         node[1] = Text{""} <<: loc
          target[1] = pre
       node
    else ->
@@ -275,5 +285,5 @@ tokenize{src} =
    tokenizer.run{src}
 
 parse{src} =
-   parser.parse{src} or [#text{""} <<: Location{src, 0, src.text.length}]
+   parser.parse{src} or [Text{""} <<: Location{src, 0, src.text.length}]
 

@@ -12,7 +12,8 @@ require:
       SeqDocument, MapDocument
    "./util" ->
       insertSorted
-
+   "./engine" ->
+      Engine
 
 provide:
    basicPlugin
@@ -35,23 +36,45 @@ headerRule{level}{engine, {=> x}} =
    rval &: {block = true}
 
 
+class BasicEvaluator:
+   constructor{@store = {=}} =
+      pass
+   eval{key, env = {=}, loc = null} =
+      s = @store & env
+      if not Object.hasProperty.call{s, key}:
+         throw E.not_in_environment{key}
+      s[key]
+   setenv{key, value} =
+      @store[key] = value
+   withenv{env} =
+      BasicEvaluator{@store & env}
+
+
+
+litPlugin = {
+   documents{} = {
+      sections = SeqDocument{}
+   }
+
+   evaluator = BasicEvaluator
+
+   regexps{} = {
+   }
+
+   rules{} = {
+      "{\\x}"{engine, {=> x}} =
+         tools.code{engine, x}
+   }
+}
+
+
 basicPlugin = {
 
    documents{} = {
       sections = SeqDocument{}
    }
 
-   evaluator{store = {=}} = {
-      eval{key, env = {=}, loc = null} =
-         s = store & env
-         if not Object.hasProperty.call{s, key}:
-            throw E.not_in_environment{key}
-         s[key]
-      setenv{key, value} =
-         store[key] = value
-      withenv{env} =
-         basicPlugin.evaluator{store & env}
-   }
+   evaluator = BasicEvaluator
 
    regexps{} = {
    }
@@ -89,8 +112,10 @@ basicPlugin = {
          code % raw{x}
 
       "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+         leng = Engine{litPlugin, false}
+         leng.evaluator = engine.evaluator.withenv{{=}}
          a %
-            href = tools.rawOrCode{engine, url, {s} -> s.trim{}}
+            href = leng.gen{url}
             engine.gen{label}
 
       "\\descr .. \\maybe\\contents"{engine, {=> descr, => contents}} =
@@ -135,25 +160,14 @@ basicPlugin = {
                args each arg ->
                   td % engine.gen{arg}
 
-      ;; "\\v <- \\value"{engine, {=> v, => value}} =
-      ;;    result =
-      ;;       match engine.gen{value}:
-      ;;          ENode? x -> x
-      ;;          x -> [% x]
-      ;;    engine.setenv{raw{v}, result <<: value}
-      ;;    ""
-
-      "\\rule => \\body"{engine, {=> rule, => body}} =
-         spec and {top, tree, specificity} = parseSpec{raw{shed{rule}}}
+      "\\rule => \\body"{engine, {rule => shed! raw! rule
+                                  body => shed! shedIndent! body}} =
+         spec and {top, tree, specificity} = parseSpec{rule}
          match tree:
             #put ->
                throw E.too_general{rule}
             #eq{#text{name}} ->
-               result =
-                  match engine.gen{body}:
-                     ENode? x -> x
-                     x -> [% x]
-               engine.setenv{name, result <<: body}
+               engine.setenv{name, body}
             else ->
                engine.register{spec} with {engine, values} ->
                   env = object with items{values} each

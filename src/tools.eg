@@ -2,7 +2,8 @@
 require:
    opg ->
       Source, Location
-   "./lang" -> parse
+   "./lang" ->
+      parse, Text, Oper, Seq
 
 provide:
    next
@@ -30,10 +31,13 @@ code{engine, x} =
    genfrom %
       generate{documents} =
          try:
-            engine.eval{raw{x}, env, x.location} or "" where
-               env = {
-                  doc and documents = documents
-               }
+            res = engine.eval{raw{x}, env, x.location} or "" where
+               env = {doc and documents = documents}
+            match res:
+               {qast => true?} ->
+                  engine.gen{res}
+               else ->
+                  res
          catch e:
             span.error % String{e}
 
@@ -62,7 +66,7 @@ parseSpec{match} =
             specificity += 1
             if [not top]:
                top = operator
-            #seq{*[args each arg -> helper{arg, opts}]}
+            Seq{*[args each arg -> helper{arg, opts}]}
       {top, rval, specificity}
    {top, rval, specificity} ->
       {top, rval, specificity}
@@ -114,7 +118,7 @@ extractor{*rules} =
 
 extract{match} =
    #seq{*args} ->
-      #seq{args[1][1], *newargs} where newargs =
+      Seq{args[1][1], *newargs} where newargs =
          enumerate{args} each
             {i, arg} when i mod 2 == 0 ->
                arg
@@ -164,7 +168,7 @@ shedIndent{match node} =
          #seq{#text{""}, #oper{"NL"}, x} ->
             x
          #seq{#text{""}, #oper{"NL"}, *rest} ->
-            #seq{*rest} &: mid
+            Seq{*rest} &: mid
          else ->
             mid
    node ->

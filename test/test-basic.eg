@@ -111,6 +111,7 @@ describe "basic rules":
    asserts "links":
       q{"quack @@ quaaack"} == "<a href=\"quaaack\">quack</a>"
       q{"quack@@quaaack"} == "<a href=\"quaaack\">quack</a>"
+      q{"quack@@this_should_be_raw"} == "<a href=\"this_should_be_raw\">quack</a>"
 
    asserts "lists":
       q{"* hello"} == "<ul><li>hello</li></ul>"
@@ -182,6 +183,8 @@ describe "basic rules":
       asserts:
          q{"[duck => quack]{duck}{duck}"} == "quackquack"
          q{"[duck => _quack]{duck}{duck}"} == "<em>quack</em><em>quack</em>"
+         q{"[duck => _quack][duck@@{duck}]"} == "<a href=\"_quack\">duck</a>"
+         q{"[duck => _quack][duck@@http://{duck}.com]"} == "<a href=\"http://_quack.com\">duck</a>"
          q{"[[\\a + \\b] => __{b}~{a}][_zig + zag]"} ==
             "<strong>zag</strong><em>zig</em>"
 

@@ -196,12 +196,8 @@ processDocuments{x, documents, maxiter = 10} =
          rval = ENode{tags, props, children} where
             tags = node.tags
             props = object with items{node.props} each {k, match v} ->
-               [genfrom %]? ->
-                  forges.add{{v, documents, replace, path ++ {k}}} where
-                     replace{x} = rval.props[k] = x
-                  {k, "PLACEHOLDER"}
-               else ->
-                  {k, v}
+               _ -> {k, populate{v, documents, replace, path ++ {k}}} where
+                  replace{x} = rval.props[k] = x
             children =
                enumerate{node.children} each {i, c} ->
                   populate{c, documents, replace, path ++ {i}} where
