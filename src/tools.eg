@@ -109,11 +109,18 @@ extractor{*rules} =
          {_, _, ex} = makeExtractor{rule}
          ruleBank[rule] = ex
          ex
-   {node} ->
+   f{node} =
       extractors each ex ->
          if [res = ex{node}]:
             return res
       return false
+   f[":::project"]{x} =
+      match f{x}:
+         === false ->
+            {false, null}
+         values ->
+            {true, values}
+   f
 
 
 extract{match} =

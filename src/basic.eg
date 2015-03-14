@@ -176,7 +176,36 @@ basicPlugin = {
             href = leng.gen{url}
             engine.gen{label}
 
-      requireWide! "\\descr % \\maybe\\contents"{engine, {=> descr, => contents}} =
+      "\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+         leng = Engine{litPlugin, false}
+         leng.evaluator = engine.evaluator.withenv{{=}}
+         img %
+            src = leng.gen{url}
+            alt = engine.gen{label}
+
+      "\\url @@ image"{engine, {url => shed! url}} =
+         leng = Engine{litPlugin, false}
+         leng.evaluator = engine.evaluator.withenv{{=}}
+         img % src = leng.gen{url}
+
+      requireWide! "\\descr % \\maybe\\contents"{engine, var {=> descr, => contents}} =
+         leng = Engine{litPlugin, false}
+         leng.evaluator = engine.evaluator.withenv{{=}}
+
+         ex = extractor{"\\key = \\value"}
+         props = {=}
+         stmts = statements{contents} each
+            ex! {key => raw! key, => value} ->
+               props[key] = leng.gen{value}
+               continue
+            stmt ->
+               stmt
+         children =
+            if props != {=}:
+               [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
+            else:
+               {engine.gen{shedIndent{contents}}}
+
          parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
          var id = null
          tags = {}
@@ -187,9 +216,8 @@ basicPlugin = {
                id = _id
             tag ->
                tags.push with tag
-         props = {=}
          if id: props.id = id
-         ENode{tags, props, {engine.gen{shedIndent{contents}}}}
+         ENode{tags, props, children}
 
       requireWide! "= \\x" = headerRule{1}
       requireWide! "== \\x" = headerRule{2}
