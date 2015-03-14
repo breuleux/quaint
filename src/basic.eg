@@ -27,7 +27,7 @@ requireWide{f}{engine, data} =
 
 headerRule{level}{engine, {=> x}} =
    gx = engine.gen{x}
-   lbl = raw{x}.replace{R.g"\W", ""}
+   lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
    rval =
       ^[S'h{level}'] %
          id = lbl
@@ -84,7 +84,7 @@ basicPlugin = {
    env{} = {
 
       css{engine, shed! body} =
-         style % raw{body}
+         style[raw] % raw{body}
 
       html{engine, shed! body} =
          raw % raw{body}
@@ -176,7 +176,7 @@ basicPlugin = {
             href = leng.gen{url}
             engine.gen{label}
 
-      requireWide! "\\descr % \\contents"{engine, {=> descr, => contents}} =
+      requireWide! "\\descr % \\maybe\\contents"{engine, {=> descr, => contents}} =
          parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
          var id = null
          tags = {}
@@ -228,10 +228,11 @@ basicPlugin = {
                engine.setenv{name, body}
             else ->
                engine.register{spec} with {engine, values} ->
-                  env = object with items{values} each
-                     {k, v} when not k.startsWith{._} ->
-                        {k, engine.gen{v}}
-                  engine.withenv{env}.gen{body}
+                  ;; env = object with items{values} each
+                  ;;    {k, v} when not k.startsWith{._} ->
+                  ;;       {k, engine.gen{v}}
+                  ;; engine.withenv{env}.gen{body}
+                  engine.withenv{values}.gen{body}
          ""
 
       ;; newline rule is a bit more complicated

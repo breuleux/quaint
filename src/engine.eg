@@ -60,11 +60,13 @@ class Dispatcher:
 
 class Engine:
 
-   constructor{Array! @plugins, setEvaluator = true} =
+   constructor{Array! plugins, setEvaluator = true} =
       @dispatch = Dispatcher{}
-      @plugins each p -> @plug{p, setEvaluator}
+      @plugins = {}
+      plugins each p -> @plug{p, setEvaluator}
 
    plug{p, setEvaluator = true} =
+      @plugins.push with p
       rules = if{p.rules, p.rules{}, {=}}
       items{rules} each {rule, match} ->
          Function? handler ->
@@ -117,7 +119,9 @@ class Engine:
       #seq{*parts} ->
          result = f{} where f{} =
             @dispatch.handlers{node} each {values, handler} ->
-               extra = {_node = node, _wide = node.width == .wide}
+               extra = {_node = node
+                        _wide = node.width == .wide
+                        _op = node[2]}
                match handler.gen{@, extra & values}:
                   == tools.next -> pass
                   result -> return result
