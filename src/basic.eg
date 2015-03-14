@@ -83,6 +83,12 @@ basicPlugin = {
 
    env{} = {
 
+      css{engine, shed! body} =
+         style % raw{body}
+
+      html{engine, shed! body} =
+         raw % raw{body}
+
       toc{engine, body} =
          genfrom %
             generate{docs} =
