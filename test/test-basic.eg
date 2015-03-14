@@ -127,12 +127,12 @@ describe "basic rules":
             r2 = "<tr><td>a</td><td>b</td><td>c</td></tr>"
 
    asserts "headers":
-      q{"= quack"} == "<h1>quack</h1>"
-      q{"== quack"} == "<h2>quack</h2>"
-      q{"=== quack"} == "<h3>quack</h3>"
-      q{"==== quack"} == "<h4>quack</h4>"
-      q{"===== quack"} == "<h5>quack</h5>"
-      q{"====== quack"} == "<h6>quack</h6>"
+      q{"= quack"} == "<h1 id=\"quack\">quack</h1>"
+      q{"== quack"} == "<h2 id=\"quack\">quack</h2>"
+      q{"=== quack"} == "<h3 id=\"quack\">quack</h3>"
+      q{"==== quack"} == "<h4 id=\"quack\">quack</h4>"
+      q{"===== quack"} == "<h5 id=\"quack\">quack</h5>"
+      q{"====== quack"} == "<h6 id=\"quack\">quack</h6>"
 
    asserts "some operators must be wide":
       q{"=quack"} == "=quack"
@@ -144,7 +144,7 @@ describe "basic rules":
 
    describe "sections document":
       getSections{docs} =
-         docs.sections.entries{} each {l, match x} ->
+         docs.sections.entries{} each {l, match x, _} ->
             String? -> {l, x}
             else -> {l, x.toHTML{}}
       it "trivial case":

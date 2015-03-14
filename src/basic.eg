@@ -27,27 +27,31 @@ requireWide{f}{engine, data} =
 
 headerRule{level}{engine, {=> x}} =
    gx = engine.gen{x}
+   lbl = raw{x}.replace{R.g"\W", ""}
    rval =
       ^[S'h{level}'] %
+         id = lbl
          gx
          genfor %
             document = .sections
-            {level, gx}
+            {level, gx, lbl}
    rval &: {block = true}
 
 
 class BasicEvaluator:
-   constructor{@store = {=}} =
+   constructor{@store = Object.create{null}} =
       pass
    eval{key, env = {=}, loc = null} =
-      s = @store & env
+      s = Object.create{@store} &: env
       if not Object.hasProperty.call{s, key}:
          throw E.not_in_environment{key}
       s[key]
    setenv{key, value} =
       @store[key] = value
    withenv{env} =
-      BasicEvaluator{@store & env}
+      newstore = Object.create{@store}
+      newstore &: env
+      BasicEvaluator{newstore}
 
 
 
@@ -82,8 +86,28 @@ basicPlugin = {
       toc{engine, body} =
          genfrom %
             generate{docs} =
-               ol % docs.sections.entries{} each
-                  {level, title} -> li % title
+               rval = [ul.toc %]
+               stack = {}
+               var cnode = rval
+               var clvl = -1
+               docs.sections.entries{} each {match, title, lbl} ->
+                  do:
+                     link = a %
+                        href = S'#{lbl}'
+                        title
+                  level == clvl or [level when clvl == -1] ->
+                     clvl = level
+                     cnode.children.push with li % link
+                  level > clvl ->
+                     newnode = ul % li % link
+                     cnode.children.push{newnode}
+                     stack.push with {clvl, cnode}
+                     {clvl, cnode} = {level, newnode}
+                  level < clvl ->
+                     while level < clvl:
+                        {clvl, cnode} = stack.pop{}
+                     cnode.children.push{li % link}
+               rval
 
       meta{engine, match body} =
          #text{.dump} ->
