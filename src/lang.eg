@@ -24,7 +24,7 @@ tokenizer = Tokenizer with {
    }
 
    post = {
-      indentTracker{calcSize}
+      indentTracker{calcSize, true}
       inferLocation
       addDefaults
       tuckWhitespace

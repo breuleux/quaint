@@ -7,7 +7,7 @@ require:
 
 provide:
    next
-   raw, code, rawOrCode
+   raw, rawRelative, dedent, code, rawOrCode
    parseSpec, makeExtractor, extractor
    ;; parseSpec2, makeExtractor2, extractor2
    extract, collapse, statements
@@ -26,6 +26,22 @@ raw{match x, operate = {x} -> x} =
          generate{path, docs} =
             raw{x.props.generate{path, docs}}
    else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
+
+rawRelative{match x} =
+   {=> location} ->
+      {{_, c}, _} = location.linecol{}
+      padding = [1..c each i -> " "].join{""}
+      padding + location.text{}
+   String? -> x
+   else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
+
+dedent{x} =
+   lines = x.split{"\n"}
+   indents = lines each R"^( *)"! {_, pfx} -> pfx.length
+   min = Math.min{*indents}
+   newlines.join{"\n"} where
+      newlines = lines each line -> line.slice{min}
+
 
 code{engine, x} =
    genfrom %

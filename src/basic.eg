@@ -5,7 +5,7 @@ require:
       transferLocation as [<<:]
    "./tools" as tools ->
       parseSpec, makeExtractor, extractor
-      raw, extract, collapse, statements
+      raw, rawRelative, dedent, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
    "./doc" ->
@@ -96,7 +96,10 @@ basicPlugin = {
                stack = {}
                var cnode = rval
                var clvl = -1
-               docs.sections.entriesAfter{path} each {match, title, lbl} ->
+               entries = match raw{body}:
+                  "" or .all -> docs.sections.entries{path}
+                  .below -> docs.sections.entriesAfter{path}
+               entries each {match, title, lbl} ->
                   do:
                      link = a %
                         href = S'#{lbl}'
@@ -119,7 +122,6 @@ basicPlugin = {
          #text{.dump} ->
             genfrom %
                generate{path, docs} =
-                  print consume{docs.meta.entries{}}
                   table % docs.meta.entries{} each
                      {k, v} -> tr %
                         td % k
@@ -166,8 +168,11 @@ basicPlugin = {
       "__ \\x"{engine, {=> x}} =
          strong % engine.gen{x}
 
-      "& \\x"{engine, {x => shed! x}} =
+      "` \\x"{engine, {x => shed! x}} =
          code % raw{x}
+
+      "& \\x"{engine, {x => shed! x}} =
+         pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
       "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
          leng = Engine{litPlugin, false}
