@@ -53,8 +53,12 @@ tokenizer = Tokenizer with {
             ;; prev.wsa and prev.wsb = 1
             prev.wsa = 1
             {tok}
-         {type => [.indent or .nl]} ->
-            prev.wsa and prev.wsb = 1
+         {type => .indent} ->
+            prev.wsa = prev.wsb
+            {tok}
+         {type => .nl} ->
+            prev.wsa = 1
+            next.wsb = 1
             {tok}
          {type => .boundary} when prev ->
             ;; prev.wsa and prev.wsb = 1
