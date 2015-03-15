@@ -61,8 +61,10 @@ tokenizer = Tokenizer with {
             next.wsb = 1
             {tok}
          {type => .boundary} when prev ->
-            ;; prev.wsa and prev.wsb = 1
             prev.wsa = 1
+            {tok}
+         {type => .boundary} when next ->
+            next.wsb = 1
             {tok}
          else ->
             {tok}
@@ -127,10 +129,14 @@ tokenizer = Tokenizer with {
                   {true?,  _  , 0}     -> {.sh_pfx, false, pad{tok}}
                   {true?,  0  , _}     -> {if{never_sfx, .wi_ifx, .sh_sfx}
                                            not never_sfx, {tok}}
+
                   {false?, 0  , 0}     -> {.sh_pfx, false,  {tok}}
                   {false?, > 0, > 0}   -> {.wi_pfx, false,  {tok}}
                   {false?, _  , 0}     -> {.sh_pfx, false,  {tok}}
-                  {false?, 0  , _}     -> {.wi_pfx, false,  {tok}}
+                  {false?,  0  , _}    -> {if{never_sfx, .wi_ifx, .wi_pfx}
+                                           false, {tok}}
+
+                  ;; {false?, 0  , _}     -> {.wi_pfx, false,  {tok}}
 
          else ->
             throw E.unknown_token_type{tok.type + " " + tok.token}

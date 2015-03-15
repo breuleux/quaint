@@ -27,7 +27,9 @@ q{txt} = eng.run{txt}.main
 tr{x, y} =
    ;; 1. x translates to y
    ;; 2. [x] translates to [y]
-   q{x} == y and q{S'[{x}]'} == S'[{y}]'
+   q{x} == y
+   \ and q{S'[{x}]'} == S'[{y}]'
+   \ and q{"\n" + x + "\n"} == "\n" + y + "\n"
 
 same{x} =
    tr{x, x}
@@ -51,7 +53,11 @@ describe "basic rules":
 
    asserts "indent":
       q{"a |\n b"} == "<a|\n b>"
-      q{"a|\n b"} == "<a|\n b>"
+      q{"a|\n b"} == "<a|>\n b"
+      q{"|\n b"} == "<|\n b>"
+      q{"| \n b"} == "<| \n b>"
+      q{"\na |\n b\n"} == "\n<a|\n b>\n"
+      q{"\n|\n b\n"} == "\n<|\n b>\n"
 
    describe "associativity":
       asserts "wide":
@@ -70,6 +76,10 @@ describe "basic rules":
       tr{"a |", "<a|>"}
       tr{"x |a", "x <|a>"}
       tr{"a| x", "<a|> x"}
+      tr{"a b|", "a <b|>"}
+      tr{"a b |", "<a b|>"}
+      tr{"|a b", "<|a> b"}
+      tr{"| a b", "<|a b>"}
 
    asserts "priority between prefix, infix and suffix":
       tr{"a|b+", "<a|b+>"}
@@ -86,6 +96,10 @@ describe "basic rules":
          tr{"a :b", "a <:b>"}
          tr{"a, b", "<a,b>"}
          tr{"a ,b", "a <,b>"}
+
+   describe "edge cases":
+      it "short suffix then comma":
+         assert tr{"a|, b", "<<a|>,b>"}
 
    xdescribe "pending":
       it "should preserve whitespace at beginning and end":
