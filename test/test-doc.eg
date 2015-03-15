@@ -95,4 +95,29 @@ describe "SeqDocument":
       @d.register{{10, 3}, 71}
       expect{0, 1, 1.5, 2.1, 71}
 
+   it "entries before":
+      expect{path, *xs} =
+         assert @d.entriesBefore{path} == xs
+      @d.register{{1}, 1}
+      @d.register{{4, 6, 1}, 2}
+      @d.register{{10, 3}, 3}
+      @d.register{{}, 0}
+      @d.register{{2}, 1.5}
+      expect{{}}
+      expect{{1}, 0}
+      expect{{1, 8}, 0, 1}
+      expect{{11}, 0, 1, 1.5, 2, 3}
+
+   it "entries after":
+      expect{path, *xs} =
+         assert @d.entriesAfter{path} == xs
+      @d.register{{1}, 1}
+      @d.register{{4, 6, 1}, 2}
+      @d.register{{10, 3}, 3}
+      @d.register{{}, 0}
+      @d.register{{2}, 1.5}
+      expect{{}, 1, 1.5, 2, 3}
+      expect{{1, 8}, 1.5, 2, 3}
+      expect{{11}}
+
 

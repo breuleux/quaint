@@ -73,4 +73,10 @@ class SeqDocument{BasicDocument}:
    entries{} =
       @accessed = true
       @data each {_, e} -> e
+   entriesBefore{path} =
+      @accessed = true
+      @data each {p, e} when comparePaths{p, path} < 0 -> e
+   entriesAfter{path} =
+      @accessed = true
+      @data each {p, e} when comparePaths{p, path} > 0 -> e
 

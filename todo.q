@@ -18,6 +18,9 @@
     and reruns code when needed.
 * plugin system
 * Order candidates by pattern specificity
+* Fix short suffix operator when at the end of a line (it is interpreted
+  as wide in case there is an indented block below...)
+* Fix short suffix operator when right before comma, e.g. blah//, things.
 
 
 == ABANDONED

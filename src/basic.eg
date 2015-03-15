@@ -91,12 +91,12 @@ basicPlugin = {
 
       toc{engine, body} =
          genfrom %
-            generate{docs} =
+            generate{path, docs} =
                rval = [ul.toc %]
                stack = {}
                var cnode = rval
                var clvl = -1
-               docs.sections.entries{} each {match, title, lbl} ->
+               docs.sections.entriesAfter{path} each {match, title, lbl} ->
                   do:
                      link = a %
                         href = S'#{lbl}'
@@ -118,7 +118,7 @@ basicPlugin = {
       meta{engine, match body} =
          #text{.dump} ->
             genfrom %
-               generate{docs} =
+               generate{path, docs} =
                   print consume{docs.meta.entries{}}
                   table % docs.meta.entries{} each
                      {k, v} -> tr %

@@ -23,13 +23,13 @@ raw{match x, operate = {x} -> x} =
    String? -> operate{x}
    [genfrom %]? ->
       genfrom %
-         generate{docs} =
-            raw{x.props.generate{docs}}
+         generate{path, docs} =
+            raw{x.props.generate{path, docs}}
    else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
 
 code{engine, x} =
    genfrom %
-      generate{documents} =
+      generate{path, documents} =
          try:
             res = engine.eval{raw{x}, env, x.location} or "" where
                env = {doc and documents = documents}
