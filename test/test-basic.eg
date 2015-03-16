@@ -97,12 +97,17 @@ describe "basic rules":
       q{"the~_tiger~pounces"} == "the<em>tiger</em>pounces"
 
    asserts "code":
-      q{"& quack quack"} == "<code>quack quack</code>"
-      q{"&quack"} == "<code>quack</code>"
-      q{"&[quack]"} == "<code>quack</code>"
-      q{"&[quack]quack"} == "<code>[quack]quack</code>"
-      q{"&[[quack]]"} == "<code>[quack]</code>"
-      q{"&{quack}"} == "<code>{quack}</code>"
+      q{"` quack quack"} == "<code>quack quack</code>"
+      q{"`quack"} == "<code>quack</code>"
+      q{"`[quack]"} == "<code>quack</code>"
+      q{"`[quack]quack"} == "<code>[quack]quack</code>"
+      q{"`[[quack]]"} == "<code>[quack]</code>"
+      q{"`{quack}"} == "<code>{quack}</code>"
+
+   asserts "pre":
+      q{"& quack quack"} == "<pre>quack quack</pre>"
+      q{"& quack\n  quack"} == "<pre>quack\nquack</pre>"
+      q{"& quack\n    quack"} == "<pre>quack\n  quack</pre>"
 
    asserts "emphasis":
       q{"_quack"} == "<em>quack</em>"
