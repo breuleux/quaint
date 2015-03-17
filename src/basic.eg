@@ -120,6 +120,9 @@ basicPlugin{@} =
                   {raw{key}, value}
    }
 
+   @lit{} = @forkPlug{litPlugin}
+   @litgen{x} = @lit{}.gen{x}
+
    @registerRule with {
 
       "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
@@ -158,23 +161,20 @@ basicPlugin{@} =
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
       "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
-         leng = engine.fork{}.plug{litPlugin}
          a %
-            href = leng.gen{url}
+            href = engine.litgen{url}
             engine.gen{label}
 
       "\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
-         leng = engine.fork{}.plug{litPlugin}
          img %
-            src = leng.gen{url}
+            src = engine.litgen{url}
             alt = engine.gen{label}
 
       "\\url @@ image"{engine, {url => shed! url}} =
-         leng = engine.fork{}.plug{litPlugin}
-         img % src = leng.gen{url}
+         img % src = engine.litgen{url}
 
       requireWide! "\\descr % \\maybe\\contents"{engine, var {=> descr, => contents}} =
-         leng = engine.fork{}.plug{litPlugin}
+         leng = engine.lit{}
 
          ex = extractor{"\\key = \\value"}
          props = {=}

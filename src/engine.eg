@@ -66,11 +66,14 @@ class Engine:
    constructor{Array! plugins} =
       @dispatch = Dispatcher{}
       @documentMakers = {=}
-      plugins each p -> @plug{p}
+      @plug{*plugins}
 
-   plug{{installTo => f} or Function? f} =
-      f{@}
+   forkPlug{*plugins} =
+      @fork{}.plug{*plugins}
 
+   plug{*plugins} =
+      plugins each {installTo => f} or Function? f -> f{@}
+      @
 
    genDocuments{clone! docs} =
       items{@documentMakers} each {name, maker} when not docs[name] ->
