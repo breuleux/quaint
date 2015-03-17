@@ -12,8 +12,6 @@ require:
       SeqDocument, MapDocument
    "./util" ->
       insertSorted
-   "./engine" ->
-      Engine
 
 provide:
    basicPlugin
@@ -48,41 +46,30 @@ class BasicEvaluator:
       s[key]
    setenv{key, value} =
       @store[key] = value
-   withenv{env} =
-      newstore = Object.create{@store}
-      newstore &: env
-      BasicEvaluator{newstore}
+   fork{} =
+      BasicEvaluator with
+         Object.create{@store}
 
 
 
-litPlugin = {
-   documents{} = {
-      sections = SeqDocument{}
-   }
-
-   evaluator = BasicEvaluator
-
-   regexps{} = {
-   }
-
-   rules{} = {
+litPlugin{@} =
+   @clearRules{}
+   @registerRule with {
       "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
    }
-}
 
 
-basicPlugin = {
+basicPlugin{@} =
 
-   documents{} = {
-      meta = MapDocument{}
-      sections = SeqDocument{}
+   @registerDocument with {
+      meta = MapDocument
+      sections = SeqDocument
    }
 
-   evaluator = BasicEvaluator
+   @evaluator = BasicEvaluator{}
 
-   env{} = {
-
+   @setenv with {
       css{engine, shed! body} =
          style[raw] % raw{body}
 
@@ -131,13 +118,9 @@ basicPlugin = {
             ENode{{.genfor}, {document = .meta}} with
                statements{body} each ex! {=> key, => value} ->
                   {raw{key}, value}
-
    }
 
-   regexps{} = {
-   }
-
-   rules{} = {
+   @registerRule with {
 
       "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
          beg = raw{o}.replace{"[", ""}
@@ -175,27 +158,23 @@ basicPlugin = {
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
       "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
-         leng = Engine{litPlugin, false}
-         leng.evaluator = engine.evaluator.withenv{{=}}
+         leng = engine.fork{}.plug{litPlugin}
          a %
             href = leng.gen{url}
             engine.gen{label}
 
       "\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
-         leng = Engine{litPlugin, false}
-         leng.evaluator = engine.evaluator.withenv{{=}}
+         leng = engine.fork{}.plug{litPlugin}
          img %
             src = leng.gen{url}
             alt = engine.gen{label}
 
       "\\url @@ image"{engine, {url => shed! url}} =
-         leng = Engine{litPlugin, false}
-         leng.evaluator = engine.evaluator.withenv{{=}}
+         leng = engine.fork{}.plug{litPlugin}
          img % src = leng.gen{url}
 
       requireWide! "\\descr % \\maybe\\contents"{engine, var {=> descr, => contents}} =
-         leng = Engine{litPlugin, false}
-         leng.evaluator = engine.evaluator.withenv{{=}}
+         leng = engine.fork{}.plug{litPlugin}
 
          ex = extractor{"\\key = \\value"}
          props = {=}
@@ -260,12 +239,9 @@ basicPlugin = {
             #eq{#text{name}} ->
                engine.setenv{name, body}
             else ->
-               engine.register{spec} with {engine, values} ->
-                  ;; env = object with items{values} each
-                  ;;    {k, v} when not k.startsWith{._} ->
-                  ;;       {k, engine.gen{v}}
-                  ;; engine.withenv{env}.gen{body}
-                  engine.withenv{values}.gen{body}
+               engine.registerRule{spec} with {engine, values} ->
+                  engine.fork{}.setenv{values}.gen{body}
+
          ""
 
       ;; newline rule is a bit more complicated
@@ -325,6 +301,4 @@ basicPlugin = {
                   result
                else ->
                   [% results] &: {block = Boolean! wide}
-
    }
-}

@@ -42,14 +42,17 @@ class Dispatcher:
                      pass
             false
 
-   register{handler} =
-      key = handler.operator
-      l = [@dispatch[key] or= {}]
-      insertSorted{l, handler} with
-         {{specificity => match s1}, {specificity => s2}} ->
-            ;; Do not return 0 because it will cause a replacement
-            > s2 -> -1
-            else -> 1
+   register{*match} =
+      {Spec? handler} ->
+         key = handler.operator
+         l = [@dispatch[key] or= {}]
+         insertSorted{l, handler} with
+            {{specificity => match s1}, {specificity => s2}} ->
+               ;; Do not return 0 because it will cause a replacement
+               > s2 -> -1
+               else -> 1
+      {rule, fn} ->
+         @register{Spec{rule, fn}}
 
    clone{} =
       d = Dispatcher{}
@@ -60,31 +63,20 @@ class Dispatcher:
 
 class Engine:
 
-   constructor{Array! plugins, setEvaluator = true} =
+   constructor{Array! plugins} =
       @dispatch = Dispatcher{}
-      @plugins = {}
-      plugins each p -> @plug{p, setEvaluator}
+      @documentMakers = {=}
+      plugins each p -> @plug{p}
 
-   plug{p, setEvaluator = true} =
-      @plugins.push with p
-      rules = if{p.rules, p.rules{}, {=}}
-      items{rules} each {rule, match} ->
-         Function? handler ->
-            @dispatch.register{Spec{rule, handler}}
-         {rule, handler} ->
-            @dispatch.register{Spec{rule, handler}}
+   plug{{installTo => f} or Function? f} =
+      f{@}
 
-      if setEvaluator:
-         if p.evaluator:
-            @evaluator = p.evaluator{}
-         env = if{p.env, p.env{}, {=}}
-         items{env} each {k, v} -> @setenv{k, v}
 
-   makeDocuments{} =
-      acc = {=}
-      @plugins each p when p.documents ->
-         acc &: p.documents{}
-      acc
+   genDocuments{clone! docs} =
+      items{@documentMakers} each {name, maker} when not docs[name] ->
+         docs[name] = maker{}
+      docs
+
 
    run{src, documents = {=}} =
 
@@ -102,7 +94,7 @@ class Engine:
          null? ->
             {main = generated}
          else ->
-            docs = @makeDocuments{} & documents
+            docs = @genDocuments{documents}
             main = processDocuments{generated, docs}
             docs &: {= main}
 
@@ -139,23 +131,58 @@ class Engine:
       @plug with {rules{} = {rule = {spec, dispatcher}}}
       @
 
-   ;; registerAll{entries} =
-   ;;    items{entries} each {spec, dispatcher} ->
-   ;;       @register{spec, dispatcher}
-   ;;    @
+   registerAll{entries} =
+      items{entries} each {spec, dispatcher} ->
+         @register{spec, dispatcher}
+      @
+
+
+   clearRules{} =
+      @dispatch = Dispatcher{}
+
+
+   registerRule{*match} =
+      {rule, handler} ->
+         @dispatch.register{rule, handler}
+         @
+      {rules} ->
+         items{rules} each {name, match} ->
+            Function? handler ->
+               @registerRule{name, handler}
+            {rule, handler} ->
+               @registerRule{rule, handler}
+         @
+
+
+   registerDocument{*match} =
+      {name, maker} ->
+         @documentMakers[name] = maker
+         @
+      {docs} ->
+         items{docs} each {name, maker} ->
+            @documentMakers[name] = maker
+         @
+
+
+   fork{} =
+      e = Engine{{}}
+      e.dispatch = @dispatch.clone{}
+      e.documentMakers = clone{@documentMakers}
+      e.evaluator = @evaluator.fork{}
+      e
+
 
    eval{text, env, loc = null} =
       @evaluator.eval{text, env, loc}
 
-   setenv{name, value} =
-      @evaluator.setenv{name, value}
-      @
-
-   withenv{env} =
-      ;; @evaluator.setenv{name, value}
-      eng = Engine{@plugins, false}
-      eng.evaluator = @evaluator.withenv{env}
-      eng
+   setenv{*match} =
+      {name, value} ->
+         @evaluator.setenv{name, value}
+         @
+      {env} ->
+         items{env} each {k, v} ->
+            @setenv{k, v}
+         @
 
 
 class Spec:

@@ -27,27 +27,30 @@ describe "engine":
             q{"a + y -- z"} == "rule 3"
 
       describe "more specific declared first":
-         testit with Engine{= rules} where rules = {
-            "\\a + \\b"{*} = "rule 1"
-            "\\a + \\b -- \\c"{*} = "rule 2"
-            "a + \\b"{*} = "rule 3"
-         }
+         testit with Engine with {@} ->
+            @registerRule with {
+               "\\a + \\b"{*} = "rule 1"
+               "\\a + \\b -- \\c"{*} = "rule 2"
+               "a + \\b"{*} = "rule 3"
+            }
       describe "more specific declared last":
-         testit with Engine{= rules} where rules = {
-            "a + \\b"{*} = "rule 3"
-            "\\a + \\b -- \\c"{*} = "rule 2"
-            "\\a + \\b"{*} = "rule 1"
-         }
+         testit with Engine with {@} ->
+            @registerRule with {
+               "a + \\b"{*} = "rule 3"
+               "\\a + \\b -- \\c"{*} = "rule 2"
+               "\\a + \\b"{*} = "rule 1"
+            }
 
    describe "a rule can pass execution to the next":
 
       describe "more specific to less specific":
-         let eng = Engine{= rules} where rules = {
-            "\\a + \\b -- \\c"{_, {a => match}} =
-               #text{"hello"} -> "rule 1"
-               else -> tools.next
-            "\\a + \\b"{*} = "rule 2"
-         }
+         let eng = Engine with {@} ->
+            @registerRule with {
+               "\\a + \\b -- \\c"{_, {a => match}} =
+                  #text{"hello"} -> "rule 1"
+                  else -> tools.next
+               "\\a + \\b"{*} = "rule 2"
+            }
          let q{txt} =
             eng.run{txt}.main
          asserts:
@@ -55,12 +58,13 @@ describe "engine":
             q{"allo + monde -- youpi"} == "rule 2"
 
       describe "second rule goes before first, does not replace it":
-         let eng = Engine{= rules} where rules = {
-            one = {"\\a + \\b", f} where f{*} = "rule 1"
-            two = {"\\a + \\b", f} where f{_, {a => match}} =
-               #text{"hello"} -> "rule 2"
-               else -> tools.next
-         }
+         let eng = Engine with {@} ->
+            @registerRule with {
+               one = {"\\a + \\b", f} where f{*} = "rule 1"
+               two = {"\\a + \\b", f} where f{_, {a => match}} =
+                  #text{"hello"} -> "rule 2"
+                  else -> tools.next
+            }
          let q{txt} =
             eng.run{txt}.main
          asserts:
