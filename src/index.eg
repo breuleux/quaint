@@ -22,6 +22,7 @@ provide:
    processDocuments
    tools
 
+   toHTML2
 
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
@@ -34,3 +35,7 @@ toENode{text} =
 toHTML{toENode! match} =
    String? s -> s
    e -> e.toHTML{}
+
+toHTML2{text} =
+   defaultEngine.translate{text, .html}
+

@@ -11,6 +11,7 @@ require:
       SeqDocument
    "./util" ->
       insertSorted
+      transform
 
 provide:
    Dispatcher
@@ -66,6 +67,8 @@ class Engine:
    constructor{Array! plugins} =
       @dispatch = Dispatcher{}
       @documentMakers = {=}
+      @regexps = {}
+      @methods = {}
       @plug{*plugins}
 
    forkPlug{*plugins} =
@@ -79,6 +82,37 @@ class Engine:
       items{@documentMakers} each {name, maker} when not docs[name] ->
          docs[name] = maker{}
       docs
+
+
+   .gen{match node} =
+      
+      #text{t} or #oper{t} ->
+         l = node.location
+         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
+         node.location.text{}.replace{r} with {match} ->
+            "~" -> ""
+            s -> s[1]
+
+      #seq{*parts} ->
+         result = f{} where f{} =
+            @dispatch.handlers{node} each {values, handler} ->
+               extra = {_node = node
+                        _wide = node.width == .wide
+                        _op = node[2]}
+               match handler.gen{@, extra & values}:
+                  == tools.next -> pass
+                  result -> return result
+            % [parts each part -> @gen{part}]
+
+         ;; match result:
+         ;;    ENode? {tags => {}, props => == {=}, => children} or Array? children
+         ;;    \ when children.every{x -> String? x} ->
+         ;;       r = children.join{""}
+         ;;       if{result.block, % r, r}
+         ;;    else ->
+         ;;       result
+
+         result
 
 
    run{src, documents = {=}} =
@@ -102,47 +136,83 @@ class Engine:
             docs &: {= main}
 
 
-   .gen{match node} =
-      
-      #text{t} or #oper{t} ->
-         l = node.location
-         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
-         node.location.text{}.replace{r} with {match} ->
-            "~" -> ""
-            s -> s[1]
+   translate{src, format, options = {=}} =
 
-      #seq{*parts} ->
-         result = f{} where f{} =
-            @dispatch.handlers{node} each {values, handler} ->
-               extra = {_node = node
-                        _wide = node.width == .wide
-                        _op = node[2]}
-               match handler.gen{@, extra & values}:
-                  == tools.next -> pass
-                  result -> return result
-            % [parts each part -> @gen{part}]
+      ;; stash = {}
 
-         match result:
-            ENode? {tags => {}, props => == {=}, => children} or Array? children
-            \ when children.every{x -> String? x} ->
-               r = children.join{""}
-               if{result.block, % r, r}
-            else ->
-               result
+      ;; crossReplace{children, regexps, ndone = 0} =
+      ;;    if regexps 
+      ;;    s = xs.join{""} where xs = children each
+      ;;       String? s -> s
+      ;;       other ->
+      ;;          stash.push with other
+      ;;          S'#{stash.length - 1}#'
 
-   register{spec, dispatcher} =
-      @plug with {rules{} = {rule = {spec, dispatcher}}}
-      @
+      finalize{match, ndone} =
+         var String? s ->
+            enumerate{@regexps.slice{ndone}} each {i, {r, match repl}} ->
+               String? ->
+                  s = s.replace{r, repl}
+               Function? f or f is [-> repl] ->
+                  parts = {}
+                  var index = 0
+                  var curr = null
+                  while [curr = r.exec{s}]:
+                     parts.push{s[index...curr.index]}
+                     index = curr.index + curr[0].length
+                     parts.push{f{*curr}}
+                     if not "g" in r.flags:
+                        break
+                  parts.push{s.slice{index}}
+                  return collapse{parts, ndone + i + 1}
+            s
+         x -> x
 
-   registerAll{entries} =
-      items{entries} each {spec, dispatcher} ->
-         @register{spec, dispatcher}
-      @
+      collapse{match, ndone = 0} =
+
+         ENode? {tags => {}, props => == {=}, => children} or Array? children ->
+            fn{*match} =
+               {String? s, String? t} ->
+                  #replace{s + t}
+               {x, ENode? {tags => {}, props => == {=}, => children} or Array? children} ->
+                  #splice{*children}
+               {x, y} ->
+                  #push{collapse{y}}
+            r = transform{children, fn, ""}
+            r each x -> finalize{x, ndone}
+
+         ENode? {=> tags, => props, => children} ->
+            ENode{tags, props, collapse{children}}
+
+         x -> x
+
+      documents = options.documents or {=}
+      results = @run{src, documents}
+      main = collapse{top % results.main}
+
+      match format:
+         .text -> main.toString{}
+         .html -> main.toHTML{}
+         .dom -> main.toHTML{.dom}
+
+
+   registerMethods{methods} =
+      @methods ++= keys{methods}
+      this &: methods
+
+
+   registerReplace{*match} =
+      {match expr, repl} ->
+         String? ->
+            @regexps.push{{RegExp{expr, "g"}, repl}}
+         RegExp? ->
+            @regexps.push{{expr, repl}}
+      {each {expr, repl}} ->
+         @registerReplace{expr, repl}
 
 
    clearRules{} =
       @dispatch = Dispatcher{}
-
 
    registerRule{*match} =
       {rule, handler} ->
@@ -172,6 +242,9 @@ class Engine:
       e.dispatch = @dispatch.clone{}
       e.documentMakers = clone{@documentMakers}
       e.evaluator = @evaluator.fork{}
+      e.regexps = clone{@regexps}
+      e.methods = clone{@methods}
+      e.methods each m -> e[m] = this[m]
       e
 
 

@@ -120,8 +120,10 @@ basicPlugin{@} =
                   {raw{key}, value}
    }
 
-   @lit{} = @forkPlug{litPlugin}
-   @litgen{x} = @lit{}.gen{x}
+   @registerMethods with {
+      lit{} = this.forkPlug{litPlugin}
+      litgen{x} = this.lit{}.gen{x}
+   }
 
    @registerRule with {
 
@@ -232,15 +234,20 @@ basicPlugin{@} =
 
       "\\rule => \\body"{engine, {rule => shed! raw! rule
                                   body => shed! shedIndent! body}} =
-         spec and {top, tree, specificity} = parseSpec{rule}
-         match tree:
-            #put ->
-               throw E.too_general{rule}
-            #eq{#text{name}} ->
-               engine.setenv{name, body}
-            else ->
-               engine.registerRule{spec} with {engine, values} ->
+         match rule:
+            R"^/(.*)/$"! {_, regexp} ->
+               engine.registerReplace{regexp} with {*matches} ->
+                  values = object with enumerate{matches} each
+                     {i, m} -> {S'm{i}', m}
                   engine.fork{}.setenv{values}.gen{body}
+            parseSpec! [spec and {top, match tree, specificity}] ->
+               #put ->
+                  throw E.too_general{rule}
+               #eq{#text{name}} ->
+                  engine.setenv{name, body}
+               else ->
+                  engine.registerRule{spec} with {engine, values} ->
+                     engine.fork{}.setenv{values}.gen{body}
 
          ""
 

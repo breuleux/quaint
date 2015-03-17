@@ -23,7 +23,7 @@ eng = Engine with {@} ->
          % ["<", engine.gen{a}, ",", engine.gen{b}, ">"]
    }
 
-q{txt} = eng.run{txt}.main
+q{txt} = eng.translate{txt, .text}
 
 tr{x, y} =
    ;; 1. x translates to y

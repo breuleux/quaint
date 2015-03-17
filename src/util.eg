@@ -2,6 +2,7 @@
 
 provide:
    findInsert, insertSorted, deleteSorted
+   group, transform
 
 
 findInsert{xs, x, ord} =
@@ -23,4 +24,34 @@ deleteSorted{xs, x, ord} =
    {idx, replace} = findInsert{xs, x, ord}
    if replace:
       xs.splice{idx, if{replace, 1, 0}}
+
+
+group{xs, classify} =
+   transform{xs, f, {}} where f{match current, x and classify! cls} =
+      {} ->
+         current.push{cls, x}, #replace{current}
+      {== cls, *} ->
+         current.push{x}, #replace{current}
+      else ->
+         #push{{cls, x}}
+
+transform{xs, control, init = null} =
+   results = {}
+   var current = init
+   var pushc = false
+   helper{x} =
+      match control{current, x}:
+         #push{v} ->
+            results.push{current}
+            current = v
+            pushc = true
+         #replace{v} ->
+            current = v
+            pushc = true
+         #splice{*[elems each elem]} ->
+            helper{elem}
+   xs each x -> helper{x}
+   if pushc:
+      results.push{current}
+   results
 
