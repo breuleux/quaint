@@ -191,6 +191,7 @@ class Engine:
       main = collapse{top % results.main}
 
       match format:
+         .enode -> main
          .text -> main.toString{}
          .html -> main.toHTML{}
          .dom -> main.toHTML{.dom}

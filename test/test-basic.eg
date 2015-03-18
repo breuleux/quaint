@@ -10,7 +10,8 @@ require:
    "../src/index" ->
       toHTML as q
       Engine
-      defaultEngine as eng
+      create{} as eng
+      ;; defaultengine as eng
    "../src/tools" as tools
 
 

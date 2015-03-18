@@ -17,25 +17,16 @@ provide:
    Location, Source
    Engine
    create
-   defaultEngine
    toENode, toHTML
    processDocuments
    tools
 
-   toHTML2
-
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
 
-defaultEngine = create{}
-
 toENode{text} =
-   defaultEngine.run{text}.main
+   create{}.translate{text, .enode}
 
-toHTML{toENode! match} =
-   String? s -> s
-   e -> e.toHTML{}
-
-toHTML2{text} =
-   defaultEngine.translate{text, .html}
+toHTML{text} =
+   create{}.translate{text, .html}
 
