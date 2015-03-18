@@ -211,6 +211,7 @@ describe "basic rules":
 
 
    describe "macros":
+
       asserts:
          q{"[duck => quack]{duck}{duck}"} == "quackquack"
          q{"[duck => _quack]{duck}{duck}"} == "<em>quack</em><em>quack</em>"
@@ -219,4 +220,7 @@ describe "basic rules":
          q{"[[\\a + \\b] => __{b}~{a}][_zig + zag]"} ==
             "<strong>zag</strong><em>zig</em>"
 
+      asserts "define after use":
+         q{"{duck}{duck}[duck => quack]"} == "quackquack"
+         q{"{duck}{duck}[duck => _quack]"} == "<em>quack</em><em>quack</em>"
 
