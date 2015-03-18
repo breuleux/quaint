@@ -66,7 +66,7 @@ class Engine:
 
    constructor{Array! plugins} =
       @dispatch = Dispatcher{}
-      @documentMakers = {=}
+      @documents = {=}
       @regexps = {}
       @methods = {}
       @plug{*plugins}
@@ -78,10 +78,10 @@ class Engine:
       plugins each {installTo => f} or Function? f -> f{@}
       @
 
-   genDocuments{clone! docs} =
-      items{@documentMakers} each {name, maker} when not docs[name] ->
-         docs[name] = maker{}
-      docs
+   ;; genDocuments{clone! docs} =
+   ;;    items{@documentMakers} each {name, maker} when not docs[name] ->
+   ;;       docs[name] = maker{}
+   ;;    docs
 
 
    .gen{match node} =
@@ -115,25 +115,25 @@ class Engine:
          result
 
 
-   run{src, documents = {=}} =
+   run{src} =
 
       generated =
          match src:
             String? text ->
-               return @run{Source{text, "<quaint>"}, documents}
+               return @run{Source{text, "<quaint>"}}
             Source? src ->
                parsed = parse{src}
                @gen{parsed}
             node ->
                @gen{node}
 
-      match documents:
-         null? ->
-            {main = generated}
-         else ->
-            docs = @genDocuments{documents}
-            main = processDocuments{generated, docs}
-            docs &: {= main}
+      ;; match documents:
+      ;;    null? ->
+      ;;       {main = generated}
+      ;;    else ->
+      docs = @documents ;; @genDocuments{documents}
+      main = processDocuments{generated, docs}
+      docs &: {= main}
 
 
    translate{src, format, options = {=}} =
@@ -230,11 +230,11 @@ class Engine:
 
    registerDocument{*match} =
       {name, maker} ->
-         @documentMakers[name] = maker
+         @documents[name] = maker
          @
       {docs} ->
          items{docs} each {name, maker} ->
-            @documentMakers[name] = maker
+            @documents[name] = maker
          @
 
 

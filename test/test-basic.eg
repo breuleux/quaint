@@ -10,9 +10,12 @@ require:
    "../src/index" ->
       toHTML as q
       Engine
-      create{} as eng
+      create
       ;; defaultengine as eng
    "../src/tools" as tools
+
+run{text} =
+   create{}.run{text}
 
 
 describe "engine":
@@ -158,10 +161,10 @@ describe "basic rules":
             String? -> {l, x}
             else -> {l, x.toHTML{}}
       it "trivial case":
-         docs = eng.run{"= quack"}
+         docs = run{"= quack"}
          assert getSections{docs} == {{1, "quack"}}
       it "preserve markup":
-         docs = eng.run{"= _quack"}
+         docs = run{"= _quack"}
          assert getSections{docs} == {{1, "<em>quack</em>"}}
       it "complex document":
          src = """
@@ -180,7 +183,7 @@ describe "basic rules":
          == six
          the end
          """
-         docs = eng.run{src}
+         docs = run{src}
          assert getSections{docs} == {
             {1, "one"}
             {2, "two"}
@@ -196,14 +199,14 @@ describe "basic rules":
    describe "meta":
       getMeta{docs} =
          object with docs.meta.entries{} each {l, x} ->
-            match eng.gen{x}:
+            match q{x}:
                String? x -> {l, x}
                x -> {l, x.toHTML{}}
       it "works":
-         docs = eng.run{"meta ::\n a = X\n b = Y"}
+         docs = run{"meta ::\n a = X\n b = Y"}
          assert getMeta{docs} == {a = "X", b = "Y"}
       it "preserves markup":
-         docs = eng.run{"meta ::\n a = _zazz\n b = Y"}
+         docs = run{"meta ::\n a = _zazz\n b = Y"}
          assert getMeta{docs} == {a = "<em>zazz</em>", b = "Y"}
 
 

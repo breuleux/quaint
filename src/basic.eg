@@ -63,8 +63,8 @@ litPlugin{@} =
 basicPlugin{@} =
 
    @registerDocument with {
-      meta = MapDocument
-      sections = SeqDocument
+      meta = MapDocument{}
+      sections = SeqDocument{}
    }
 
    @evaluator = BasicEvaluator{}
