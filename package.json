@@ -1,12 +1,17 @@
 {
   "name": "quaint",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "format": "cjs",
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
-      "earlgrey-runtime": ">= 0.0.3",
-      "opg": ">= 0.0.2"
+      "earlgrey-runtime": ">=0.0.5",
+      "opg": ">=0.0.3"
+  },
+  "devDependencies": {
+    "earlgrey": ">=0.0.1",
+    "mocha": "^2.2.1",
+    "grey-mocha": ">=0.0.1"
   },
   "scripts": {
     "test": "mocha"
