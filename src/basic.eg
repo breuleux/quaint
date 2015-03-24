@@ -105,19 +105,30 @@ basicPlugin{@} =
                      cnode.children.push{li % link}
                rval
 
-      meta{engine, match body} =
-         #text{.dump} ->
+      meta{engine, body} =
+         r = raw{body}
+         if r == "dump!":
             genfrom %
                generate{path, docs} =
                   table % docs.meta.entries{} each
                      {k, v} -> tr %
                         td % k
                         td % engine.gen{v}
-         else ->
+         elif "=" in raw{body}:
             ex = extractor{"\\key = \\value"}
             ENode{{.genfor}, {document = .meta}} with
                statements{body} each ex! {=> key, => value} ->
                   {raw{key}, value}
+         else:
+            genfrom %
+               generate{path, docs} =
+                  match docs.meta.get{r}:
+                     undefined? ->
+                        'No meta information: {r}'
+                     ENode? x or String? x ->
+                        x
+                     node ->
+                        engine.gen{node}
    }
 
    @registerMethods with {

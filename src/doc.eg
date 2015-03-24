@@ -37,6 +37,9 @@ class MapDocument{BasicDocument}:
       @modified = true
       pairs each {key, value} ->
          @data.set{key, value}
+   .has{key} =
+      @accessed = true
+      @data.has{key}
    .get{key} =
       @accessed = true
       @data.get{key}

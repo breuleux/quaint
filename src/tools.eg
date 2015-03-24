@@ -230,7 +230,7 @@ blockElements = [object with elems.split{R"[\n ]+"} each x -> {x, true}] where
       ul
       video
       html head body link script
-      top
+      raw top
    """
 
 normalize{match node} =
