@@ -13,6 +13,7 @@ provide:
    extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
+   normalize
 
 
 next = Symbol{.next}
@@ -212,3 +213,45 @@ mergeable{tag, child, block = true} =
    node
 
 
+blockElements = [object with elems.split{R"[\n ]+"} each x -> {x, true}] where
+   elems = """
+      address article aside audio
+      blockquote
+      canvas
+      dd div dl
+      fieldset figcaption figure footer form
+      h1 h2 h3 h4 h5 h6 header hgroup hr
+      main
+      nav noscript
+      ol output
+      p pre
+      section
+      table tfoot
+      ul
+      video
+      html head body link script
+      top
+   """
+
+normalize{match node} =
+   ENode? {tags => {.p}, props => == {=}, children => {R"^[\n ]*$"?} or {}} ->
+      ""
+   ENode? {tags => match tags, props => props == {=}, => children} ->
+      {.p} ->
+         ch = normalize{children}
+         ch each
+            ENode? {=> tags} when tags.some{t -> blockElements[t]} ->
+               return ch
+            else ->
+               pass
+         ENode{tags, props, ch}
+      else ->
+         ENode{tags, props, normalize{children}}
+   Array? children ->
+      var res = {}
+      children each normalize! match ->
+         Array? a -> res ++= a
+         other -> res.push{other}
+      res
+   else ->
+      node

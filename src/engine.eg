@@ -7,6 +7,7 @@ require:
       parse
    "./tools" as tools ->
       makeExtractor
+      normalize
    "./doc" ->
       SeqDocument
    "./util" ->
@@ -136,6 +137,7 @@ class Engine:
       docs &: {= main}
 
 
+
    translate{src, format, options = {=}} =
 
       ;; stash = {}
@@ -186,9 +188,9 @@ class Engine:
 
          x -> x
 
-      documents = options.documents or {=}
-      results = @run{src, documents}
-      main = collapse{top % results.main}
+      ;; documents = options.documents or {=}
+      results = @run{src} ;;, documents}
+      main = normalize{collapse{top % results.main}}
 
       match format:
          .enode -> main
