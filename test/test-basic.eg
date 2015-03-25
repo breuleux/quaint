@@ -6,6 +6,8 @@ requireMacros:
       assert, asserts
 
 require:
+   "../src/lang" ->
+      QAst, Text, Oper, Seq
    "../src/index" ->
       toHTML as q
       Engine
@@ -50,7 +52,7 @@ describe "engine":
          let eng = Engine with {@} ->
             @registerRule with {
                "\\a + \\b -- \\c"{_, {a => match}} =
-                  #text{"hello"} -> "rule 1"
+                  Text? {"hello"} -> "rule 1"
                   else -> tools.next
                "\\a + \\b"{*} = "rule 2"
             }
@@ -65,7 +67,7 @@ describe "engine":
             @registerRule with {
                one = {"\\a + \\b", f} where f{*} = "rule 1"
                two = {"\\a + \\b", f} where f{_, {a => match}} =
-                  #text{"hello"} -> "rule 2"
+                  Text? {"hello"} -> "rule 2"
                   else -> tools.next
             }
          let q{txt} =

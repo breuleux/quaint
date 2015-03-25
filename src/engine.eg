@@ -5,6 +5,7 @@ require:
       Source
    "./lang" ->
       parse
+      QAst, Text, Oper, Seq
    "./tools" as tools ->
       makeExtractor
       normalize
@@ -87,14 +88,14 @@ class Engine:
 
    .gen{match node} =
       
-      #text{t} or #oper{t} ->
+      Text? {t} or Oper? {t} ->
          l = node.location
          r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
          node.location.text{}.replace{r} with {match} ->
             "~" -> ""
             s -> s[1]
 
-      #seq{*parts} ->
+      Seq? {*parts} ->
          result = f{} where f{} =
             @dispatch.handlers{node} each {values, handler} ->
                extra = {_node = node

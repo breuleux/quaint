@@ -12,6 +12,8 @@ require:
       SeqDocument, MapDocument
    "./util" ->
       insertSorted
+   "./lang" ->
+      QAst, Text, Oper, Seq
 
 provide:
    basicPlugin
@@ -138,7 +140,7 @@ basicPlugin{@} =
 
    @registerRule with {
 
-      "[\\maybe\\x]"{engine, {_node => #seq{_, o, x, c, _}}} =
+      "[\\maybe\\x]"{engine, {_node => Seq? {_, o, x, c, _}}} =
          beg = raw{o}.replace{"[", ""}
          middle = engine.gen{x}
          end = raw{c}.replace{"]", ""}
@@ -254,7 +256,7 @@ basicPlugin{@} =
             parseSpec! [spec and {top, match tree, specificity}] ->
                #put ->
                   throw E.too_general{rule}
-               #eq{#text{name}} ->
+               #eq{Text? {name}} ->
                   engine.setenv{name, body}
                else ->
                   engine.registerRule{spec} with {engine, values} ->
@@ -266,14 +268,14 @@ basicPlugin{@} =
       newlineRule = {spec, fn} where
 
          filter{match node} =
-            extract! #seq{"NL", *args} ->
+            extract! Seq? {"NL", *args} ->
                {args = args}
             else ->
                false
 
          spec = {"NL", #fn{filter}, 1}
 
-         fn{engine, {_node => node and #seq{*elems}, => args}} =
+         fn{engine, {_node => node and Seq? {*elems}, => args}} =
             results = {}
             wide = node.width == .wide
             var last = null

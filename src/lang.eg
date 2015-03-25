@@ -10,7 +10,7 @@ require:
 provide:
    tokenizer, tokenize
    parser, parse
-   Text, Oper, Seq
+   QAst, Text, Oper, Seq
 
 
 tokenizer = Tokenizer with {
@@ -44,7 +44,7 @@ tokenizer = Tokenizer with {
 
       tuckWhitespace{match tok, i, toks} =
          do:
-            {prev, next} = {toks[i-1], toks[i+1]}
+            {prev, next} = {toks[i - 1], toks[i + 1]}
          {type => .ws, => token} ->
             prev.wsa and next.wsb = token.length
             next.tucked = tok
@@ -205,14 +205,55 @@ prio = PriorityOrder{tokgrp, priorities} where
       boundary = {left = -1, right = -1}
    }
 
-Text{x} =
-   #text{x, qast = true}
 
-Oper{x} =
-   #oper{x, qast = true}
+class QAst:
+   constructor{} =
+      pass
 
-Seq{*xs} =
-   #seq{*xs} &: {qast = true}
+_ts = Symbol{"text"}
+class Text{QAst}:
+   constructor{x} =
+      @0 = x
+      @length = 1
+      ;; @qast = true
+   "::clone"{} =
+      Text{@0}
+   "::serialize"{} =
+      {_ts, @0}
+
+_os = Symbol{"oper"}
+class Oper{QAst}:
+   constructor{x} =
+      @0 = x
+      @length = 1
+      ;; @qast = true
+   "::clone"{} =
+      Oper{@0}
+   "::serialize"{} =
+      {_os, @0}
+
+_ss = Symbol{"seq"}
+class Seq{QAst}:
+   constructor{*xs} =
+      self = [@]
+      enumerate{xs} each {i, x} ->
+         self[i] = x
+      @length = xs.length
+      ;; @qast = true
+   "::clone"{} =
+      Seq{*[enumerate{@} each {_, x} -> x]}
+   "::serialize"{} =
+      {_ss, enumerate{@} each {_, x} -> x}
+
+
+;; Text{x} =
+;;    #text{x, qast = true}
+
+;; Oper{x} =
+;;    #oper{x, qast = true}
+
+;; Seq{*xs} =
+;;    #seq{*xs} &: {qast = true}
 
 
 finalize{match node} =
@@ -261,7 +302,7 @@ finalize{match node} =
          newparts[newparts.length - 1].location.end
       }
       rval &: {
-         operator = newparts[1][1]
+         operator = newparts[1][0]
          width = newparts[1].width
       }
       adjust{rval}
@@ -270,9 +311,10 @@ finalize{match node} =
 
 
 adjust{match node} =
-   #seq{pre, inds and #oper{"I("}, mid, inde and #oper{")I"}, tail} ->
+   ;; #seq{pre, inds and #oper{"I("}, mid, inde and #oper{")I"}, tail} ->
+   Seq? {pre, inds and Oper? {"I("}, mid, inde and Oper? {")I"}, tail} ->
       findTarget{match x} =
-         #seq{pre, #oper{"NL"}, *} ->
+         Seq? {pre, Oper? {"NL"}, *} ->
             findTarget{pre} or x
          else ->
             false
@@ -282,8 +324,8 @@ adjust{match node} =
          target.location.start = loc.start
          node.location.start = loc.start
          inds.location = loc
-         node[1] = Text{""} <<: loc
-         target[1] = pre
+         node[0] = Text{""} <<: loc
+         target[0] = pre
       node
    else ->
       node

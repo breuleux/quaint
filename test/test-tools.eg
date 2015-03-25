@@ -7,6 +7,7 @@ requireMacros:
 require:
    "../src/lang" ->
       parse
+      QAst, Text, Oper, Seq
    "../src/tools" ->
       extractor, parseSpec
    "../src/util" ->
@@ -73,9 +74,9 @@ describe "extractor":
    it "simple extractor":
       ex = extractor{"\\x = \\y"}
       assert ex{parse{"hello = world"}} ==
-         {x = #text{"hello"}, y = #text{"world"}}
+         {x = Text{"hello"}, y = Text{"world"}}
       assert ex{parse{"hello=world"}} ==
-         {x = #text{"hello"}, y = #text{"world"}}
+         {x = Text{"hello"}, y = Text{"world"}}
       assert not ex{parse{"hello ="}}
       assert not ex{parse{"= world"}}
       assert not ex{parse{"hello ++ world"}}
@@ -83,23 +84,23 @@ describe "extractor":
    it "multiple matchers":
       ex = extractor{"\\x = \\y", "\\zz ++ \\qq"}
       assert ex{parse{"hello = world"}} ==
-         {x = #text{"hello"}, y = #text{"world"}}
+         {x = Text{"hello"}, y = Text{"world"}}
       assert ex{parse{"hello ++ world"}} ==
-         {zz = #text{"hello"}, qq = #text{"world"}}
+         {zz = Text{"hello"}, qq = Text{"world"}}
 
    it "optional arguments":
       ex = extractor{"\\maybe\\x = \\maybe\\y"}
       assert ex{parse{"hello = world"}} ==
-         {x = #text{"hello"}, y = #text{"world"}}
+         {x = Text{"hello"}, y = Text{"world"}}
       assert ex{parse{"hello="}} ==
-         {x = #text{"hello"}, y = #text{""}}
+         {x = Text{"hello"}, y = Text{""}}
       assert ex{parse{"=world"}} ==
-         {x = #text{""}, y = #text{"world"}}
+         {x = Text{""}, y = Text{"world"}}
 
    it "literals":
       ex = extractor{"zazz :: \\x"}
       assert not ex{parse{"a :: b"}}
-      assert ex{parse{"zazz :: b"}} == {x = #text{"b"}}
+      assert ex{parse{"zazz :: b"}} == {x = Text{"b"}}
 
    moreSpecific{parseSpec! {_, _, s1}, parseSpec! {_, _, s2}} =
       s1 > s2
@@ -115,9 +116,9 @@ describe "extractor":
    ;; it "simple extractor":
    ;;    ex = extractor{"x = y"}
    ;;    assert ex{parse{"hello = world"}} ==
-   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;       {x = Text{"hello"}, y = Text{"world"}}
    ;;    assert ex{parse{"hello=world"}} ==
-   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;       {x = Text{"hello"}, y = Text{"world"}}
    ;;    assert not ex{parse{"hello ="}}
    ;;    assert not ex{parse{"= world"}}
    ;;    assert not ex{parse{"hello ++ world"}}
@@ -125,18 +126,18 @@ describe "extractor":
    ;; it "multiple matchers":
    ;;    ex = extractor{"x = y", "zz ++ qq"}
    ;;    assert ex{parse{"hello = world"}} ==
-   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;       {x = Text{"hello"}, y = Text{"world"}}
    ;;    assert ex{parse{"hello ++ world"}} ==
-   ;;       {zz = #text{"hello"}, qq = #text{"world"}}
+   ;;       {zz = Text{"hello"}, qq = Text{"world"}}
 
    ;; it "optional arguments":
    ;;    ex = extractor{"[maybe x] = [maybe y]"}
    ;;    assert ex{parse{"hello = world"}} ==
-   ;;       {x = #text{"hello"}, y = #text{"world"}}
+   ;;       {x = Text{"hello"}, y = Text{"world"}}
    ;;    assert ex{parse{"hello="}} ==
-   ;;       {x = #text{"hello"}, y = #text{""}}
+   ;;       {x = Text{"hello"}, y = Text{""}}
    ;;    assert ex{parse{"=world"}} ==
-   ;;       {x = #text{""}, y = #text{"world"}}
+   ;;       {x = Text{""}, y = Text{"world"}}
 
 
 ;; shed

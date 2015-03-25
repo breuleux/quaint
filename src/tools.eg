@@ -3,7 +3,7 @@ require:
    opg ->
       Source, Location
    "./lang" ->
-      parse, Text, Oper, Seq
+      parse, QAst, Text, Oper, Seq
 
 provide:
    next
@@ -51,7 +51,7 @@ code{engine, x} =
             res = engine.eval{raw{x}, env, x.location} or "" where
                env = {doc and documents = documents}
             match res:
-               {qast => true?} ->
+               QAst? ->
                   engine.gen{res}
                else ->
                   res
@@ -59,7 +59,7 @@ code{engine, x} =
             span.error % String{e}
 
 rawOrCode{engine, match x, operate = {x} -> x} =
-   #seq{_, #oper{"{"}, x, #oper{"}"}, _} ->
+   Seq? {_, Oper? {"{"}, x, Oper? {"}"}, _} ->
       raw{code{engine, x}, operate}
    else ->
       raw{x, operate}
@@ -71,19 +71,21 @@ parseSpec{match} =
       var top = null
       var specificity = 0
       rval = helper{ast, {shed = true}} where helper{match expr, opts} =
-         #text{R"^\\(?:([^\\]*)\\)?(.*)$"! {_, match flag, name}} ->
+         Text? {R"^\\(?:([^\\]*)\\)?(.*)$"! {_, match flag, name}} ->
             "maybe" -> #put{name, true}
             else -> #put{name, false}
-         #text ->
+         Text? ->
             specificity += 100
             #eq{expr}
-         #oper{op} ->
-            #eq{#oper{op}}
-         #seq{*args} and {=> operator} ->
+         Oper? ->
+            #eq{expr}
+         ;; Oper? {op} ->
+         ;;    #eq{Oper{op}}
+         Seq? {*args} and {=> operator} ->
             specificity += 1
             if [not top]:
                top = operator
-            Seq{*[args each arg -> helper{arg, opts}]}
+            #seq{*[args each arg -> helper{arg, opts}]}
       {top, rval, specificity}
    {top, rval, specificity} ->
       {top, rval, specificity}
@@ -92,7 +94,7 @@ makeExtractor{parseSpec! {top, tree, specificity}} =
    helper{match x, node} =
       #put{v, maybe = true} ->
          match node:
-            #text{""} when not maybe ->
+            Text? {""} when not maybe ->
                false
             else ->
                {v => node}
@@ -101,7 +103,7 @@ makeExtractor{parseSpec! {top, tree, specificity}} =
          else -> false
       #seq{*subtrees} ->
          match node:
-            #seq{*args} when subtrees.length == args.length ->
+            Seq? {*args} when subtrees.length == args.length ->
                rval = {=}
                zip{subtrees, args} each {subtree, arg} ->
                   match helper{subtree, arg}:
@@ -141,8 +143,8 @@ extractor{*rules} =
 
 
 extract{match} =
-   #seq{*args} ->
-      Seq{args[1][1], *newargs} where newargs =
+   Seq? {*args} ->
+      Seq{args[1][0], *newargs} where newargs =
          enumerate{args} each
             {i, arg} when i mod 2 == 0 ->
                arg
@@ -151,18 +153,19 @@ extract{match} =
 
 collapse{operator, match} =
    ;; TODO: take width into account
-   extract! #seq{=== operator, l, r} ->
+   extract! Seq? {=== operator, l, r} ->
       {l} ++ collapse{operator, r}
    node ->
       {node}
 
 statements{shedIndent! match node} =
-   #seq{_, #oper{"NL"}, *} ->
+   Seq? {_, Oper? {"NL"}, *} ->
       [xs.reduce{++}] where xs =
-         enumerate{node.slice{1}} each
+         ;; enumerate{node.slice{1}} each
+         enumerate{node} each
             {i, x} when i mod 2 == 0 ->
                statements{x}
-   #text{""} ->
+   Text? {""} ->
       {}
    else ->
       {node}
@@ -170,7 +173,7 @@ statements{shedIndent! match node} =
 
 
 shed{match, n = 1} =
-   #seq{_, ob and #oper{"["}, mid, cb and #oper{"]"}, _} ->
+   Seq? {_, ob and Oper? {"["}, mid, cb and Oper? {"]"}, _} ->
       if n > 1:
          shed{mid, n - 1}
       else:
@@ -187,11 +190,11 @@ shedAll{node} =
    shed{node, 1/0}
 
 shedIndent{match node} =
-   #seq{_, #oper{"I("}, mid, #oper{")I"}, _} ->
+   Seq? {_, Oper? {"I("}, mid, Oper? {")I"}, _} ->
       match mid:
-         #seq{#text{""}, #oper{"NL"}, x} ->
+         Seq? {Text? {""}, Oper? {"NL"}, x} ->
             x
-         #seq{#text{""}, #oper{"NL"}, *rest} ->
+         Seq? {Text? {""}, Oper? {"NL"}, *rest} ->
             Seq{*rest} &: mid
          else ->
             mid
