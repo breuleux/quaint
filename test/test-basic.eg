@@ -1,6 +1,6 @@
 
 requireMacros:
-   "grey-mocha" ->
+   "earl-mocha" ->
       describe, it, before, after
       xdescribe, xit
       assert, asserts
