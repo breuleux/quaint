@@ -4,7 +4,7 @@ require:
       Source, Location
       transferLocation as [<<:]
    "./lang" ->
-      parse
+      parse, QAst, Text, Oper, Seq
    "./tools" as tools
    "./doc" as docs
    "./engine" ->
@@ -20,6 +20,7 @@ provide:
    toENode, toHTML
    processDocuments
    tools
+   QAst, Text, Oper, Seq
 
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
