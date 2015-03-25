@@ -5,7 +5,6 @@ requireMacros:
       assert, asserts
 
 require:
-   "grey-mocha"
    "../src/lang" ->
       parse
    "../src/tools" ->

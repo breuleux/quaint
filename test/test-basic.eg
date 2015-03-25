@@ -6,7 +6,6 @@ requireMacros:
       assert, asserts
 
 require:
-   "grey-mocha"
    "../src/index" ->
       toHTML as q
       Engine

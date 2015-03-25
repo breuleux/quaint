@@ -6,7 +6,6 @@ requireMacros:
       xdescribe, xit
 
 require:
-   "grey-mocha"
    "../src/index" ->
       Engine
    "../src/lang" ->
