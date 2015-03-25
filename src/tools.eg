@@ -9,7 +9,6 @@ provide:
    next
    raw, rawRelative, dedent, code, rawOrCode
    parseSpec, makeExtractor, extractor
-   ;; parseSpec2, makeExtractor2, extractor2
    extract, collapse, statements
    shed, shedAll, shedIndent
    mergeable
@@ -79,8 +78,6 @@ parseSpec{match} =
             #eq{expr}
          Oper? ->
             #eq{expr}
-         ;; Oper? {op} ->
-         ;;    #eq{Oper{op}}
          Seq? {*args} and {=> operator} ->
             specificity += 1
             if [not top]:
@@ -161,7 +158,6 @@ collapse{operator, match} =
 statements{shedIndent! match node} =
    Seq? {_, Oper? {"NL"}, *} ->
       [xs.reduce{++}] where xs =
-         ;; enumerate{node.slice{1}} each
          enumerate{node} each
             {i, x} when i mod 2 == 0 ->
                statements{x}

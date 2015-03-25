@@ -129,10 +129,6 @@ class Engine:
             node ->
                @gen{node}
 
-      ;; match documents:
-      ;;    null? ->
-      ;;       {main = generated}
-      ;;    else ->
       docs = @documents ;; @genDocuments{documents}
       main = processDocuments{generated, docs}
       docs &: {= main}
@@ -189,8 +185,7 @@ class Engine:
 
          x -> x
 
-      ;; documents = options.documents or {=}
-      results = @run{src} ;;, documents}
+      results = @run{src}
       main = normalize{collapse{top % results.main}}
 
       match format:

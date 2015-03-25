@@ -215,7 +215,6 @@ class Text{QAst}:
    constructor{x} =
       @0 = x
       @length = 1
-      ;; @qast = true
    "::clone"{} =
       Text{@0}
    "::serialize"{} =
@@ -226,7 +225,6 @@ class Oper{QAst}:
    constructor{x} =
       @0 = x
       @length = 1
-      ;; @qast = true
    "::clone"{} =
       Oper{@0}
    "::serialize"{} =
@@ -239,21 +237,11 @@ class Seq{QAst}:
       enumerate{xs} each {i, x} ->
          self[i] = x
       @length = xs.length
-      ;; @qast = true
    "::clone"{} =
       Seq{*[enumerate{@} each {_, x} -> x]}
    "::serialize"{} =
       {_ss, enumerate{@} each {_, x} -> x}
 
-
-;; Text{x} =
-;;    #text{x, qast = true}
-
-;; Oper{x} =
-;;    #oper{x, qast = true}
-
-;; Seq{*xs} =
-;;    #seq{*xs} &: {qast = true}
 
 
 finalize{match node} =
@@ -311,7 +299,6 @@ finalize{match node} =
 
 
 adjust{match node} =
-   ;; #seq{pre, inds and #oper{"I("}, mid, inde and #oper{")I"}, tail} ->
    Seq? {pre, inds and Oper? {"I("}, mid, inde and Oper? {")I"}, tail} ->
       findTarget{match x} =
          Seq? {pre, Oper? {"NL"}, *} ->
