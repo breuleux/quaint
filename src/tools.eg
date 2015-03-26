@@ -19,7 +19,7 @@ next = Symbol{.next}
 
 
 raw{match x, operate = {x} -> x} =
-   {=> location} -> location.text{}
+   QAst? -> x.raw{}
    String? -> operate{x}
    [genfrom %]? ->
       genfrom %

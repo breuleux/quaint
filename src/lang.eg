@@ -209,6 +209,9 @@ prio = PriorityOrder{tokgrp, priorities} where
 class QAst:
    constructor{} =
       pass
+   raw{} =
+      @location.text{} !! e ->
+         throw E.noraw{'Cannot get a raw string from {@}.'}
 
 _ts = Symbol{"text"}
 class Text{QAst}:
