@@ -184,7 +184,11 @@ class Engine:
          x -> x
 
       results = @run{src}
-      main = normalize{collapse{top % results.main}}
+      main = normalize{collapse{top}} where top =
+         if options.paragraph:
+            p % results.main
+         else:
+            top % results.main
 
       match format:
          .enode -> main

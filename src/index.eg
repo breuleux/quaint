@@ -25,9 +25,9 @@ provide:
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
 
-toENode{text} =
-   create{}.translate{text, .enode}
+toENode{text, options = {=}} =
+   create{}.translate{text, .enode, options}
 
-toHTML{text} =
-   create{}.translate{text, .html}
+toHTML{text, options = {=}} =
+   create{}.translate{text, .html, options}
 
