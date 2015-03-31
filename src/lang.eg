@@ -178,8 +178,8 @@ prio = PriorityOrder{tokgrp, priorities} where
    MAX = Infinity
 
    priorities = {
-      ;; indent = {left = 240, right = 1}
-      indent = {left = 190, right = 1}
+      indent = {left = 240, right = 1}
+      ;; indent = {left = 190, right = 1}
       dedent = {left = 1  , right = MAX}
       opens  = {left = MAX, right = 2}
       closes = {left = 2  , right = MAX}
@@ -298,7 +298,7 @@ finalize{match node} =
          operator = newparts[1][0]
          width = newparts[1].width
       }
-      adjust2{rval}
+      adjust{rval}
    else ->
       throw E.syntax.unknown_node{node}
 
@@ -341,6 +341,7 @@ adjust2{match node} =
             adjust{node}
          } <<: Location{source, start, end}
          rval.operator = t
+         rval.width = .wide
          rval
       else ->
          adjust{node}
