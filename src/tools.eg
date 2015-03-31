@@ -7,7 +7,7 @@ require:
 
 provide:
    next
-   raw, rawRelative, dedent, code, rawOrCode
+   raw, rawRelative, dedent, code
    parseSpec, makeExtractor, extractor
    extract, collapse, statements
    shed, shedAll, shedIndent
@@ -57,11 +57,6 @@ code{engine, x} =
          catch e:
             span.error % String{e}
 
-rawOrCode{engine, match x, operate = {x} -> x} =
-   Seq? {_, Oper? {"{"}, x, Oper? {"}"}, _} ->
-      raw{code{engine, x}, operate}
-   else ->
-      raw{x, operate}
 
 
 parseSpec{match} =

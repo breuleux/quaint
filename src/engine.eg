@@ -77,13 +77,11 @@ class Engine:
       @fork{}.plug{*plugins}
 
    plug{*plugins} =
-      plugins each {installTo => f} or Function? f -> f{@}
+      plugins each match plugin ->
+         Function? f -> f{@}
+         {=> install-to} ->
+            plugin.install-to{@}
       @
-
-   ;; genDocuments{clone! docs} =
-   ;;    items{@documentMakers} each {name, maker} when not docs[name] ->
-   ;;       docs[name] = maker{}
-   ;;    docs
 
 
    .gen{match node} =
