@@ -178,7 +178,8 @@ prio = PriorityOrder{tokgrp, priorities} where
    MAX = Infinity
 
    priorities = {
-      indent = {left = 240, right = 1}
+      ;; indent = {left = 240, right = 1}
+      indent = {left = 190, right = 1}
       dedent = {left = 1  , right = MAX}
       opens  = {left = MAX, right = 2}
       closes = {left = 2  , right = MAX}
@@ -248,8 +249,9 @@ class Seq{QAst}:
 
 
 finalize{match node} =
-   {null?, mid and {=> token, => location}, null?} ->
-      Text{token} <<: location
+   {null?, mid and {=> token, => location, => type}, null?} ->
+      rval = Text{token} <<: location
+      rval &: {operator-token = type != .word}
 
    {*parts} ->
       newparts = enumerate{parts} each {match i, part} ->
@@ -296,7 +298,7 @@ finalize{match node} =
          operator = newparts[1][0]
          width = newparts[1].width
       }
-      adjust{rval}
+      adjust2{rval}
    else ->
       throw E.syntax.unknown_node{node}
 
@@ -317,6 +319,31 @@ adjust{match node} =
          node[0] = Text{""} <<: loc
          target[0] = pre
       node
+   else ->
+      node
+
+adjust2{match node} =
+   Seq? {match pre, inds and Oper? {"I("}, mid, inde and Oper? {")I"}, tail} ->
+      Seq? {left, {width => .wide}, right} ->
+         {=> source, => start, => end} = node.location
+         node[0] = pre[2]
+         node.location = Location{source, right.location.start, end}
+         pre[2] = adjust{node}
+         pre.location = Location{source, start, end}
+         pre
+      Text? {t} and {operator-token => true?} ->
+         {=> source, => start, => end} = node.location
+         node[0] = Text{""} <<: pre.location.at_end{}
+         node <<: Location{source, pre.location.end, end}
+         rval = Seq{
+            Text{""} <<: Location{source, start, start}
+            [Oper{t} &: {width = .wide}] <<: pre
+            adjust{node}
+         } <<: Location{source, start, end}
+         rval.operator = t
+         rval
+      else ->
+         adjust{node}
    else ->
       node
 
