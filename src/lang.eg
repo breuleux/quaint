@@ -178,7 +178,7 @@ prio = PriorityOrder{tokgrp, priorities} where
    MAX = Infinity
 
    priorities = {
-      indent = {left = 280, right = 1}
+      indent = {left = 240, right = 1}
       dedent = {left = 1  , right = MAX}
       opens  = {left = MAX, right = 2}
       closes = {left = 2  , right = MAX}
