@@ -158,8 +158,13 @@ basicPlugin{@} =
 
       "\\fn :: \\maybe\\body"{engine, {=> fn, => body}} =
          try:
-            f = engine.eval{raw{fn}, {=}, fn.location}
-            f{engine, body} or ""
+            match fn:
+               extract! Seq? {"J", fn, *args} ->
+                  f = engine.eval{raw{fn}, {=}, fn.location}
+                  f{engine, *args, body} or ""
+               else ->
+                  f = engine.eval{raw{fn}, {=}, fn.location}
+                  f{engine, body} or ""
          catch e:
             span.error % String{e}
 
