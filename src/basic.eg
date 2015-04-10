@@ -72,6 +72,22 @@ basicPlugin{@} =
    @evaluator = BasicEvaluator{}
 
    @setenv with {
+
+      store{engine, shed! raw! name, body} =
+         if raw{body} == "dump!":
+            genfrom %
+               generate{path, docs} =
+                  match docs[name]:
+                     undefined? ->
+                        ""
+                     doc ->
+                        doc.entries{} each x -> engine.gen{x}
+         else:
+            genfor %
+               document = name
+               create{} = SeqDocument{}
+               body
+
       css{engine, shed! body} =
          style[raw] % raw{body}
 

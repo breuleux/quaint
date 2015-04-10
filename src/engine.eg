@@ -114,6 +114,8 @@ class Engine:
 
          result
 
+      x and [ENode? or Array? or String?] ->
+         x
 
    run{src} =
 
@@ -290,8 +292,14 @@ processDocuments{x, documents, maxiter = 10} =
       [genfor %]? ->
          docname = node.props.document
          match documents[docname]:
+            undefined? when node.props.create ->
+               documents[docname] = node.props.create{}
             undefined? when node.props.important ->
                throw E.no_document{docname}
+            else ->
+               pass
+
+         match documents[docname]:
             false? ->
                ""
             {delay => true?} ->
