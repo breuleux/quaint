@@ -94,6 +94,9 @@ basicPlugin{@} =
       html{engine, shed! body} =
          raw % raw{body}
 
+      js{engine, shed! body} =
+         script[raw] % raw{body}
+
       toc{engine, body} =
          genfrom %
             generate{path, docs} =
