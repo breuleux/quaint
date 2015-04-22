@@ -196,7 +196,7 @@ basicPlugin{@} =
       "` \\x"{engine, {x => shed! x}} =
          code % raw{x}
 
-      "& \\x"{engine, {x => shed! x}} =
+      "\\maybe\\lang & \\x"{engine, {x => shed! x}} =
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
       "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
