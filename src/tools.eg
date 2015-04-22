@@ -37,7 +37,9 @@ rawRelative{match x} =
 
 dedent{x} =
    lines = x.split{"\n"}
-   indents = lines each R"^( *)"! {_, pfx} -> pfx.length
+   indents = lines each
+      R"^( *)(?! |$)"! {_, pfx} -> pfx.length
+      else -> continue
    min = Math.min{*indents}
    newlines.join{"\n"} where
       newlines = lines each line -> line.slice{min}
