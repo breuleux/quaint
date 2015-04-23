@@ -14,6 +14,8 @@ require:
    "./util" ->
       insertSorted
       transform
+   /html
+   /dom
 
 provide:
    Dispatcher
@@ -195,8 +197,10 @@ class Engine:
       match format:
          .enode -> main
          .text -> main.toString{}
-         .html -> main.toHTML{}
-         .dom -> main.toHTML{.dom}
+         .html -> html{main}
+         .dom -> dom{main}
+         ;; .html -> main.toHTML{}
+         ;; .dom -> main.toHTML{.dom}
 
 
    registerMethods{methods} =

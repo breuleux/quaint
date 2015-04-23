@@ -1,5 +1,5 @@
 
-requireMacros:
+require-macros:
    "earl-mocha" ->
       describe, it, before, after
       xdescribe, xit
@@ -14,6 +14,7 @@ require:
       create
       ;; defaultengine as eng
    "../src/tools" as tools
+   @html
 
 run{text} =
    create{}.run{text}
@@ -160,7 +161,7 @@ describe "basic rules":
       getSections{docs} =
          docs.sections.entries{} each {l, match x, _} ->
             String? -> {l, x}
-            else -> {l, x.toHTML{}}
+            else -> {l, html{x}}
       it "trivial case":
          docs = run{"= quack"}
          assert getSections{docs} == {{1, "quack"}}
@@ -202,7 +203,7 @@ describe "basic rules":
          object with docs.meta.entries{} each {l, x} ->
             match q{x}:
                String? x -> {l, x}
-               x -> {l, x.toHTML{}}
+               x -> {l, html{x}}
       it "works":
          docs = run{"meta ::\n a = X\n b = Y"}
          assert getMeta{docs} == {a = "X", b = "Y"}
