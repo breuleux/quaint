@@ -9,6 +9,18 @@
 * MAYBE: suffix `[!] and `[?] behave like suffix `[.]. Also `[...],
   `[?!?] and so on.
 
+* Paragraphs behave weird sometimes, for instance
+
+  Par 1
+
+  Par 2
+
+  .note %
+    * a
+    * b
+
+  Will not put the bullet list inside the note?
+
 
 == DONE
 
