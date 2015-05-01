@@ -5,15 +5,16 @@
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
-      "earlgrey-runtime": ">=0.0.5",
+      "earlgrey-runtime": ">=0.0.7",
       "opg": ">=0.0.3"
   },
   "devDependencies": {
-    "earlgrey": ">=0.0.1",
+    "earlgrey": ">=0.0.2",
     "mocha": "^2.2.1",
-    "earl-mocha": ">=0.0.1"
+    "earl-mocha": ">=0.0.2"
   },
   "scripts": {
+    "prepublish": "earl compile -5rvso lib/ src/",
     "test": "mocha"
   },
   "repository": {
