@@ -3,9 +3,9 @@ Quaint
 ======
 
 Quaint is a markup language that's a bit similar to Markdown, but is
-more regular and easier to customize. The markup is documented
-[here](http://breuleux.net/quaint) for the Python version (available
-[here](https://github.com/breuleux/quaint)).
+more regular and easier to customize. Unfortunately the markup is
+poorly documented at the moment, but you can use it interactively
+[here](http://breuleux.net/tryquaint/).
 
 Install:
 
