@@ -14,7 +14,7 @@ require:
       create
       ;; defaultengine as eng
    "../src/tools" as tools
-   @html
+   /html
 
 run{text} =
    create{}.run{text}
@@ -159,6 +159,7 @@ describe "basic rules":
 
    describe "sections document":
       getSections{docs} =
+         print docs.sections.entries{}
          docs.sections.entries{} each {l, match x, _} ->
             String? -> {l, x}
             else -> {l, html{x}}

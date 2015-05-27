@@ -34,7 +34,7 @@ headerRule{level}{engine, {=> x}} =
          gx
          genfor %
             document = .sections
-            {level, gx, lbl}
+            {{level, gx, lbl}}
    rval &: {block = true}
 
 
@@ -86,7 +86,7 @@ basicPlugin{@} =
             genfor %
                document = name
                create{} = SeqDocument{}
-               body
+               {body}
 
       css{engine, shed! body} =
          style[raw] % raw{body}
