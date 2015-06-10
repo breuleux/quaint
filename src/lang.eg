@@ -242,7 +242,10 @@ class Seq{QAst}:
          self[i] = x
       @length = xs.length
    "::clone"{} =
-      Seq{*[enumerate{@} each {_, x} -> x]}
+      rval = Seq{*[enumerate{@} each {_, x} -> x]}
+      rval.operator = @operator
+      rval.location = @location
+      rval
    "::serialize"{} =
       {_ss, enumerate{@} each {_, x} -> x}
 
