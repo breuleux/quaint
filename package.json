@@ -5,11 +5,12 @@
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
-    "earlgrey-runtime": ">=0.0.7",
-    "opg": ">=0.0.3"
+    "earlgrey-runtime": ">=0.0.10",
+    "opg": ">=0.0.3",
+    "kaiser": ">=0.0.0"
   },
   "devDependencies": {
-    "earlgrey": ">=0.0.2",
+    "earlgrey": ">=0.0.10",
     "mocha": "^2.2.1",
     "earl-mocha": ">=0.0.2"
   },
