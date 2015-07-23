@@ -6,6 +6,7 @@ require:
          Tokenizer, indentTracker, inferLocation
       parse as _parse ->
          Parser, TokenGroups, PriorityOrder
+   kaiser/reg -> register-all
 
 provide:
    tokenizer, tokenize
@@ -249,6 +250,9 @@ class Seq{QAst}:
    "::serialize"{} =
       {_ss, enumerate{@} each {_, x} -> x}
 
+register-all{{QAst.prototype, Text.prototype, Oper.prototype, Seq.prototype}} with {
+   package = require: ..package
+}
 
 
 finalize{match node} =
