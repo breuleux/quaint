@@ -73,6 +73,7 @@ class Engine:
       @documents = {=}
       @regexps = {}
       @methods = {}
+      @macros = {=}
       @plug{*plugins}
 
    forkPlug{*plugins} =
@@ -207,6 +208,8 @@ class Engine:
       @methods ++= keys{methods}
       this &: methods
 
+   registerMacros{macs} =
+      @macros &: macs
 
    registerReplace{*match} =
       {match expr, repl} ->

@@ -7,6 +7,7 @@ require:
 
 provide:
    next
+   may-fail
    raw, rawRelative, dedent, code
    parseSpec, makeExtractor, extractor
    extract, collapse, statements
@@ -16,6 +17,13 @@ provide:
 
 
 next = Symbol{.next}
+
+
+may-fail{f} =
+   try:
+      f{}
+   catch e:
+      span.error % String{e}
 
 
 raw{match x, operate = {x} -> x} =
@@ -48,7 +56,7 @@ dedent{x} =
 code{engine, x} =
    genfrom %
       generate{path, documents} =
-         try:
+         may-fail with ->
             res = engine.eval{raw{x}, env, x.location} or "" where
                env = {doc and documents = documents}
             match res:
@@ -56,9 +64,6 @@ code{engine, x} =
                   engine.gen{res}
                else ->
                   res
-         catch e:
-            span.error % String{e}
-
 
 
 parseSpec{match} =
@@ -86,9 +91,9 @@ parseSpec{match} =
 
 makeExtractor{parseSpec! {top, tree, specificity}} =
    helper{match x, node} =
-      #put{v, maybe = true} ->
+      #put{v, _maybe = true} ->
          match node:
-            Text? {""} when not maybe ->
+            Text? {""} when not _maybe ->
                false
             else ->
                {v => node}

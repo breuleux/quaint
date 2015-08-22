@@ -4,6 +4,7 @@ require:
    opg ->
       transferLocation as [<<:]
    "./tools" as tools ->
+      may-fail
       parseSpec, makeExtractor, extractor
       raw, rawRelative, dedent, extract, collapse, statements
       shed, shedAll, shedIndent
@@ -42,7 +43,8 @@ class BasicEvaluator:
    constructor{@store = Object.create{null}} =
       pass
    eval{key, env = {=}, loc = null} =
-      s = Object.create{@store} &: env
+      ;; s = Object.create{@store} &: env
+      s = @store &: env
       if not Object.hasProperty.call{s, key}:
          throw E.not_in_environment{key}
       s[key]
@@ -71,7 +73,8 @@ basicPlugin{@} =
 
    @evaluator = BasicEvaluator{}
 
-   @setenv with {
+   ;; @setenv with {
+   @register-macros with {
 
       store{engine, shed! raw! name, body} =
          if raw{body} == "dump!":
@@ -176,16 +179,35 @@ basicPlugin{@} =
          tools.code{engine, x}
 
       "\\fn :: \\maybe\\body"{engine, {=> fn, => body}} =
-         try:
-            match fn:
-               extract! Seq? {"J", fn, *args} ->
-                  f = engine.eval{raw{fn}, {=}, fn.location}
-                  f{engine, *args, body} or ""
-               else ->
-                  f = engine.eval{raw{fn}, {=}, fn.location}
-                  f{engine, body} or ""
-         catch e:
-            span.error % String{e}
+         may-fail with ->
+            args =
+               match fn:
+                  extract! Seq? {"J", fn, *args} ->
+                     args
+                  else ->
+                     {}
+            rf = raw{fn}
+            if engine.macros[rf] as f:
+               f{engine, *args, body} or ""
+            else:
+               genfrom %
+                  generate{path, documents} =
+                     may-fail with ->
+                        f2 = engine.eval{rf, {=}, fn.location}
+                        f2.apply{null, {engine, *args, body}} or ""
+
+         ;; try:
+         ;;    match fn:
+         ;;       extract! Seq? {"J", fn, *args} ->
+         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f{engine, *args, body} or ""
+         ;;       else ->
+         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f{engine, body} or ""
+         ;; catch e:
+         ;;    span.error % String{e}
 
       "_ \\x"{engine, {=> x}} =
          em % engine.gen{x}
