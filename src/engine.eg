@@ -69,6 +69,7 @@ class Dispatcher:
 class Engine:
 
    constructor{Array! plugins} =
+      @is-quaint-engine = true
       @dispatch = Dispatcher{}
       @documents = {=}
       @regexps = {}
@@ -253,6 +254,7 @@ class Engine:
       e.documentMakers = clone{@documentMakers}
       e.evaluator = @evaluator.fork{}
       e.regexps = clone{@regexps}
+      e.macros = clone{@macros}
       e.methods = clone{@methods}
       e.methods each m -> e[m] = this[m]
       e
