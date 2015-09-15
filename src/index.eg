@@ -6,7 +6,8 @@ require:
    "./lang" ->
       parse, QAst, Text, Oper, Seq
    "./tools" as tools
-   "./doc" as docs
+   "./doc" as docs ->
+      BasicDocument, SeqDocument, MapDocument
    "./engine" ->
       Engine, processDocuments
    "./basic" ->
@@ -21,6 +22,7 @@ provide:
    processDocuments
    tools
    QAst, Text, Oper, Seq
+   BasicDocument, SeqDocument, MapDocument
 
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
@@ -30,4 +32,3 @@ toENode{text, options = {=}} =
 
 toHTML{text, options = {=}} =
    create{}.translate{text, .html, options}
-
