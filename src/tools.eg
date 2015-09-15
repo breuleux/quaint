@@ -58,7 +58,7 @@ code{engine, x} =
       generate{path, documents} =
          may-fail with ->
             res = engine.eval{raw{x}, env, x.location} or "" where
-               env = {doc and documents = documents}
+               env = {doc and documents = documents, = engine}
             match res:
                QAst? ->
                   engine.gen{res}
