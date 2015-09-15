@@ -133,7 +133,7 @@ class Engine:
             node ->
                @gen{node}
 
-      docs = @documents ;; @genDocuments{documents}
+      docs = @documents
       main = processDocuments{generated, docs}
       docs &: {= main}
 
@@ -201,9 +201,12 @@ class Engine:
          .text -> main.toString{}
          .html -> html{main}
          .dom -> dom{main}
-         ;; .html -> main.toHTML{}
-         ;; .dom -> main.toHTML{.dom}
 
+   toHTML{src} =
+      @translate{src, .html}
+
+   toENode{src} =
+      @translate{src, .enode}
 
    registerMethods{methods} =
       @methods ++= keys{methods}

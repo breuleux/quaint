@@ -18,14 +18,20 @@ provide:
    Location, Source
    Engine
    create
-   toENode, toHTML
+   toENode, toHTML, translate
    processDocuments
    tools
    QAst, Text, Oper, Seq
    BasicDocument, SeqDocument, MapDocument
 
+provide{*plugins} =
+   create{*plugins}
+
 create{*plugins} =
    Engine with {basicPlugin, *plugins}
+
+translate{text, format, options = {=}} =
+   create{}.translate{text, format, options}
 
 toENode{text, options = {=}} =
    create{}.translate{text, .enode, options}
