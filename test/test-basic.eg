@@ -14,6 +14,8 @@ require:
       create
       ;; defaultengine as eng
    "../src/tools" as tools
+   "../src/doc" ->
+      SeqDocument
    /html
 
 run{text} =
@@ -213,6 +215,16 @@ describe "basic rules":
          assert getMeta{docs} == {a = "<em>zazz</em>", b = "Y"}
 
 
+   describe "store":
+      it "works":
+         let q = create{}
+         docs = q.run{"[store xyz :: 123]aa[store abc :: 777]bb[store xyz :: 456]"}
+         abc = docs.abc.entries{} each x -> x.raw{}
+         xyz = docs.xyz.entries{} each x -> x.raw{}
+         assert abc == {"777"}
+         assert xyz == {"123", "456"}
+
+
    describe "macros":
 
       asserts:
@@ -226,4 +238,3 @@ describe "basic rules":
       asserts "define after use":
          q{"{duck}{duck}[duck => quack]"} == "quackquack"
          q{"{duck}{duck}[duck => _quack]"} == "<em>quack</em><em>quack</em>"
-

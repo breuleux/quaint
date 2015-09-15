@@ -162,6 +162,9 @@ basicPlugin{@} =
 
    @registerRule with {
 
+      "\\maybe\\x ;; \\ignore"{engine, {=> x}} =
+         engine.gen{x}
+
       "[\\maybe\\x]"{engine, {_node => Seq? {_, o, x, c, _}}} =
          beg = raw{o}.replace{"[", ""}
          middle = engine.gen{x}
@@ -178,14 +181,14 @@ basicPlugin{@} =
       "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
 
-      "\\fn :: \\maybe\\body"{engine, {=> fn, => body}} =
+      "\\fna :: \\maybe\\body"{engine, {=> fna, => body}} =
          may-fail with ->
-            args =
-               match fn:
-                  extract! Seq? {"J", fn, *args} ->
+            {fn, *args} =
+               match fna:
+                  extract! Seq? {"J", *args} ->
                      args
                   else ->
-                     {}
+                     {fna}
             rf = raw{fn}
             if engine.macros[rf] as f:
                f{engine, *args, body} or ""
@@ -216,7 +219,7 @@ basicPlugin{@} =
          strong % engine.gen{x}
 
       "` \\x"{engine, {x => shed! x}} =
-         code % raw{x}
+         code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
 
       "\\maybe\\lang & \\x"{engine, {x => shed! x}} =
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
