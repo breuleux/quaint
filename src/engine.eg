@@ -202,11 +202,11 @@ class Engine:
          .html -> html{main}
          .dom -> dom{main}
 
-   toHTML{src} =
-      @translate{src, .html}
+   toHTML{src, options = {=}} =
+      @translate{src, .html, options}
 
-   toENode{src} =
-      @translate{src, .enode}
+   toENode{src, options = {=}} =
+      @translate{src, .enode, options}
 
    registerMethods{methods} =
       @methods ++= keys{methods}
