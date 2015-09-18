@@ -224,12 +224,13 @@ basicPlugin{@} =
       "\\maybe\\lang & \\x"{engine, {x => shed! x}} =
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
-      "\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+      "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+         url2 = engine.litgen{url}
          a %
-            href = engine.litgen{url}
-            engine.gen{label}
+            href = url2
+            if{label == Text{""}, url2, engine.gen{label}}
 
-      "\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+      "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
          img %
             src = engine.litgen{url}
             alt = engine.gen{label}
