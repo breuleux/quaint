@@ -1,14 +1,8 @@
 
 require:
    yargs
-   child_process
-   fs, path
-   .index as quaint
-   module
+   .run
 
-provide:
-   run-cli
-   cli
 
 get-arguments{} =
 
@@ -129,7 +123,6 @@ get-arguments{} =
          "quaint -e '[meta::template=tpl]BODY' -t templates/"
          "Use template ./templates/tpl.q"
 
-
       @check with {argv} ->
          if not argv.e and not argv._.length:
             throw E.usage with
@@ -145,134 +138,9 @@ get-arguments{} =
       @argv
 
 
-
-collate-data{data-arguments} =
-
-   json-filename{match f} =
-      R"\."? -> f
-      else -> f + ".json"
-
-   json-parse{filename, contents} =
-      cli-error{'Error parsing JSON in {filename}'} with ->
-         JSON.parse{contents}
-
-   data = {=}
-
-   [Array! data-arguments] each match entry ->
-      undefined? -> pass
-      R"^[\"']"? ->
-         data &: json-parse{'argument {entry}', "{" + entry + "}"}
-      R"^[{]"? ->
-         data &: json-parse{'argument {entry}', entry}
-      R"([a-zA-Z0-9_-]+)::(.*)"! {_, key, filename} ->
-         f = json-filename{filename}
-         contents = json-parse{'file {f}', fs.read-file-sync{f, .utf8}}
-         data &: {key => contents}
-      R"([a-zA-Z0-9_-]+):(.*)"! {_, key, value} ->
-         try:
-            data &: {key => JSON.parse{value}}
-         catch e:
-            data &: {key => value}
-      filename ->
-         f = json-filename{filename}
-         data &: json-parse{'file {f}', fs.read-file-sync{f, .utf8}}
-
-   data
-
-
-module-here{} =
-   m = new module{}
-   m.filename = process.cwd{}
-   c = process.cwd{}.split{"/"}
-   m.paths = xs.reverse{} where xs = [1..c.length] each i ->
-      c[...i].join{"/"} + "/node_modules"
-   ;; Push global npm path
-   m.paths.push with
-      "/usr/local/lib/node_modules"
-      "/usr/lib/node_modules"
-      ;; child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
-   m
-
-
-resolve-plugins{plugins} =
-   m = module-here{}
-
-   r{p} = module._load{p, m, true}
-
-   inj = {}
-   results = {}
-   var spawned = false
-
-   r2{name} =
-      if spawned:
-         r{name}
-      else:
-         try:
-            r{name}
-         catch e:
-            ;; If all else fails (this is a bit slow, which is why we don't do it
-            ;; if we don't have to)
-            m.paths.push with
-               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
-            spawned = true
-            r{name}
-
-   try-require{orig, match names, all = names} =
-      {} ->
-         rqs = [all each name -> '"{name}"'].join{", "}
-         throw E.cli-error with
-            'Could not find a plugin for "{orig}". I tried requiring the following modules: {rqs}.\nIf they are available on npm, you can install them locally or globally, then try again.'
-
-      {name, *rest} ->
-         try:
-            r2{name}
-         catch e:
-            if e.message == 'Cannot find module \'{name}\'':
-               try-require{orig, rest, all}
-            else:
-               throw E.cli-error with
-                  'An error happened when loading module \'{name}\''
-                  e
-
-   resolve{plugins} where resolve{match name} =
-      undefined? -> pass
-      Array? ->
-         name each n -> resolve{n}
-      R","? ->
-         name.split{R"[, ]+"} each n -> resolve{n}
-      R"^(\.+)([^/.]|$)"! {_, dots, _} ->
-         resolve{dots + "/" + name.slice{dots.length}}
-
-      R"\.q$"? ->
-         inj.push with fs.read-file-sync{name, .utf8}
-      R"^[./]"? ->
-         results.push with
-            try-require{name, {name}}
-      else ->
-         results.push with
-            try-require{name, {'quaint-{name}', name}}
-
-   {inj = inj
-    plugins = results}
-
-
-is-directory{path} =
+provide{} =
    try:
-      fs.stat-sync{path}.is-directory{}
-   catch e:
-      false
-
-
-cli-error{msg, fn} =
-   try:
-      fn{}
-   catch e:
-      throw E.cli-error{msg, e}
-
-
-run-cli{} =
-   try:
-      cli{}
+      run{get-arguments{}}
    catch [E.usage-error? e]:
       yargs.show-help{}
       console.error{e.message}
@@ -283,102 +151,4 @@ run-cli{} =
          console.error with '\n{e[0].stack}'
    catch e:
       console.error with e.stack
-
-
-run-template{q, source, t-specific, t-directory, verbose} =
-   res = q.toHTML{source}
-   t = q.documents.meta.get{.template}??.raw{}
-   q.documents.meta.set{.template, null}
-   if t-specific:
-      if verbose:
-         console.error with 'quaint: using template "{t-specific}"'
-      tpl =
-         if R"\{"? t-specific:
-            t-specific
-         else:
-            fs.read-file-sync{t-specific, .utf8}
-      q.setenv{.body, raw % res}
-      run-template{q, tpl, null, t-directory, verbose}
-   elif t-directory and t:
-      if verbose:
-         console.error with 'quaint: using template "{t}" from "{t-directory}"'
-      tpl = fs.read-file-sync{path.join{t-directory, '{t}.q'}, .utf8}
-      q.setenv{.body, raw % res}
-      run-template{q, tpl, null, t-directory, verbose}
-   else:
-      res
-
-
-cli{} =
-
-   ;; DONE: help eval format data plugin out stdout template verbose
-   ;; TODO: config save-config save-meta dump-data
-
-   ;; helper function
-   save-results{p >> p.replace{R".q$|$", ".html"}, contents} =
-      if argv.stdout or argv.eval and not argv.out:
-         print contents
-      elif is-dir:
-         p2 = path.join{argv.out or "./", path.basename{p}}
-         fs.write-file-sync{p2, contents}
-         if argv.verbose:
-            console.error with  'quaint: wrote to "{p2}"'
-      else:
-         fs.write-file-sync{argv.out, contents}
-         if argv.verbose:
-            console.error with 'quaint: wrote to "{argv.out}"'
-
-   ;; Get arguments
-   argv = get-arguments{}
-   ;; if argv._ == {} and not argv.eval:
-   ;;    throw E.usage-error with
-   ;;       "You must provide one or more filenames, or a string with the -e option."
-   ;; if argv._ != {} and argv.eval:
-   ;;    throw E.usage-error with
-   ;;       "You cannot translate a file if the -e option is used."
-
-   ;; Collect all the source files
-   sources = argv._ each filename ->
-      {file = filename,
-       contents = fs.read-file-sync{filename, .utf8}}
-   if argv.eval:
-      sources.push with {file = "<cli>", contents = argv.e}
-
-   ;; Error checking
-   is-dir = is-directory{argv.out or "./"}
-   if not argv.stdout and not is-dir and sources.length > 1:
-      throw E.usage-error with
-         "The -o option must point to a directory in order to process multiple files."
-
-   ;; --data
-   data = collate-data{argv.data}
-   {=> inj, => plugins} = resolve-plugins{argv.plugin}
-
-   ;; --template
-   {t-specific, t-directory} =
-      if is-directory{argv.template}:
-         {null, argv.template}
-      elif argv.template:
-         {argv.template, null}
-      else:
-         {null, "."}
-
-   ;; Generate
-   sources each {=> file, => contents} ->
-      if argv.verbose:
-         console.error with 'quaint: processing "{file}"'
-      q = quaint{*plugins}
-      q.setenv{data}
-      match argv.format:
-         .html ->
-            result = run-template{
-               q
-               [inj ++ {contents}].join{""}
-               t-specific
-               t-directory
-               argv.verbose
-            }
-            save-results{file, result}
-         else ->
-            throw E.usage-error{"Format must be html"}
 
