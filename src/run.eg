@@ -33,6 +33,12 @@ module-here{} =
       ;; child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
    m
 
+normalize-qname{match t} =
+   R".q$"? or false? ->
+      t
+   else ->
+      t + ".q"
+
 
 ;; Large helpers
 
@@ -134,7 +140,7 @@ resolve-plugins{plugins} =
 
 run-template{q, source, t-specific, t-directory, verbose} =
    res = q.toHTML{source}
-   t = q.documents.meta.get{.template}??.raw{}
+   t = normalize-qname{q.documents.meta.get{.template}??.raw{}}
    q.documents.meta.set{.template, null}
    if t-specific:
       if verbose:
@@ -145,11 +151,12 @@ run-template{q, source, t-specific, t-directory, verbose} =
          else:
             fs.read-file-sync{t-specific, .utf8}
       q.setenv{.body, raw % res}
-      run-template{q, tpl, null, t-directory, verbose}
+      run-template{q, tpl, null, t-directory or ".", verbose}
    elif t-directory and t:
+      p = path.join{t-directory, t}
       if verbose:
-         console.error with 'quaint: using template "{t}" from "{t-directory}"'
-      tpl = fs.read-file-sync{path.join{t-directory, '{t}.q'}, .utf8}
+         console.error with 'quaint: using template "{p}"'
+      tpl = fs.read-file-sync{p, .utf8}
       q.setenv{.body, raw % res}
       run-template{q, tpl, null, t-directory, verbose}
    else:
@@ -172,7 +179,7 @@ provide{argv} =
          p2 = path.join{argv.out or "./", path.basename{p}}
          fs.write-file-sync{p2, contents}
          if argv.verbose:
-            console.error with  'quaint: wrote to "{p2}"'
+            console.error with 'quaint: wrote to "{p2}"'
       else:
          fs.write-file-sync{argv.out, contents}
          if argv.verbose:
@@ -197,12 +204,13 @@ provide{argv} =
 
    ;; --template
    {t-specific, t-directory} =
-      if is-directory{argv.template}:
-         {null, argv.template}
-      elif argv.template:
-         {argv.template, null}
-      else:
-         {null, "."}
+      match argv.template:
+         t when is-directory{t} ->
+            {null, t}
+         true? t ->
+            {normalize-qname{t}, null}
+         else ->
+            {null, "."}
 
    ;; Generate
    sources each {=> file, => contents} ->
