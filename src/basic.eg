@@ -156,8 +156,12 @@ basicPlugin{@} =
    }
 
    @registerMethods with {
-      lit{} = this.forkPlug{litPlugin}
-      litgen{x} = this.lit{}.gen{x}
+      method lit{} =
+         p = @fork-plug{litPlugin}
+         p.evaluator = @evaluator
+         p
+      method litgen{x} =
+         @lit{}.gen{x}
    }
 
    @registerRule with {
