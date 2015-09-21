@@ -102,7 +102,7 @@ class Engine:
             @dispatch.handlers{node} each {values, handler} ->
                extra = {_node = node
                         _wide = node.width == .wide
-                        _op = node[2]}
+                        _op = node[1]}
                match handler.gen{@, extra & values}:
                   == tools.next -> pass
                   result -> return result
