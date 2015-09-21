@@ -7,7 +7,7 @@ require:
 get-arguments{} =
 
    argv = chain yargs:
-      @usage{"Usage: $0 <file ...> [options]"}
+      @usage{"Usage: quaint <file ...> [options]"}
 
       ;; --data, -d
       @alias{.d, .data}
