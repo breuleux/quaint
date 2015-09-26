@@ -1,0 +1,650 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <title>Syntax</title>
+    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
+    <script src="/quaint/lib/toc-scroll.js"></script><script src="/quaint/lib/highlight.pack.js"></script><script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script></head>
+
+  <body>
+    
+
+<div id="sidebar"><div id="sidebar-contents">
+  <ul class="toc"><li><a href="#basics">Basics</a></li><ul><li><a href="#emphasis">Emphasis</a></li><li><a href="#links">Links</a></li><li><a href="#headers">Headers</a></li><li><a href="#lists">Lists</a></li><li><a href="#tables">Tables</a></li><li><a href="#codeblocks">Code blocks</a></li><li><a href="#inlinecode">Inline code</a></li><li><a href="#comments">Comments</a></li></ul><li><a href="#escaping">Escaping</a></li><li><a href="#whitespaceandgrouping">Whitespace and grouping</a></li><ul><li><a href="#spacing">Spacing</a></li><li><a href="#indent">Indent</a></li><li><a href="#grouping">Grouping</a></li></ul><li><a href="#htmlgeneration">HTML Generation</a></li><ul><li><a href="#htmlmacro"><code>html</code> macro</a></li><li><a href="#injectcss">Inject CSS</a></li><li><a href="#injectjavascript">Inject JavaScript</a></li><li><a href="#htmlsandbox">HTML Sandbox</a></li></ul><li><a href="#variables">Variables</a></li><li><a href="#rules">Rules</a></li><ul><li><a href="#behavior">Behavior</a></li><li><a href="#rulesandbox">Rule Sandbox</a></li></ul><li><a href="#scripting">Scripting</a></li><li><a href="#macros">Macros</a></li><ul><li><a href="#meta"><code>meta</code></a></li><li><a href="#toc"><code>toc</code></a></li><li><a href="#store"><code>store</code></a></li><li><a href="#html"><code>html</code></a></li><li><a href="#css"><code>css</code></a></li></ul></ul></div></div>
+
+<div id="page">
+  <div id="nav-container" class="container"><div id="nav">
+      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
+<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
+      <div class="filler"></div>
+      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
+      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
+      <div class="navlink"><a href="/quaint/api.html">API</a></div>
+      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
+      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
+      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
+  
+
+<div id="main-container" class="container"><div id="main">
+
+
+
+
+
+
+<h1 id="basics">Basics</h1>
+
+<p>Let's start with the basics, so that you can be productive right away!
+Also, just so you know, each example is a live editor.</p>
+
+<h2 id="emphasis">Emphasis</h2>
+
+<p>A prefix underscore will emphasize a word. Use two for strong
+emphasis.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">_One underscore is _italics</textarea></div><div class="output"><em>One</em> underscore is <em>italics</em></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">__Two underscores is __bold</textarea></div><div class="output"><strong>Two</strong> underscores is <strong>bold</strong></div></div>
+
+<p>Brackets can be used to emphasize multiple words or parts of a word.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">The __[apple pie] was a[_ma]zing!</textarea></div><div class="output">The <strong>apple pie</strong> was a<em>ma</em>zing!</div></div>
+
+<p>Alternatively you can use the tilde, which is a non-breaking space:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">a~_ma~zing!</textarea></div><div class="output">a<em>ma</em>zing!</div></div>
+
+
+<h2 id="links">Links</h2>
+
+<p>The <code>@@</code> operator is used to create links. On the left goes the
+link's label (optional) and on the right, the URL.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Google@@http://google.com</textarea></div><div class="output"><a href="http://google.com">Google</a></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">@@http://github.com</textarea></div><div class="output"><a href="http://github.com">http://github.com</a></div></div>
+
+<p>Again, you can group with brackets:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">[Link to Google]@@http://google.com</textarea></div><div class="output"><a href="http://google.com">Link to Google</a></div></div>
+
+<p>Finally, you can put the URL in a <a href="#variables">variable</a> if you find
+it more convenient:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">Check out my blog@@{blog}~!
+blog =&gt; http://breuleux.net/blog</textarea></div><div class="output">Check out my <a href="http://breuleux.net/blog">blog</a>!
+</div></div>
+
+<p>Also note the use of the tilde above. It is required otherwise the
+<code>!</code> is understood to be part of the URL.</p>
+
+
+<h2 id="headers">Headers</h2>
+
+<p>Begin a line with one equal sign for a <code>h1</code> tag, two for a <code>h2</code> tag, and
+so on:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">= h1</textarea></div><div class="output"><h1 id="h1">h1</h1></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">== h2</textarea></div><div class="output"><h2 id="h2">h2</h2></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">=== h3</textarea></div><div class="output"><h3 id="h3">h3</h3></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">==== h4</textarea></div><div class="output"><h4 id="h4">h4</h4></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">===== h5</textarea></div><div class="output"><h5 id="h5">h5</h5></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">====== h6</textarea></div><div class="output"><h6 id="h6">h6</h6></div></div>
+
+
+
+<h2 id="lists">Lists</h2>
+
+<p>An asterisk at the beginning of a line creates a bullet point.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">* Bread
+* Tomatoes
+* Goat cheese</textarea></div><div class="output"><ul><li>Bread</li><li>Tomatoes</li><li>Goat cheese</li></ul></div></div>
+
+<p>A hash sign, on the other hand, starts an ordered list.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3"># One!
+# Two!
+# Three!</textarea></div><div class="output"><ol><li>One!</li><li>Two!</li><li>Three!</li></ol></div></div>
+
+
+<h2 id="tables">Tables</h2>
+
+<p>A leading <code>+</code> creates a header row and a leading <code>|</code> creates a
+normal row.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">+ Name   + Surname     + Job
+| Alice  | Lovelace    | Physicist
+| Harold | Worthington | Banker</textarea></div><div class="output"><table><tr><th>Name</th><th>Surname</th><th>Job</th></tr><tr><td>Alice</td><td>Lovelace</td><td>Physicist</td></tr><tr><td>Harold</td><td>Worthington</td><td>Banker</td></tr></table></div></div>
+
+
+<h2 id="codeblocks">Code blocks</h2>
+
+<p>The ampersand operator creates a code block:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">&amp; This is a code block</textarea></div><div class="output"><pre class="hl">This is a code block</pre></div></div>
+
+<p>If you wish to highlight the code in a particular language, use the
+<a href="//github.com/breuleux/quaint-highlight">quaint-highlight</a> plugin and then write out the language
+before the <code>&amp;</code>:</p>
+
+
+
+<div class="quaint-example"><div class="input"><textarea rows="4">javascript &amp;
+  function square(x) {
+      return x * x;
+  }</textarea></div><div class="output"><pre class="hl"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">square</span>(<span class="hljs-params">x</span>) </span>{
+    <span class="hljs-keyword">return</span> x * x;
+}</pre></div></div>
+
+
+<h2 id="inlinecode">Inline code</h2>
+
+<p>A prefix backtick makes a word into inline code.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Here is `code</textarea></div><div class="output">Here is <code>code</code></div></div>
+
+<p>Normally you will want to use brackets:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[1 + 1 = 2]</textarea></div><div class="output">Simple as <code>1 + 1 = 2</code></div></div>
+
+<p>Note that only the outer bracket pair will be stripped off:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[[1 + 1 = 2]]</textarea></div><div class="output">Simple as <code>[1 + 1 = 2]</code></div></div>
+
+<p>For the rare case where you want to show an unmatched opening or
+closing bracket as code, escape it with a backslash:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">`[The opening bracket is \[]</textarea></div><div class="output"><code>The opening bracket is [</code></div></div>
+
+
+<h2 id="comments">Comments</h2>
+
+<p>Any block that comes after <code>;;</code> will be ignored by Quaint:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">I have nothing to hide
+;; except the rotting corpses
+   of two elephants</textarea></div><div class="output">I have nothing to hide
+</div></div>
+
+
+<h1 id="escaping">Escaping</h1>
+
+<p>If you want to print a character without triggering any special
+meaning it may have, simply prefix it with a backslash.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">\_\_Not \_emphasized</textarea></div><div class="output">__Not _emphasized</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">\[Bracketed!\]</textarea></div><div class="output">[Bracketed!]</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">You\~have\~to\~escape\~tildes</textarea></div><div class="output">You~have~to~escape~tildes</div></div>
+
+<p>Also, Quaint thinks every sequence of operator characters is a
+distinct operator. So while <code>x@@#y</code> looks like a link to <code>#y</code> it is
+actually an application of the <code>@@#</code> operator, which does not
+exist. Escaping an operator character makes it a word character, so in
+that case you can escape <code>#</code> to get the desired behavior:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">No@@#escaping</textarea></div><div class="output">No@@#escaping</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Yes@@\#escaping</textarea></div><div class="output"><a href="#escaping">Yes</a></div></div>
+
+
+<h1 id="whitespaceandgrouping">Whitespace and grouping</h1>
+
+
+<h2 id="spacing">Spacing</h2>
+
+<p>The spacing between an operator and its operand determine the priority
+of the operator. More spacing means a larger operand. To put it
+simply:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">__One word is bolded</textarea></div><div class="output"><strong>One</strong> word is bolded</div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">__ All the words are bolded</textarea></div><div class="output"><strong>All the words are bolded</strong></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">One word is linked@@index.html</textarea></div><div class="output">One word is <a href="index.html">linked</a></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">All words are linked @@ index.html</textarea></div><div class="output"><a href="index.html">All words are linked</a></div></div>
+
+<p>Play a bit with the spacing above to get a feel of the results</p>
+
+
+<h2 id="indent">Indent</h2>
+
+<p>An indented block after an operator belongs to that operator:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">* This is
+  all inside
+  the bullet point</textarea></div><div class="output"><ul><li>This is
+  all inside
+  the bullet point</li></ul></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">__ all inside
+   the strong emphasis</textarea></div><div class="output"><strong>all inside
+   the strong emphasis</strong></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">*
+  You can also put the operator
+  on its own line.</textarea></div><div class="output"><ul><li>
+  You can also put the operator
+  on its own line.</li></ul></div></div>
+
+
+<h2 id="grouping">Grouping</h2>
+
+<p>You can group together any chunk of text by enclosing it in square
+brackets (<code>[]</code>). They effectively behave like a single word.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">[Brackets do [[[not]]] [show up]]</textarea></div><div class="output">Brackets do not show up</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Emphasis on __one word</textarea></div><div class="output">Emphasis on <strong>one</strong> word</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Emphasis on __[many words]</textarea></div><div class="output">Emphasis on <strong>many words</strong></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Here is [a link]@@[#grouping]</textarea></div><div class="output">Here is <a href="#grouping">a link</a></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">Here is [another link @@ #spacing]</textarea></div><div class="output">Here is <a href="#spacing">another link</a></div></div>
+
+
+<h1 id="htmlgeneration">HTML Generation</h1>
+
+<p>The <code>%</code> operator is used to generate arbitrary HTML nodes, if you
+need to. The full syntax looks like this:</p>
+
+<pre class="hl">tag.class1.class2#id %
+  attribute = value
+  child1
+  child2
+  ...</pre>
+
+<p>If there is no tag, the default is <code>div</code>.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="7">x[sup % 2]
+
+img % src = assets/quaint-small.png
+
+span.err %
+  style = color:red
+  An __error occurred! (Not really)</textarea></div><div class="output"><p>x<sup>2</sup></p>
+
+<p><img src="assets/quaint-small.png"></p>
+
+<p><span style="color:red" class="err">An <strong>error</strong> occurred! (Not really)</span></p></div></div>
+
+
+<h2 id="htmlmacro"><code>html</code> macro</h2>
+
+<p>Alternatively, you can embed HTML directly using one of these two
+methods:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="5">html ::
+  &lt;span&gt;x&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt;
+
+raw %
+  &lt;span&gt;x&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt;</textarea></div><div class="output">
+  <span>x<sup>2</sup></span>
+
+<span>x<sup>2</sup></span></div></div>
+
+
+<h2 id="injectcss">Inject CSS</h2>
+
+<div class="quaint-example"><div class="input"><textarea rows="15">=== Injecting CSS!
+css ::
+  .orange { color: orange; }
+  .block {
+    height: 100px;
+    width: 100px;
+    color: white;
+    text-align: center;
+    line-height: 100px;
+    font-weight: bold;
+    background: red;
+  }
+
+Oranges are [span.orange % orange!]
+div.block % HELLO</textarea></div><div class="output"><h3 id="injectingcss">Injecting CSS!</h3>
+<style>
+  .orange { color: orange; }
+  .block {
+    height: 100px;
+    width: 100px;
+    color: white;
+    text-align: center;
+    line-height: 100px;
+    font-weight: bold;
+    background: red;
+  }</style>
+
+Oranges are <span class="orange">orange!</span>
+<div class="block">HELLO</div></div></div>
+
+
+<h2 id="injectjavascript">Inject JavaScript</h2>
+
+<p>Note that this is different from <em>embedding</em> JavaScript: what I mean by
+inject is to write code inside the generated HTML, with script
+tags. This is done as follows:</p>
+
+<pre class="hl">js :: javascript code</pre>
+
+<p>For example,</p>
+
+<pre class="hl">js :: console.log("hello")</pre>
+
+<p>will print "hello" to the console when you load the page in the
+browser. It will do nothing at generation time.</p>
+
+
+<h2 id="htmlsandbox">HTML Sandbox</h2>
+
+<div class="quaint-example"><div class="input"><textarea rows="7">h3 % Let's generate HTML!
+ol %
+  type = i
+  li % 2[sup % 2] is 4
+  li % 2[sup % 2[sup % 2]] is 16
+  li % html ::
+    &lt;em&gt;And so forth...&lt;/em&gt;</textarea></div><div class="output"><h3>Let's generate HTML!</h3>
+<ol type="i"><li>2<sup>2</sup> is 4</li>
+<li>2<sup>2<sup>2</sup></sup> is 16</li>
+<li>
+    <em>And so forth...</em></li></ol></div></div>
+
+
+<h1 id="variables">Variables</h1>
+
+<p>If there is a piece of markup you don't want to put in the middle of a
+paragraph, for example a long URL for a link, or want to use multiple
+times, then variables are for you. It's very simple:</p>
+
+<pre class="hl">variable =&gt; contents
+...
+{variable}</pre>
+
+
+<p>For example:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="7">smith03 =&gt; //some.where/thing.pdf
+
+Theropods are a family of dinosaurs which, according to the study by Smith@@{smith03}, had very large wings that allowed them to fly to the moon.</textarea></div><div class="output">
+
+<p>Theropods are a family of dinosaurs which, according to the study by <a href="//some.where/thing.pdf">Smith</a>, had very large wings that allowed them to fly to the moon.</p></div></div>
+
+<p>Better yet... you can define the variable <strong>after</strong> it is used, and it
+will work anyway!</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="9">Quaint@@{q} is a language similar to Markdown@@{md} with a dash of Haml@@{haml}
+
+q =&gt; //breuleux.github.io/quaint
+md =&gt; //daringfireball.net/projects/markdown
+haml =&gt; //haml.info</textarea></div><div class="output"><p><a href="//breuleux.github.io/quaint">Quaint</a> is a language similar to <a href="//daringfireball.net/projects/markdown">Markdown</a> with a dash of <a href="//haml.info">Haml</a></p>
+
+</div></div>
+
+<p>A variable can be used multiple times.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">k =&gt; __KNOCK!
+{k} {k} {k}</textarea></div><div class="output">
+<strong>KNOCK!</strong> <strong>KNOCK!</strong> <strong>KNOCK!</strong></div></div>
+
+
+<h1 id="rules">Rules</h1>
+
+<p>Simply put, a rule is a reusable template that you assign a name or
+an operator to. Rules help with terseness and code reusability,
+although abusing them could make your code difficult to read. The
+syntax for a rule is:</p>
+
+<pre class="hl">[pattern] =&gt; template</pre>
+
+<p>A pattern is a normal Quaint expression, but any word which is
+prefixed with a backslash becomes a <em>variable</em>. The variable can be
+inserted in the template using curly brackets (<code>{variable}</code>). Here is
+an example of a rule someone may write to make superscripts easier:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">[\text ^ \superscript] =&gt;
+  {text}[sup % {superscript}]
+2^3</textarea></div><div class="output">
+2<sup>3</sup></div></div>
+
+<p>Both arguments must be present in order for the rule to work. If
+either is absent, for instance <code>^2</code> lacks the <code>text</code> argument, the
+rule will not be run. You can change this by declaring the argument
+as <code>\maybe\text</code> instead:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">[\maybe\text ^ \superscript] =&gt;
+  {text}[sup % {superscript}]
+2^3 and ^3 match, but 2^ does not</textarea></div><div class="output">
+2<sup>3</sup> and <sup>3</sup> match, but 2^ does not</div></div>
+
+<p>Conversely, if you declare the pattern <code>[^ \superscript]</code>, Quaint
+requires the operator to be prefix:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="3">[^ \superscript] =&gt;
+  sup % {superscript}
+^3 matches, but 2^3 and 2^ do not</textarea></div><div class="output">
+<sup>3</sup> matches, but 2^3 and 2^ do not</div></div>
+
+<h2 id="behavior">Behavior</h2>
+
+<p>Rules do <em>not</em> modify Quaint's parser: the <code>^</code> operator has always
+existed, it is just that by default it just prints itself out. This is
+an advantage, because rules in Quaint are predictable: the operator
+we just defined is right-associative, because all operators in Quaint
+are right-associative. They are sensitive to spacing like all
+operators, they can be bracketed like all operators, and so on.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="10">[\maybe\text ^ \superscript] =&gt;
+  {text}[sup % {superscript}]
+
+* Superscript ^one word
+* Superscript ^[multiple words]
+* Right associative: 2^3^4^5^6
+* Emphasized ^ _superscript
+* Superscripting ^
+    a whole
+    block!</textarea></div><div class="output">
+
+<ul><li>Superscript <sup>one</sup> word</li><li>Superscript <sup>multiple words</sup></li><li>Right associative: 2<sup>3<sup>4<sup>5<sup>6</sup></sup></sup></sup></li><li>Emphasized<sup><em>superscript</em></sup></li><li>Superscripting<sup>
+    a whole
+    block!</sup></li></ul></div></div>
+
+
+<h2 id="rulesandbox">Rule Sandbox</h2>
+
+<div class="quaint-example"><div class="input"><textarea rows="15">css :: .orange { color: orange; }
+[/ \text] =&gt; span.orange % {text}
+
+I am a big fan of /oranges and other /[orange food] like /carrots.
+
+[?? \t] =&gt;
+  {t} @@ //wikipedia.org/wiki/{t}
+
+The ??orange is a ??fruit, who would have thought?</textarea></div><div class="output"><style>.orange { color: orange; }</style>
+
+
+<p>I am a big fan of <span class="orange">oranges</span> and other <span class="orange">orange food</span> like <span class="orange">carrots</span>.</p>
+
+
+
+<p>The <a href="//wikipedia.org/wiki/orange">orange</a> is a <a href="//wikipedia.org/wiki/fruit">fruit</a>, who would have thought?</p></div></div>
+
+
+
+<h1 id="scripting">Scripting</h1>
+
+<p>Curly brackets switch to "eval mode". They could contain JavaScript,
+or Earl Grey, or something else. By default the "eval" used is just a
+key-based load/store mechanism. Other scripting languages require
+importing a plugin.</p>
+
+<p>Supposing the <a href="//github.com/breuleux/quaint-javascript">quaint-javascript</a> plugin is used, as it is on this
+site, then you can embed JS expressions:</p>
+
+
+
+<div class="quaint-example"><div class="input"><textarea rows="1">2 + 2 = {2 + 2}</textarea></div><div class="output">2 + 2 = 4</div></div>
+
+<p>You can also use JS inside rules. The variables declared by the rule
+are also available in JavaScript! They are not strings, but you can
+convert them into strings by calling the <code>raw</code> method on them.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="5">[shout :: \text] =&gt;
+  {text.raw().toUpperCase()}
+
+shout :: hello! I don't mean to shout, but where's the beef?</textarea></div><div class="output">
+
+<p>HELLO! I DON'T MEAN TO SHOUT, BUT WHERE'S THE BEEF?</p></div></div>
+
+<p>It is also possible to build HTML programmatically. <code>quaint-javascript</code>
+comes with the <code>h</code> function. If you use <code>h</code>, though, make sure to call
+<code>engine.gen</code> on the arguments to apply Quaint markup to them! Unless
+you are converting them to strings, that is. The markup will be lost
+if you do that.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="5">[bolden :: \text] =&gt;
+  {h("b", {}, engine.gen(text))}
+
+bolden :: This is _bold!</textarea></div><div class="output">
+
+<p><b>This is <em>bold!</em></b></p></div></div>
+
+<p>With the <code>quaint</code> command line and API, you can provide environment
+variables for use inside curly brackets. See the <code>-d</code> option for the
+<code>quaint</code> command.</p>
+
+
+
+<h1 id="macros">Macros</h1>
+
+<p>Macros are typically written with the <code>::</code> operator, either as
+<code>macro :: body</code> or <code>macro argument :: body</code>.</p>
+
+
+<h2 id="meta"><code>meta</code></h2>
+
+<p><code>meta</code> lets you declare metadata: title, author, template, and so on.
+It also lets you print out the data elsewhere in the file.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="6">meta ::
+  title = My Life
+  author = Me!
+
+You are reading meta::title by meta::author.</textarea></div><div class="output">
+
+<p>You are reading My Life by Me!.</p></div></div>
+
+
+<h2 id="toc"><code>toc</code></h2>
+
+<p><code>toc</code> prints out a table of contents based on the headers declared in
+the markup. It can be used anywhere in the file.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="6">toc::
+= One
+= Two
+== Two point one
+== Two point two
+= Three</textarea></div><div class="output"><ul class="toc"><li><a href="#one">One</a></li><li><a href="#two">Two</a></li><ul><li><a href="#twopointone">Two point one</a></li><li><a href="#twopointtwo">Two point two</a></li></ul><li><a href="#three">Three</a></li></ul>
+<h1 id="one">One</h1>
+<h1 id="two">Two</h1>
+<h2 id="twopointone">Two point one</h2>
+<h2 id="twopointtwo">Two point two</h2>
+<h1 id="three">Three</h1></div></div>
+
+
+<h2 id="store"><code>store</code></h2>
+
+<p><code>store</code> is mostly useful in conjunction with the <a href="/quaint/api.html">API</a> and/or
+templates. With this macro you can push data to an internal "document"
+(a list of references, or a list of script tags to put in &lt;head&gt; for
+instance), and then dump that document somewhere convenient. You don't
+have to dump after everything has been stored.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="8">store names ::
+  Bob
+  Clara
+
+store names :: dump!
+
+store names ::
+  Damian</textarea></div><div class="output">
+
+<p>
+  Bob
+  Clara
+  Damian</p>
+
+</div></div>
+
+<p>One use case of <code>store</code> is in Quaint's very documentation. The code for
+this page declares:</p>
+
+<pre class="hl">store sidebar ::
+  toc::</pre>
+
+<p>That is to say, "put the table of contents in the sidebar". Then, the
+template it is using dumps the contents of the sidebar document in the
+sidebar.</p>
+
+
+<h2 id="html"><code>html</code></h2>
+
+<p><a href="#htmlmacro">See here</a></p>
+
+<h2 id="css"><code>css</code></h2>
+
+<p><a href="#injectcss">See here</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></div>
+
+  <div id="foot-container" class="container"><div id="foot"></div></div></div>
+
+    <script>
+                                    System.import("edit").then(function(x){
+                                       if(x.main) x.main();
+                                    })
+                                 </script></body></html>

@@ -1,0 +1,382 @@
+
+
+require:
+   opg ->
+      transferLocation as [<<:]
+   "./tools" as tools ->
+      may-fail
+      parseSpec, makeExtractor, extractor
+      raw, rawRelative, dedent, extract, collapse, statements
+      shed, shedAll, shedIndent
+      mergeable
+   "./doc" ->
+      SeqDocument, MapDocument
+   "./util" ->
+      insertSorted
+   "./lang" ->
+      QAst, Text, Oper, Seq
+
+provide:
+   basicPlugin
+
+
+requireWide{f}{engine, data} =
+   if data._wide:
+      f.call{this, engine, data}
+   else:
+      tools.next
+
+headerRule{level}{engine, {=> x}} =
+   gx = engine.gen{x}
+   lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
+   rval =
+      ^[S'h{level}'] %
+         id = lbl
+         gx
+         genfor %
+            document = .sections
+            {{level, gx, lbl}}
+   rval &: {block = true}
+
+
+class BasicEvaluator:
+   constructor{@store = Object.create{null}} =
+      pass
+   eval{key, env = {=}, loc = null} =
+      ;; s = Object.create{@store} &: env
+      s = @store &: env
+      if not Object.hasProperty.call{s, key}:
+         throw E.not_in_environment{key}
+      s[key]
+   setenv{key, value} =
+      @store[key] = value
+   fork{} =
+      BasicEvaluator with
+         Object.create{@store}
+
+
+
+litPlugin{@} =
+   @clearRules{}
+   @registerRule with {
+      "{\\x}"{engine, {=> x}} =
+         tools.code{engine, x}
+   }
+
+
+basicPlugin{@} =
+
+   @registerDocument with {
+      meta = MapDocument{}
+      sections = SeqDocument{}
+   }
+
+   @evaluator = BasicEvaluator{}
+
+   ;; @setenv with {
+   @register-macros with {
+
+      store{engine, shed! raw! name, body} =
+         if raw{body} == "dump!":
+            genfrom %
+               generate{path, docs} =
+                  match docs[name]:
+                     undefined? ->
+                        ""
+                     doc ->
+                        doc.entries{} each x -> engine.gen{x}
+         else:
+            genfor %
+               document = name
+               create{} = SeqDocument{}
+               {body}
+
+      css{engine, shed! body} =
+         style[raw] % raw{body}
+
+      html{engine, shed! body} =
+         raw % raw{body}
+
+      js{engine, shed! body} =
+         script[raw] % raw{body}
+
+      toc{engine, body} =
+         genfrom %
+            generate{path, docs} =
+               rval = [ul.toc %]
+               stack = {}
+               var cnode = rval
+               var clvl = -1
+               entries = match raw{body}:
+                  "" or .all -> docs.sections.entries{path}
+                  .below -> docs.sections.entriesAfter{path}
+               entries each {match, title, lbl} ->
+                  do:
+                     link = a %
+                        href = S'#{lbl}'
+                        title
+                  level == clvl or [level when clvl == -1] ->
+                     clvl = level
+                     cnode.children.push with li % link
+                  level > clvl ->
+                     newnode = ul % li % link
+                     cnode.children.push{newnode}
+                     stack.push with {clvl, cnode}
+                     {clvl, cnode} = {level, newnode}
+                  level < clvl ->
+                     while level < clvl:
+                        {clvl, cnode} = stack.pop{}
+                     cnode.children.push{li % link}
+               rval
+
+      meta{engine, body} =
+         r = raw{body}
+         if r == "dump!":
+            genfrom %
+               generate{path, docs} =
+                  table % docs.meta.entries{} each
+                     {k, v} -> tr %
+                        td % k
+                        td % engine.gen{v}
+         elif "=" in raw{body}:
+            ex = extractor{"\\key = \\value"}
+            ENode{{.genfor}, {document = .meta}} with
+               statements{body} each ex! {=> key, => value} ->
+                  {raw{key}, value}
+         else:
+            genfrom %
+               generate{path, docs} =
+                  match docs.meta.get{r}:
+                     undefined? ->
+                        'No meta information: {r}'
+                     ENode? x or String? x ->
+                        x
+                     node ->
+                        engine.gen{node}
+   }
+
+   @registerMethods with {
+      method lit{} =
+         p = @fork-plug{litPlugin}
+         p.evaluator = @evaluator
+         p
+      method litgen{x} =
+         @lit{}.gen{x}
+   }
+
+   @registerRule with {
+
+      "\\maybe\\x ;; \\ignore"{engine, {=> x}} =
+         engine.gen{x}
+
+      "[\\maybe\\x]"{engine, {_node => Seq? {_, o, x, c, _}}} =
+         beg = raw{o}.replace{"[", ""}
+         middle = engine.gen{x}
+         end = raw{c}.replace{"]", ""}
+         res =
+            if beg or end or middle.block:
+               % [beg, middle, end]
+            else:
+               middle
+         if middle.block:
+            res &: {block = middle.block}
+         res
+
+      "{\\x}"{engine, {=> x}} =
+         tools.code{engine, x}
+
+      "\\fna :: \\maybe\\body"{engine, {=> fna, => body}} =
+         may-fail with ->
+            {fn, *args} =
+               match fna:
+                  extract! Seq? {"J", *args} ->
+                     args
+                  else ->
+                     {fna}
+            rf = raw{fn}
+            if engine.macros[rf] as f:
+               f{engine, *args, body} or ""
+            else:
+               genfrom %
+                  generate{path, documents} =
+                     may-fail with ->
+                        f2 = engine.eval{rf, {=}, fn.location}
+                        f2.apply{null, {engine, *args, body}} or ""
+
+         ;; try:
+         ;;    match fn:
+         ;;       extract! Seq? {"J", fn, *args} ->
+         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f{engine, *args, body} or ""
+         ;;       else ->
+         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
+         ;;          f{engine, body} or ""
+         ;; catch e:
+         ;;    span.error % String{e}
+
+      "_ \\x"{engine, {=> x}} =
+         em % engine.gen{x}
+
+      "__ \\x"{engine, {=> x}} =
+         strong % engine.gen{x}
+
+      "` \\x"{engine, {x => shed! x}} =
+         code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
+
+      "\\maybe\\lang & \\x"{engine, {x => shed! x}} =
+         pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
+
+      "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+         url2 = engine.litgen{url}
+         a %
+            href = url2
+            if{label == Text{""}, url2, engine.gen{label}}
+
+      "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+         img %
+            src = engine.litgen{url}
+            alt = engine.gen{label}
+
+      "\\url @@ image"{engine, {url => shed! url}} =
+         img % src = engine.litgen{url}
+
+      requireWide! "\\descr % \\maybe\\contents"{engine, var {=> descr, => contents}} =
+         leng = engine.lit{}
+
+         ex = extractor{"\\key = \\value"}
+         props = {=}
+         stmts = statements{contents} each
+            ex! {key => raw! key, => value} ->
+               props[key] = leng.gen{value}
+               continue
+            stmt ->
+               stmt
+         children =
+            if props != {=}:
+               [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
+            else:
+               s = shedIndent{contents}
+               if s == Text{""}:
+                  {}
+               else:
+                  {engine.gen{s}}
+
+         parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+         var id = null
+         tags = {}
+         parts each
+            "" ->
+               pass
+            R"^#(.*)"! {_, _id} ->
+               id = _id
+            tag ->
+               tags.push with tag
+         if id: props.id = id
+         ENode{tags, props, children}
+
+      requireWide! "= \\x" = headerRule{1}
+      requireWide! "== \\x" = headerRule{2}
+      requireWide! "=== \\x" = headerRule{3}
+      requireWide! "==== \\x" = headerRule{4}
+      requireWide! "===== \\x" = headerRule{5}
+      requireWide! "====== \\x" = headerRule{6}
+
+      requireWide! "# \\x"{engine, {=> x}} =
+         mergeable{.ol, li % engine.gen{x}}
+
+      requireWide! "* \\x"{engine, {=> x}} =
+         mergeable{.ul, li % engine.gen{x}}
+
+      requireWide! "+ \\x"{engine, {=> x}} =
+         args = collapse{"+", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  th % engine.gen{arg}
+
+      requireWide! "| \\x"{engine, {=> x}} =
+         args = collapse{"|", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  td % engine.gen{arg}
+
+      "\\rule => \\body"{engine, {rule => shed! raw! rule
+                                  body => shed! shedIndent! body}} =
+         match rule:
+            R"^/(.*)/$"! {_, regexp} ->
+               engine.registerReplace{regexp} with {*matches} ->
+                  values = object with enumerate{matches} each
+                     {i, m} -> {S'm{i}', m}
+                  engine.fork{}.setenv{values}.gen{body}
+            parseSpec! [spec and {top, match tree, specificity}] ->
+               #put ->
+                  throw E.too_general{rule}
+               #eq{Text? {name}} ->
+                  engine.setenv{name, body}
+               else ->
+                  engine.registerRule{spec} with {engine, values} ->
+                     engine.fork{}.setenv{values}.gen{body}
+
+         ""
+
+      ;; newline rule is a bit more complicated
+      newlineRule = {spec, fn} where
+
+         filter{match node} =
+            extract! Seq? {"NL", *args} ->
+               {args = args}
+            else ->
+               false
+
+         spec = {"NL", #fn{filter}, 1}
+
+         fn{engine, {_node => node and Seq? {*elems}, => args}} =
+            results = {}
+            wide = node.width == .wide
+            var last = null
+            _gen = engine.gen.bind{engine}
+            var i = -3
+
+            add{addblank = true} =
+               results.push with
+                  match last:
+                     [div %]? or {block => true?} ->
+                        last
+                     != "" when wide ->
+                        p % last
+                     else ->
+                        last
+               if addblank:
+                  results.push with
+                     raw{elems[i]}
+
+            var isFirst = true
+            args each [_gen! match] ->
+               do:
+                  i += 2
+               x when isFirst ->
+                  isFirst = false
+                  last = x
+               x when last and last.merge ->
+                  match last.merge{x}:
+                     false? ->
+                        add{}
+                        last = x
+                     newx ->
+                        last = newx
+               x ->
+                  add{}
+                  last = x
+            i += 2
+            if last:
+               add{false}
+
+            match results:
+               {result} ->
+                  result
+               else ->
+                  [% results] &: {block = Boolean! wide}
+   }

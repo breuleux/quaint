@@ -1,0 +1,56 @@
+{
+  "name": "earlgrey-runtime",
+  "version": "0.0.10",
+  "description": "Runtime for the Earl Grey programming language.",
+  "main": "./lib.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "http://breuleux.github.io/earl-grey/repl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breuleux/earl-grey-runtime.git"
+  },
+  "keywords": [
+    "Programming language",
+    "Macros",
+    "Pattern matching"
+  ],
+  "author": {
+    "name": "Olivier Breuleux"
+  },
+  "license": "MIT",
+  "gitHead": "1a2dffa120f7457abb2270a2055eaecfa7a1e31e",
+  "bugs": {
+    "url": "https://github.com/breuleux/earl-grey-runtime/issues"
+  },
+  "_id": "earlgrey-runtime@0.0.10",
+  "_shasum": "52eba66f26f2ad2b35b2520ff59a4ca6072f3a74",
+  "_from": ".",
+  "_npmVersion": "2.11.2",
+  "_nodeVersion": "0.12.6",
+  "_npmUser": {
+    "name": "breuleux",
+    "email": "breuleux@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "breuleux",
+      "email": "breuleux@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "52eba66f26f2ad2b35b2520ff59a4ca6072f3a74",
+    "tarball": "http://registry.npmjs.org/earlgrey-runtime/-/earlgrey-runtime-0.0.10.tgz"
+  },
+  "format": "cjs",
+  "ignore": [
+    "node_modules"
+  ],
+  "registry": "npm",
+  "dependencies": {
+    "core-js": "core-js@^0.9.18",
+    "regenerator": "regenerator@^0.8.32",
+    "process": "github:jspm/nodelibs-process@^0.1.0"
+  }
+}

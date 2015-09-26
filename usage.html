@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <title>Usage</title>
+    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
+    <script src="/quaint/lib/toc-scroll.js"></script></head>
+
+  <body>
+    
+
+<div id="sidebar"><div id="sidebar-contents">
+  <ul class="toc"><li><a href="#install">Install</a></li><li><a href="#usage">Usage</a></li><li><a href="#templates">Templates</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#datainjection">Data injection</a></li></ul></div></div>
+
+<div id="page">
+  <div id="nav-container" class="container"><div id="nav">
+      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
+<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
+      <div class="filler"></div>
+      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
+      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
+      <div class="navlink"><a href="/quaint/api.html">API</a></div>
+      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
+      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
+      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
+  
+
+<div id="main-container" class="container"><div id="main">
+
+
+
+
+
+<h1 id="install">Install</h1>
+
+<p>Very simple. Assuming you have <code>npm</code> installed, write the command:</p>
+
+<pre class="hl">npm install quaint -g</pre>
+
+<p>This will install a <code>quaint</code> command globally. It will be your main
+tool unless you want to use the <a href="/quaint/api.html">API</a> directly or write your own
+plugins.</p>
+
+
+<h1 id="usage">Usage</h1>
+
+<p>Here's the help for the <code>quaint</code> command:</p>
+
+<pre class="hl">Usage: quaint &lt;file ...&gt; [options]
+
+Options:
+  -d, --data      JSON string or file(s) defining field:value pairs to be made
+                  available inside markup (as {field}):
+                  * key:value
+                  * {"key": value, ...}
+                  * filename.json
+                  * prefix::filename.json
+  -e, --eval      Quaint string to parse directly
+  -f, --format    Format (only html currently supported)       [default: "html"]
+  -h, --help      Show help                                            [boolean]
+  -o, --out       File or directory to save the output to
+  -p, --plugin    Plugin(s) to import:
+                  * Quaint file (injected at the beginning)
+                  * Path to JavaScript file
+                  * Local npm module
+                  * Global npm module
+  -s, --stdout    Print to standard out               [boolean] [default: false]
+  -t, --template  Quaint file to use as template, or template directory
+  -v, --verbose   Print information about the operations performed     [boolean]</pre>
+
+
+<h1 id="templates">Templates</h1>
+
+<p>Templates are an important part of <code>quaint</code>. They are very simple and
+let you avoid repeating yourself.</p>
+
+<p>Let's make a simple boilerplate template with the doctype, &lt;html&gt; tag
+and whatnot. You might actually want to save this one!</p>
+
+<p><strong>boilerplate.q</strong></p>
+
+<pre class="hl">raw % &lt;!DOCTYPE html&gt;
+html %
+  head %
+    meta %
+       http-equiv = Content-type
+       content = text/html
+       charset = UTF-8
+    title % meta :: title
+    link %
+       rel = stylesheet
+       type = text/css
+       href = my-stylesheet.css
+  body %
+    {body}</pre>
+
+<p>Notice the line that reads <code>{body}</code>: this is the place in the template
+where the contents of our post will be inserted.</p>
+
+<p>Now you can write the post:</p>
+
+<p><strong>post.q</strong></p>
+
+<pre class="hl">meta ::
+  title = New post!
+  template = boilerplate
+
+Hello! This is a new post!</pre>
+
+<p>And run:</p>
+
+<pre class="hl">quaint post.q</pre>
+
+<p>Quaint will automatically fetch the template and fill it. It will also
+use the meta-information for the title and put it at the right place!</p>
+
+<p>Alternatively the <code>-t</code> flag can be used to either force a template or
+point Quaint to a template directory (so you can be neatly organized):</p>
+
+<pre class="hl">quaint post.q -t tpl.q      <span class="hljs-comment"># Will use tpl.q instead of boilerplate.q</span>
+quaint post.q -t templates/ <span class="hljs-comment"># Will use templates/boilerplate.q</span></pre>
+
+<p>Lastly: it is possible for a template to have a template (using the
+same <code>meta :: template = xyz</code> syntax that we saw). This is not a
+problem at all unless you create a cycle (in which case <code>quaint</code> will
+crash).</p>
+
+
+<h1 id="plugins">Plugins</h1>
+
+<p>Say you want to highlight some JavaScript in a post:</p>
+
+<p><strong>post.q</strong></p>
+
+<pre class="hl">Here's my super cool square function:
+
+javascript &amp;
+  function square(x) {
+      return x * x;
+  }</pre>
+
+<p>By default, Quaint will not do it. But the <code>quaint-highlight</code> plugin
+will do it.</p>
+
+<p>First you can install it globally (locally will work too):</p>
+
+<pre class="hl">npm install quaint-highlight -g</pre>
+
+<p>Once this is done you can refer to it by name (without the <code>quaint-</code>
+part):</p>
+
+<pre class="hl">quaint -p highlight post.q</pre>
+
+<p>This will save the result in <code>post.html</code>. This uses
+<a href="https://highlightjs.org/">highlight.js</a>.
+You will need to include a stylesheet as well. They are available
+<a href="https://github.com/isagalaev/highlight.js/tree/master/src/styles">here</a>.</p>
+
+<p>You may of course use as many plugins as you want, just use the <code>-p</code>
+option multiple times or separate each plugin with a comma. For instance:</p>
+
+<pre class="hl">quaint -p highlight -p javascript post.q
+quaint -p earlgrey,highlight post.q</pre>
+
+
+
+<h1 id="datainjection">Data injection</h1>
+
+<p>Let's create two files:</p>
+
+<ul><li><code>post.q</code> will contain the Quaint markup we want to render</li><li><code>data.json</code> will contain data for the render</li></ul>
+
+<p><strong>post.q</strong></p>
+
+<pre class="hl">The individual is named {name} {surname}.
+They are {gender} and were born on {birthdate}.</pre>
+
+<p><strong>data.json</strong></p>
+
+<pre class="hl">{
+  "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"Alice"</span></span>,
+  "<span class="hljs-attribute">surname</span>": <span class="hljs-value"><span class="hljs-string">"Lovelace"</span></span>,
+  "<span class="hljs-attribute">gender</span>": <span class="hljs-value"><span class="hljs-string">"female"</span></span>,
+  "<span class="hljs-attribute">birthdate</span>": <span class="hljs-value"><span class="hljs-string">"1960/06/21"</span>
+</span>}</pre>
+
+<p>Once these are defined, simply write:</p>
+
+<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json</pre>
+
+<p>The data will be filled in as you would expect. Moreover, you can
+override parts of the data directly on the command line. For instance,
+if you want Alice's surname to be Pottergeist instead, you can do
+this:</p>
+
+<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> surname:Pottergeist</pre>
+
+<p>Or this:</p>
+
+<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> <span class="hljs-string">'{"surname": "Pottergeist"}'</span></pre>
+
+<p>If you use the <code>quaint-javascript</code> plugin, all of the JSON contents
+become top-level variables. This means that you could, for instance,
+calculate Alice's age from her birthdate as an expression inside curly
+braces. Use this tip wisely.</p>
+
+
+
+
+
+
+
+</div></div>
+
+  <div id="foot-container" class="container"><div id="foot"></div></div></div>
+
+    </body></html>

@@ -1,0 +1,384 @@
+
+
+require:
+   opg ->
+      Source
+   "./lang" ->
+      parse
+      QAst, Text, Oper, Seq
+   "./tools" as tools ->
+      makeExtractor
+      normalize
+   "./doc" ->
+      SeqDocument
+   "./util" ->
+      insertSorted
+      transform
+   /html
+   /dom
+
+provide:
+   Dispatcher
+   Engine
+   Spec
+   processDocuments
+
+
+
+class Dispatcher:
+
+   constructor{} =
+      @dispatch = {}
+
+   gen handlers{node} =
+      key = node.operator or ""
+      if not key:
+         console.error with
+            "Node lacks an operator key. That may be indicative of a bug."
+      match @dispatch[key]:
+         undefined? ->
+            false
+         candidates ->
+            candidates each c ->
+               match node:
+                  c! parts ->
+                     yield {parts, c}
+                  else ->
+                     pass
+            false
+
+   register{*match} =
+      {Spec? handler} ->
+         key = handler.operator
+         l = [@dispatch[key] or= {}]
+         insertSorted{l, handler} with
+            {{specificity => match s1}, {specificity => s2}} ->
+               ;; Do not return 0 because it will cause a replacement
+               > s2 -> -1
+               else -> 1
+      {rule, fn} ->
+         @register{Spec{rule, fn}}
+
+   clone{} =
+      d = Dispatcher{}
+      d.dispatch = object with items{@dispatch} each {key, l} ->
+         {key, l.slice{0}}
+      d
+
+
+class Engine:
+
+   constructor{Array! plugins} =
+      @is-quaint-engine = true
+      @dispatch = Dispatcher{}
+      @documents = {=}
+      @regexps = {}
+      @methods = {}
+      @macros = {=}
+      @plug{*plugins}
+
+   forkPlug{*plugins} =
+      @fork{}.plug{*plugins}
+
+   plug{*plugins} =
+      plugins each match plugin ->
+         Function? f -> f{@}
+         {=> install-to} ->
+            plugin.install-to{@}
+      @
+
+
+   .gen{match node} =
+      
+      Text? {t} or Oper? {t} ->
+         l = node.location
+         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
+         node.location.text{}.replace{r} with {match} ->
+            "~" -> ""
+            s -> s[1]
+
+      Seq? {*parts} ->
+         result = f{} where f{} =
+            @dispatch.handlers{node} each {values, handler} ->
+               extra = {_node = node
+                        _wide = node.width == .wide
+                        _op = node[1]}
+               match handler.gen{@, extra & values}:
+                  == tools.next -> pass
+                  result -> return result
+            % [parts each part -> @gen{part}]
+
+         ;; match result:
+         ;;    ENode? {tags => {}, props => == {=}, => children} or Array? children
+         ;;    \ when children.every{x -> String? x} ->
+         ;;       r = children.join{""}
+         ;;       if{result.block, % r, r}
+         ;;    else ->
+         ;;       result
+
+         result
+
+      x and [ENode? or Array? or String?] ->
+         x
+
+   run{src} =
+
+      generated =
+         match src:
+            String? text ->
+               return @run{Source{text, "<quaint>"}}
+            Source? src ->
+               parsed = parse{src}
+               @gen{parsed}
+            node ->
+               @gen{node}
+
+      docs = @documents
+      main = processDocuments{generated, docs}
+      docs &: {= main}
+
+
+
+   translate{src, format, options = {=}} =
+
+      ;; stash = {}
+
+      ;; crossReplace{children, regexps, ndone = 0} =
+      ;;    if regexps 
+      ;;    s = xs.join{""} where xs = children each
+      ;;       String? s -> s
+      ;;       other ->
+      ;;          stash.push with other
+      ;;          S'#{stash.length - 1}#'
+
+      finalize{match, ndone} =
+         var String? s ->
+            enumerate{@regexps.slice{ndone}} each {i, {r, match repl}} ->
+               String? ->
+                  s = s.replace{r, repl}
+               Function? f or f is [-> repl] ->
+                  parts = {}
+                  var index = 0
+                  var curr = null
+                  while [curr = r.exec{s}]:
+                     parts.push{s[index...curr.index]}
+                     index = curr.index + curr[0].length
+                     parts.push{f{*curr}}
+                     if not "g" in r.flags:
+                        break
+                  parts.push{s.slice{index}}
+                  return collapse{parts, ndone + i + 1}
+            s
+         x -> x
+
+      collapse{match, ndone = 0} =
+
+         ENode? {tags => {}, props => == {=}, => children} or Array? children ->
+            fn{*match} =
+               {String? s, String? t} ->
+                  #replace{s + t}
+               {x, ENode? {tags => {}, props => == {=}, => children} or Array? children} ->
+                  #splice{*children}
+               {x, y} ->
+                  #push{collapse{y}}
+            r = transform{children, fn, ""}
+            r each x -> finalize{x, ndone}
+
+         ENode? {=> tags, => props, => children} ->
+            ENode{tags, props, collapse{children}}
+
+         x -> x
+
+      results = @run{src}
+      main = normalize{collapse{top}} where top =
+         if options.paragraph:
+            p % results.main
+         else:
+            top % results.main
+
+      match format:
+         .enode -> main
+         .text -> main.toString{}
+         .html -> html{main}
+         .dom -> dom{main}
+
+   toHTML{src, options = {=}} =
+      @translate{src, .html, options}
+
+   toENode{src, options = {=}} =
+      @translate{src, .enode, options}
+
+   registerMethods{methods} =
+      @methods ++= keys{methods}
+      this &: methods
+
+   registerMacros{macs} =
+      @macros &: macs
+
+   registerReplace{*match} =
+      {match expr, repl} ->
+         String? ->
+            @regexps.push{{RegExp{expr, "g"}, repl}}
+         RegExp? ->
+            @regexps.push{{expr, repl}}
+      {each {expr, repl}} ->
+         @registerReplace{expr, repl}
+
+
+   clearRules{} =
+      @dispatch = Dispatcher{}
+
+   registerRule{*match} =
+      {rule, handler} ->
+         @dispatch.register{rule, handler}
+         @
+      {rules} ->
+         items{rules} each {name, match} ->
+            Function? handler ->
+               @registerRule{name, handler}
+            {rule, handler} ->
+               @registerRule{rule, handler}
+         @
+
+
+   registerDocument{*match} =
+      {name, maker} ->
+         @documents[name] = maker
+         @
+      {docs} ->
+         items{docs} each {name, maker} ->
+            @documents[name] = maker
+         @
+
+
+   fork{} =
+      e = Engine{{}}
+      e.dispatch = @dispatch.clone{}
+      e.documentMakers = clone{@documentMakers}
+      e.evaluator = @evaluator.fork{}
+      e.regexps = clone{@regexps}
+      e.macros = clone{@macros}
+      e.methods = clone{@methods}
+      e.methods each m -> e[m] = this[m]
+      e
+
+
+   eval{text, env, loc = null} =
+      @evaluator.eval{text, env, loc}
+
+   setenv{*match} =
+      {name, value} ->
+         @evaluator.setenv{name, value}
+         @
+      {env} ->
+         items{env} each {k, v} ->
+            @setenv{k, v}
+         @
+
+
+class Spec:
+   constructor{makeExtractor! {@operator, @specificity, @extractor}, @gen} =
+      pass
+   ":::project"{@extractor! match} =
+      false? ->
+         {false, null}
+      values ->
+         {true, values}
+
+
+
+processDocuments{x, documents, maxiter = 10} =
+
+   var forges = new Set{}
+   deps = new Map{}
+
+   populate{match node, documents, replace, path} =
+
+      [redoc %]? ->
+         {child} = node.children
+         populate{child, newdocs, replace, path} where newdocs =
+            match node.props.documents:
+               Function? f -> f{documents}
+               docs -> documents & docs
+
+      [genfor %]? ->
+         docname = node.props.document
+         match documents[docname]:
+            undefined? when node.props.create ->
+               documents[docname] = node.props.create{}
+            undefined? when node.props.important ->
+               throw E.no_document{docname}
+            else ->
+               pass
+
+         match documents[docname]:
+            false? ->
+               ""
+            {delay => true?} ->
+               node
+            doc ->
+               doc.register.apply{doc, {path} ++ node.children}
+               ""
+
+      [genfrom %]? ->
+         forges.add{{node, documents, replace, path}}
+         "PLACEHOLDER"
+
+      ENode? ->
+         rval = ENode{tags, props, children} where
+            tags = node.tags
+            props = object with items{node.props} each {k, match v} ->
+               _ -> {k, populate{v, documents, replace, path ++ {k}}} where
+                  replace{x} = rval.props[k] = x
+            children =
+               enumerate{node.children} each {i, c} ->
+                  populate{c, documents, replace, path ++ {i}} where
+                     replace{x} = rval.children[i] = x
+         rval
+
+      Array? ->
+         rval =
+            enumerate{node} each {i, c} ->
+               populate{c, documents, replace, path ++ {i}} where
+                  replace{x} = rval[i] = x
+         rval
+
+      else ->
+         node
+
+   var res = populate{% x, documents, replace, {}} where
+      replace{x} = res = x
+
+   var niter = 0
+   while forges.size != 0 and niter < maxiter:
+
+      {_forges, forges} = {forges, new Set{}}
+      niter += 1
+
+      _forges each forge and {node, docs, replace, path} ->
+
+         ;; Reset accessed/modified flags for all documents
+         items{docs} each {_, doc} when doc.resetFlags ->
+            doc.resetFlags{}
+
+         ;; Execute generator, process new node, perform the replacement.
+         replace with populate{newnode, docs, replace, path} where
+            newnode = node.props.generate{path, docs}
+
+         ;; For all modified documents, every process that accessed
+         ;; them is put back in the queue for reprocessing
+         items{docs} each {_, doc} when doc.modified ->
+            [deps.get{doc} or {}] each
+               forge -> forges.add{forge}
+            deps.set{doc, {}}
+
+         ;; For all documents it accessed, the current generator is
+         ;; put in the dependencies for that document. Since we do this
+         ;; after checking for modifications, a generator may modify
+         ;; a document it accesses without causing an infinite loop.
+         items{docs} each {_, doc} when doc.accessed ->
+            if not deps.has{doc}: deps.set{doc, {}}
+            deps.get{doc}.push with forge
+
+   res.children[0]
+

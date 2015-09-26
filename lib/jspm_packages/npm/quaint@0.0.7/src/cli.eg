@@ -1,0 +1,154 @@
+
+require:
+   yargs
+   .run
+
+
+get-arguments{} =
+
+   argv = chain yargs:
+      @usage{"Usage: quaint <file ...> [options]"}
+
+      ;; --data, -d
+      @alias{.d, .data}
+      @nargs{.d, 1}
+      @describe{.d} with """
+         JSON string or file(s) defining field:value pairs to be made available inside markup (as {field}):
+         * key:value
+         * {"key": value, ...}
+         * filename.json
+         * prefix::filename.json
+      """.trim{}
+
+      ;; --eval, -e
+      @alias{.e, .eval}
+      @nargs{.e, 1}
+      @describe{.e, "Quaint string to parse directly"}
+
+      ;; --format, -f
+      @alias{.f, .format}
+      @nargs{.f, 1}
+      @default{.f, .html}
+      @describe{.f, "Format (only html currently supported)"}
+
+      ;; --help, -h
+      @alias{.h, .help}
+      @help{.h}
+
+      ;; --out, -o
+      @alias{.o, .out}
+      @nargs{.o, 1}
+      @describe{.o, "File or directory to save the output to"}
+
+      ;; --plugin, -p
+      @alias{.p, .plugin}
+      @nargs{.p, 1}
+      @describe{.p, """Plugin(s) to import:
+         * Quaint file (injected at the beginning)
+         * Path to JavaScript file
+         * Local npm module
+         * Global npm module"""}
+
+      ;; --stdout, -s
+      @alias{.s, .stdout}
+      @boolean{.s}
+      @default{.s, false}
+      @describe{.s, "Print to standard out"}
+
+      ;; --template, -t
+      @alias{.t, .template}
+      @nargs{.t, 1}
+      @describe{.t, "Quaint file to use as template, or template directory"}
+
+      ;; --verbose, -v
+      @alias{.v, .verbose}
+      @boolean{.v}
+      @describe{.v, "Print information about the operations performed"}
+
+
+      ;; TODO
+
+      ;; ;; --config, -c
+      ;; @alias{.c, .config}
+      ;; @nargs{.c, 1}
+      ;; @default{.c, "./quaint.json"}
+      ;; @describe{.c, "Path to a configuration file with option values (must be JSON)"}
+
+      ;; ;; --save-config
+      ;; @default{"save-config", false}
+      ;; @describe{"save-config", "Save the given options in a JSON file (./quaint.json if the file is not specified)"}
+
+      ;; ;; --save-meta
+      ;; @default{"save-meta", true}
+      ;; @describe{"save-meta", "Save meta data in a file (./meta.json if the file is not specified)"}
+
+      ;; ;; --dump-data
+      ;; @default{"dump-data", true}
+      ;; @describe{"dump-data", "Dump data provided with -d in a file (./data.json if the file is not specified)"}
+
+      @example with
+         "quaint myfile.q"
+         "Translate to myfile.html"
+      @example with
+         "quaint file1.q file2.q file3.q -v"
+         "Translate multiple files"
+      @example with
+         "quaint -e 'Quaint is __cool'"
+         "Translate a literal"
+
+      @example with
+         "quaint -e 'Play {game}' -d 'game:chess'"
+         "Fill data in"
+      @example with
+         "quaint article.q -d info.json"
+         "Fill data in from a file"
+
+      @example with
+         "quaint -e '2+2={2+2}' -p javascript"
+         "Using the quaint-javascript plugin"
+      @example with
+         "quaint file1.q file2.q -p prelude.q"
+         "Prepend prelude to each file"
+
+      @example with
+         "quaint file.q -t tpl"
+         "Use template ./tpl.q"
+      @example with
+         "quaint -e 'B' -t 'A {body} C'"
+         "Inline template, prints out A B C"
+      @example with
+         "quaint -e '[meta::template=tpl]BODY'"
+         "Use template ./tpl.q"
+      @example with
+         "quaint -e '[meta::template=tpl]BODY' -t templates/"
+         "Use template ./templates/tpl.q"
+
+      @check with {argv} ->
+         if not argv.e and not argv._.length:
+            throw E.usage with
+               "You must provide one or more filenames, or a string with the -e option."
+         if argv.e and argv._.length:
+            throw E.usage with
+               "You cannot translate a file if the -e option is used."
+         if argv.s and argv.o:
+            throw E.usage with
+               "You cannot combine the options -s and -o."
+         true
+
+      @argv
+
+
+provide{} =
+   try:
+      run{get-arguments{}}
+   catch [E.usage-error? e]:
+      yargs.show-help{}
+      console.error{e.message}
+      process.exit{1}
+   catch [E.cli-error? e]:
+      console.error with e.message
+      if Error? e[0]:
+         console.error with '\n{e[0].stack}'
+   catch e:
+      console.error with e.stack
+

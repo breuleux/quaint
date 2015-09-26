@@ -1,0 +1,48 @@
+{
+  "name": "center-align",
+  "description": "Center-align the text in a string.",
+  "version": "0.1.1",
+  "homepage": "https://github.com/jonschlinkert/center-align",
+  "author": {
+    "name": "Jon Schlinkert",
+    "url": "https://github.com/jonschlinkert"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jonschlinkert/center-align.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/center-align/issues"
+  },
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/jonschlinkert/center-align/blob/master/LICENSE"
+  },
+  "files": [
+    "index.js"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "align-text": "^0.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.0",
+    "should": "*"
+  },
+  "keywords": [
+    "align",
+    "align-center",
+    "center",
+    "center-align",
+    "right",
+    "right-align",
+    "text",
+    "typography"
+  ]
+}

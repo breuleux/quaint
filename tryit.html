@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <title>Try it!</title>
+    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
+    <script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><script src="/quaint/lib/highlight.pack.js"></script></head>
+
+  <body>
+    
+
+<div id="sidebar"><div id="sidebar-contents"></div></div>
+
+<div id="page">
+  <div id="nav-container" class="container"><div id="nav">
+      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
+<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
+      <div class="filler"></div>
+      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
+      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
+      <div class="navlink"><a href="/quaint/api.html">API</a></div>
+      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
+      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
+      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
+  
+
+
+
+
+<div id="tryit"><div class="quaint-example"><div class="input"><textarea rows="1">;; Edit me!
+
+meta ::
+  title = My Resume
+  author = My Name
+
+= meta::title
+
+Hello, my name is __meta::author and this is meta::title~! I have many skills:
+
+* Pirate skills
+  * Eye patch
+  * Peg leg
+* _Ninja skills
+  css ::
+    .invisible { color: transparent; }
+  # span.invisible % Stealth!
+  # Nunchakus
+* Robot skills
+  * Beep! Boop!
+* I can also cook!
+  + Meal       + Can I cook it? + How good?
+  | Potatoes   | Yes            | Delicious
+  | Steak      | Yes            | Rare
+  | Egg salad  | You bet!       | Decadent
+  | Cheesecake | Yes!!!         | Oh my god
+
+My website is @@{web}. Find me on Google@@http://google.com~! It's easy as 2 + 2 = {2 + 2}!
+
+web =&gt; http://my.amazing.website.com
+
+Please embed my `code on your website:
+
+javascript &amp;
+  function virus() { alert("AAAAAAAAHHH"); }
+
+@@image:assets/quaint-small.png</textarea></div><div class="output">
+
+
+
+<h1 id="metatitle">My Resume</h1>
+
+<p>Hello, my name is <strong>My Name</strong> and this is My Resume! I have many skills:</p>
+
+<ul><li>Pirate skills
+  <ul><li>Eye patch</li><li>Peg leg</li></ul></li><li><em>Ninja</em> skills
+  <style>
+    .invisible { color: transparent; }</style>
+  <ol><li><span class="invisible">Stealth!</span></li><li>Nunchakus</li></ol></li><li>Robot skills
+  <ul><li>Beep! Boop!</li></ul></li><li>I can also cook!
+  <table><tr><th>Meal</th><th>Can I cook it?</th><th>How good?</th></tr><tr><td>Potatoes</td><td>Yes</td><td>Delicious</td></tr><tr><td>Steak</td><td>Yes</td><td>Rare</td></tr><tr><td>Egg salad</td><td>You bet!</td><td>Decadent</td></tr><tr><td>Cheesecake</td><td>Yes!!!</td><td>Oh my god</td></tr></table></li></ul>
+
+<p>My website is <a href="http://my.amazing.website.com">http://my.amazing.website.com</a>. Find me on <a href="http://google.com">Google</a>! It's easy as 2 + 2 = 4!</p>
+
+
+
+<p>Please embed my <code>code</code> on your website:</p>
+
+<pre class="hl"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">virus</span>(<span class="hljs-params"></span>) </span>{ alert(<span class="hljs-string">"AAAAAAAAHHH"</span>); }</pre>
+
+<p><img src="assets/quaint-small.png" alt=""></p></div></div></div>
+
+  <div id="foot-container" class="container"><div id="foot"></div></div></div>
+
+    <script>
+                                    System.import("toc").then(function(x){
+                                       if(x.main) x.main();
+                                    })
+                                 </script><script>
+                                    System.import("edit").then(function(x){
+                                       if(x.main) x.main();
+                                    })
+                                 </script></body></html>

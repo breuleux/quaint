@@ -1,0 +1,20 @@
+{
+  "name": "opg",
+  "version": "0.0.3",
+  "format": "cjs",
+  "description": "Library to parse operator precedence grammars.",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://github.com/breuleux/opg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breuleux/opg"
+  },
+  "keywords": [
+    "Parsing"
+  ],
+  "author": "Olivier Breuleux",
+  "license": "MIT"
+}

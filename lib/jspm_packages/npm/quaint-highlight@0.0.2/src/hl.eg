@@ -1,0 +1,49 @@
+
+require:
+   quaint -> tools
+   /html
+
+
+hl{hljs, raw-lang, code, inline, default-language} =
+   langstr =
+      if raw-lang === "":
+         default-language
+      else:
+         raw-lang
+   body =
+      if langstr:
+         then:
+            try:
+               hljs.highlight{langstr, code}.value
+            catch e:
+               html{code}
+         else:
+            html{code}
+   if inline:
+      code.hl[raw] % body
+   else:
+      pre.hl[raw] % body
+
+
+main{*match} =
+   {[@] and {is-quaint-engine => true?}, options = {=}} ->
+      current-hljs = options.hljs
+      options.install-plugins??{current-hljs}
+      block-rule = '\\maybe\\lang {options.operator-block or "&"} \\body'
+      inline-rule = '\\maybe\\lang {options.operator-inline or "`"} \\body' ;;"
+      @register-rule with {
+         [^block-rule]{engine, {=> lang, => body}} =
+            code = tools.dedent{tools.raw-relative{body}.replace{R"^ *\n", ""}}
+            raw-lang = lang.raw{}.trim{}
+            hl{current-hljs, raw-lang, code, false
+               options.default-block or options.default}
+         [^inline-rule]{engine, {=> lang, => body}} =
+            code = tools.shed{body}.raw{}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
+            raw-lang = lang.raw{}.trim{}
+            hl{current-hljs, raw-lang, code, true
+               options.default-inline or options.default}
+      }
+   {options = {=}} ->
+      {@} -> main{@, options}
+
+provide = main

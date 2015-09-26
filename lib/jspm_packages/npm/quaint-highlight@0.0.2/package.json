@@ -1,0 +1,30 @@
+{
+  "name": "quaint-highlight",
+  "description": "Syntax highlighting for Quaint using highlight.js",
+  "version": "0.0.2",
+  "format": "cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breuleux/quaint-highlight"
+  },
+  "keywords": [],
+  "author": "Olivier Breuleux",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "earlgrey-runtime": ">=0.0.10",
+    "highlight.js": "^8.7.0",
+    "quaint": ">=0.0.4"
+  },
+  "devDependencies": {
+    "earlgrey": ">=0.0.11",
+    "mocha": "^2.2.1",
+    "earl-mocha": ">=0.0.2"
+  },
+  "scripts": {
+    "refresh": "earl compile -5vso lib/ src/",
+    "compile": "earl compile -5rvso lib/ src/",
+    "prepublish": "npm run compile",
+    "test": "mocha"
+  }
+}

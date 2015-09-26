@@ -1,0 +1,40 @@
+{
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
+  "name": "glob",
+  "description": "a little globber",
+  "version": "4.2.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/isaacs/node-glob.git"
+  },
+  "main": "glob.js",
+  "files": [
+    "glob.js",
+    "sync.js",
+    "common.js"
+  ],
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "inflight": "^1.0.4",
+    "inherits": "2",
+    "minimatch": "^1.0.0",
+    "once": "^1.3.0"
+  },
+  "devDependencies": {
+    "mkdirp": "0",
+    "rimraf": "^2.2.8",
+    "tap": "~0.4.0",
+    "tick": "0.0.6"
+  },
+  "scripts": {
+    "prepublish": "npm run benchclean",
+    "test": "rm -f v8.log profile.txt; tap test/*.js",
+    "test-regen": "rm -f v8.log profile.txt; TEST_REGEN=1 node test/00-setup.js",
+    "bench": "bash benchmark.sh",
+    "prof": "bash prof.sh && cat profile.txt",
+    "benchclean": "bash benchclean.sh"
+  },
+  "license": "ISC"
+}

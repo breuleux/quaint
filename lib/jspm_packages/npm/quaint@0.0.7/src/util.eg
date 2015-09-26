@@ -1,0 +1,57 @@
+
+
+provide:
+   findInsert, insertSorted, deleteSorted
+   group, transform
+
+
+findInsert{xs, x, ord} =
+   var lo = 0
+   var hi = xs.length - 1
+   while lo <= hi:
+      mid = lo + [[hi - lo] // 2]
+      match ord{xs[mid], x}:
+         < 0  -> lo = mid + 1
+         > 0  -> hi = mid - 1
+         else -> return {mid, true}
+   {lo, false}
+
+insertSorted{xs, x, ord} =
+   {idx, replace} = findInsert{xs, x, ord}
+   xs.splice{idx, if{replace, 1, 0}, x}
+
+deleteSorted{xs, x, ord} =
+   {idx, replace} = findInsert{xs, x, ord}
+   if replace:
+      xs.splice{idx, if{replace, 1, 0}}
+
+
+group{xs, classify} =
+   transform{xs, f, {}} where f{match current, x and classify! cls} =
+      {} ->
+         current.push{cls, x}, #replace{current}
+      {== cls, *} ->
+         current.push{x}, #replace{current}
+      else ->
+         #push{{cls, x}}
+
+transform{xs, control, init = null} =
+   results = {}
+   var current = init
+   var pushc = false
+   helper{x} =
+      match control{current, x}:
+         #push{v} ->
+            results.push{current}
+            current = v
+            pushc = true
+         #replace{v} ->
+            current = v
+            pushc = true
+         #splice{*[elems each elem]} ->
+            helper{elem}
+   xs each x -> helper{x}
+   if pushc:
+      results.push{current}
+   results
+

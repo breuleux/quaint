@@ -1,0 +1,240 @@
+
+require-macros:
+   "earl-mocha" ->
+      describe, it, before, after
+      xdescribe, xit
+      assert, asserts
+
+require:
+   "../src/lang" ->
+      QAst, Text, Oper, Seq
+   "../src/index" ->
+      toHTML as q
+      Engine
+      create
+      ;; defaultengine as eng
+   "../src/tools" as tools
+   "../src/doc" ->
+      SeqDocument
+   /html
+
+run{text} =
+   create{}.run{text}
+
+
+describe "engine":
+
+   describe "rules are ordered by specificity":
+      testit{eng} =
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"x + y"} == "rule 1"
+            q{"x + y -- z"} == "rule 2"
+            q{"a + y"} == "rule 3"
+            q{"a + y -- z"} == "rule 3"
+
+      describe "more specific declared first":
+         testit with Engine with {@} ->
+            @registerRule with {
+               "\\a + \\b"{*} = "rule 1"
+               "\\a + \\b -- \\c"{*} = "rule 2"
+               "a + \\b"{*} = "rule 3"
+            }
+      describe "more specific declared last":
+         testit with Engine with {@} ->
+            @registerRule with {
+               "a + \\b"{*} = "rule 3"
+               "\\a + \\b -- \\c"{*} = "rule 2"
+               "\\a + \\b"{*} = "rule 1"
+            }
+
+   describe "a rule can pass execution to the next":
+
+      describe "more specific to less specific":
+         let eng = Engine with {@} ->
+            @registerRule with {
+               "\\a + \\b -- \\c"{_, {a => match}} =
+                  Text? {"hello"} -> "rule 1"
+                  else -> tools.next
+               "\\a + \\b"{*} = "rule 2"
+            }
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"hello + world -- yay"} == "rule 1"
+            q{"allo + monde -- youpi"} == "rule 2"
+
+      describe "second rule goes before first, does not replace it":
+         let eng = Engine with {@} ->
+            @registerRule with {
+               one = {"\\a + \\b", f} where f{*} = "rule 1"
+               two = {"\\a + \\b", f} where f{_, {a => match}} =
+                  Text? {"hello"} -> "rule 2"
+                  else -> tools.next
+            }
+         let q{txt} =
+            eng.run{txt}.main
+         asserts:
+            q{"hello + world"} == "rule 2"
+            q{"allo + monde"} == "rule 1"
+
+
+describe "basic rules":
+
+   asserts "square brackets are stripped out":
+      q{"the [circle] of life"} == "the circle of life"
+      q{"the[ circle ]of life"} == "the circle of life"
+      q{"the[ circle] of life"} == "the circle of life"
+      q{"the [circle ]of life"} == "the circle of life"
+      q{"the circle[ ]of life"} == "the circle of life"
+      q{"the []circle of life"} == "the circle of life"
+      q{"[[the circle of] life]"} == "the circle of life"
+      q{"[[the circle of life]]"} == "the circle of life"
+      q{"the  [   circle  ]   of life"} == "the     circle     of life"
+
+   asserts "operator characters may be escaped":
+      q{"the \\[circle\\] of life"} == "the [circle] of life"
+      q{"the \\_circle of \\{life\\}"} == "the _circle of {life}"
+      q{"a \\/\\/ b"} == "a // b"
+      q{"\\a\\bcd"} == "\\a\\bcd"
+      q{"_\\_xyz"} == "<em>_xyz</em>"
+
+   asserts "application of prefix operator":
+      q{"the _tiger pounces"} == "the <em>tiger</em> pounces"
+      q{"the _ tiger pounces"} == "the _ tiger pounces"
+      q{"the_tiger pounces"} == "the_tiger pounces"
+      q{"the _[tiger pounces]"} == "the <em>tiger pounces</em>"
+      q{"_ the tiger pounces"} == "<em>the tiger pounces</em>"
+      q{"the~_tiger~pounces"} == "the<em>tiger</em>pounces"
+
+   asserts "code":
+      q{"` quack quack"} == "<code>quack quack</code>"
+      q{"`quack"} == "<code>quack</code>"
+      q{"`[quack]"} == "<code>quack</code>"
+      q{"`[quack]quack"} == "<code>[quack]quack</code>"
+      q{"`[[quack]]"} == "<code>[quack]</code>"
+      q{"`{quack}"} == "<code>{quack}</code>"
+
+   asserts "pre":
+      q{"& quack quack"} == "<pre>quack quack</pre>"
+      q{"& quack\n  quack"} == "<pre>quack\nquack</pre>"
+      q{"& quack\n    quack"} == "<pre>quack\n  quack</pre>"
+
+   asserts "emphasis":
+      q{"_quack"} == "<em>quack</em>"
+      q{"__quack"} == "<strong>quack</strong>"
+      q{"_ __ quack"} == "<em><strong>quack</strong></em>"
+
+   asserts "links":
+      q{"quack @@ quaaack"} == "<a href=\"quaaack\">quack</a>"
+      q{"quack@@quaaack"} == "<a href=\"quaaack\">quack</a>"
+      q{"quack@@this_should_be_raw"} == "<a href=\"this_should_be_raw\">quack</a>"
+
+   asserts "lists":
+      q{"* hello"} == "<ul><li>hello</li></ul>"
+      q{"* hello\n* world"} == "<ul><li>hello</li><li>world</li></ul>"
+
+   asserts "tables":
+      q{"+ a + b + c"} == "<table><tr><th>a</th><th>b</th><th>c</th></tr></table>"
+      q{"| a | b | c"} == "<table><tr><td>a</td><td>b</td><td>c</td></tr></table>"
+      q{"+ a + b + c\n| a | b | c"} ==
+         S'<table>{r1}{r2}</table>' where
+            r1 = "<tr><th>a</th><th>b</th><th>c</th></tr>"
+            r2 = "<tr><td>a</td><td>b</td><td>c</td></tr>"
+
+   asserts "headers":
+      q{"= quack"} == "<h1 id=\"quack\">quack</h1>"
+      q{"== quack"} == "<h2 id=\"quack\">quack</h2>"
+      q{"=== quack"} == "<h3 id=\"quack\">quack</h3>"
+      q{"==== quack"} == "<h4 id=\"quack\">quack</h4>"
+      q{"===== quack"} == "<h5 id=\"quack\">quack</h5>"
+      q{"====== quack"} == "<h6 id=\"quack\">quack</h6>"
+
+   asserts "some operators must be wide":
+      q{"=quack"} == "=quack"
+      q{"==quack"} == "==quack"
+      q{"*quack"} == "*quack"
+      q{"#quack"} == "#quack"
+      q{"+quack+quack"} == "+quack+quack"
+      q{"|quack|quack"} == "|quack|quack"
+
+   describe "sections document":
+      getSections{docs} =
+         ;; print docs.sections.entries{}
+         docs.sections.entries{} each {l, match x, _} ->
+            String? -> {l, x}
+            else -> {l, html{x}}
+      it "trivial case":
+         docs = run{"= quack"}
+         assert getSections{docs} == {{1, "quack"}}
+      it "preserve markup":
+         docs = run{"= _quack"}
+         assert getSections{docs} == {{1, "<em>quack</em>"}}
+      it "complex document":
+         src = """
+         = one
+         Once upon a time...
+         == two
+         there was a queen
+         [
+            === three
+            who was really not nice at all
+         ]
+         = four
+         thankfully, she died
+         == five
+         and the nice princess replaced her
+         == six
+         the end
+         """
+         docs = run{src}
+         assert getSections{docs} == {
+            {1, "one"}
+            {2, "two"}
+            {3, "three"}
+            {1, "four"}
+            {2, "five"}
+            {2, "six"}
+         }
+      xit "table of contents":
+         pass
+
+
+   describe "meta":
+      getMeta{docs} =
+         object with docs.meta.entries{} each {l, x} ->
+            match q{x}:
+               String? x -> {l, x}
+               x -> {l, html{x}}
+      it "works":
+         docs = run{"meta ::\n a = X\n b = Y"}
+         assert getMeta{docs} == {a = "X", b = "Y"}
+      it "preserves markup":
+         docs = run{"meta ::\n a = _zazz\n b = Y"}
+         assert getMeta{docs} == {a = "<em>zazz</em>", b = "Y"}
+
+
+   describe "store":
+      it "works":
+         let q = create{}
+         docs = q.run{"[store xyz :: 123]aa[store abc :: 777]bb[store xyz :: 456]"}
+         abc = docs.abc.entries{} each x -> x.raw{}
+         xyz = docs.xyz.entries{} each x -> x.raw{}
+         assert abc == {"777"}
+         assert xyz == {"123", "456"}
+
+
+   describe "macros":
+
+      asserts:
+         q{"[duck => quack]{duck}{duck}"} == "quackquack"
+         q{"[duck => _quack]{duck}{duck}"} == "<em>quack</em><em>quack</em>"
+         q{"[duck => _quack][duck@@{duck}]"} == "<a href=\"_quack\">duck</a>"
+         q{"[duck => _quack][duck@@http://{duck}.com]"} == "<a href=\"http://_quack.com\">duck</a>"
+         q{"[[\\a + \\b] => __{b}~{a}][_zig + zag]"} ==
+            "<strong>zag</strong><em>zig</em>"
+
+      asserts "define after use":
+         q{"{duck}{duck}[duck => quack]"} == "quackquack"
+         q{"{duck}{duck}[duck => _quack]"} == "<em>quack</em><em>quack</em>"
