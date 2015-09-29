@@ -58,6 +58,9 @@ tokenizer = Tokenizer with {
          {type => .indent} ->
             prev.wsa = prev.wsb
             {tok}
+         {type => .dedent} ->
+            prev.wsa = 1
+            {tok}
          {type => .nl} ->
             prev.wsa = 1
             next.wsb = 1
