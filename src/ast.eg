@@ -71,7 +71,7 @@ class Seq{QAst}:
    "::serialize"{} =
       {_ss, enumerate{@} each {_, x} -> x}
 
-   sexp{recursive = false} =
+   sexp{recursive = true} =
       operators = {}
       newargs = {}
       enumerate{@} each {match i, arg} ->
@@ -83,7 +83,7 @@ class Seq{QAst}:
    args{} =
       @sexp{false}[1...]
 
-   .collapse{@} =
+   .collapse{} =
       collapse{@[1][0], @}
 
 
@@ -209,25 +209,47 @@ makeExtractor{parseSpec! {top, tree, specificity}} =
 
 ruleBank = {=}
 
-extractor{*rules} =
-   extractors = rules each
-      rule when ruleBank[rule] -> ruleBank[rule]
-      rule ->
-         {_, _, ex} = makeExtractor{rule}
-         ruleBank[rule] = ex
-         ex
-   f{node} =
-      extractors each ex ->
-         if [res = ex{node}]:
-            return res
-      return false
-   f[":::project"]{x} =
-      match f{x}:
-         === false ->
-            {false, null}
-         values ->
-            {true, values}
-   f
+;; extractor{*rules} =
+;;    extractors = rules each
+;;       rule when ruleBank[rule] -> ruleBank[rule]
+;;       rule ->
+;;          {_, _, ex} = makeExtractor{rule}
+;;          ruleBank[rule] = ex
+;;          ex
+;;    f{node} =
+;;       extractors each ex ->
+;;          if [res = ex{node}]:
+;;             return res
+;;       return false
+;;    f[":::project"]{x} =
+;;       match f{x}:
+;;          === false ->
+;;             {false, null}
+;;          values ->
+;;             {true, values}
+;;    f
 
+extractor{*match} =
+   {rules and not String?} ->
+      extractors = items{rules} each {name, match rule} ->
+         when ruleBank[rule] -> {name, ruleBank[rule]}
+         else ->
+            {_, _, ex} = makeExtractor{rule}
+            ruleBank[rule] = ex
+            {name, ex}
+      f{node} =
+         extractors each {name, ex} ->
+            if [res = ex{node}]:
+               return res &: {_which = name}
+         return false
+      f[":::project"]{x} =
+         match f{x}:
+            === false ->
+               {false, null}
+            values ->
+               {true, values}
+      f
+   rules ->
+      extractor{object with enumerate{rules}}
 
 

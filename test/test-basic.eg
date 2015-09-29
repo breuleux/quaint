@@ -67,12 +67,6 @@ describe "engine":
 
       describe "second rule goes before first, does not replace it":
          let eng = Engine with {@} ->
-            print {
-               one = {"\\a + \\b", f} where f{*} = "rule 1"
-               two = {"\\a + \\b", f} where f{_, {a => match}} =
-                  Text? {"hello"} -> "rule 2"
-                  else -> tools.next
-            }
             @registerRules with {
                one = {"\\a + \\b", f} where f{*} = "rule 1"
                two = {"\\a + \\b", f} where f{_, {a => match}} =

@@ -9,11 +9,16 @@ require:
       parse
       QAst, Text, Oper, Seq
    "../src/tools" ->
-      extractor, parseSpec
+      extractor as _extractor, parseSpec
    "../src/util" ->
       insertSorted, group, transform
    "../src/doc" ->
       comparePaths
+
+extractor{*args}{node} =
+   r = _extractor{*args}{node}
+   delete r._which
+   r
 
 
 describe "transform":
