@@ -3,15 +3,15 @@
 require:
    opg ->
       Source
-   "./lang" ->
+   .lang ->
       parse
       QAst, Text, Oper, Seq
-   "./tools" as tools ->
+   .tools as tools ->
       makeExtractor
       normalize
-   "./doc" ->
+   .doc ->
       SeqDocument
-   "./util" ->
+   .util ->
       insertSorted
       transform
    /html

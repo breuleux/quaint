@@ -3,17 +3,17 @@
 require:
    opg ->
       transferLocation as [<<:]
-   "./tools" as tools ->
+   .tools ->
       may-fail
       parseSpec, makeExtractor, extractor
       raw, rawRelative, dedent, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
-   "./doc" ->
+   .doc ->
       SeqDocument, MapDocument
-   "./util" ->
+   .util ->
       insertSorted
-   "./lang" ->
+   .lang ->
       QAst, Text, Oper, Seq
 
 provide:

@@ -3,14 +3,14 @@ require:
    opg ->
       Source, Location
       transferLocation as [<<:]
-   "./lang" ->
+   .lang ->
       parse, QAst, Text, Oper, Seq
-   "./tools" as tools
-   "./doc" as docs ->
+   .tools
+   .doc as docs ->
       BasicDocument, SeqDocument, MapDocument
-   "./engine" ->
+   .engine ->
       Engine, processDocuments
-   "./basic" ->
+   .basic ->
       basicPlugin
 
 provide:
