@@ -1,0 +1,233 @@
+
+require:
+   opg ->
+      Location, Source
+   kaiser/reg -> register-all
+   .lang
+
+provide:
+   QAst, Text, Oper, Seq
+   raw, shed, shed-all, shed-indent
+   parse-spec, make-extractor, extractor
+   statements, collapse
+
+
+
+class QAst:
+   constructor{} =
+      pass
+   raw{} =
+      @location.text{} !! e ->
+         throw E.noraw{'Cannot get a raw string from {@}.'}
+
+   .statements{} =
+      statements{@}
+   .shed{n = 1} =
+      shed{@, n}
+   .shed-all{} =
+      @shed{1/0}
+   .shed-indent{} =
+      shed-indent{@}
+
+   sexp{} = [@]
+   args{} = [@]
+
+   extract{*specs} =
+      extractor{*specs}{@}
+
+
+_ts = Symbol{"text"}
+class Text{QAst}:
+   constructor{x} =
+      @0 = x
+      @length = 1
+   "::clone"{} =
+      Text{@0}
+   "::serialize"{} =
+      {_ts, @0}
+
+_os = Symbol{"oper"}
+class Oper{QAst}:
+   constructor{x} =
+      @0 = x
+      @length = 1
+   "::clone"{} =
+      Oper{@0}
+   "::serialize"{} =
+      {_os, @0}
+
+_ss = Symbol{"seq"}
+class Seq{QAst}:
+   constructor{*xs} =
+      self = [@]
+      enumerate{xs} each {i, x} ->
+         self[i] = x
+      @length = xs.length
+   "::clone"{} =
+      rval = Seq{*[enumerate{@} each {_, x} -> x]}
+      rval.operator = @operator
+      rval.location = @location
+      rval
+   "::serialize"{} =
+      {_ss, enumerate{@} each {_, x} -> x}
+
+   sexp{recursive = false} =
+      operators = {}
+      newargs = {}
+      enumerate{@} each {match i, arg} ->
+         when i mod 2 == 0 ->
+            newargs.push{arg}
+         else ->
+            operators.push{arg[0]}
+      {operators.join{" "}, *newargs}
+   args{} =
+      @sexp{false}[1...]
+
+   .collapse{@} =
+      collapse{@[1][0], @}
+
+
+register-all{{QAst.prototype, Text.prototype, Oper.prototype, Seq.prototype}} with {
+   package = require: ..package
+}
+
+
+;;;;;;;;;;;;;;;;
+;; Operations ;;
+;;;;;;;;;;;;;;;;
+
+raw{match x, operate = {x} -> x} =
+   QAst? -> x.raw{}
+   String? -> operate{x}
+   [genfrom %]? ->
+      genfrom %
+         generate{path, docs} =
+            raw{x.props.generate{path, docs}}
+   else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
+
+shed{match, n = 1} =
+   Seq? {_, ob and Oper? {"["}, mid, cb and Oper? {"]"}, _} ->
+      if n > 1:
+         shed{mid, n - 1}
+      else:
+         lw = raw{ob}.split{"["}.pop{}
+         rw = raw{cb}.split{"]"}.shift{}
+         loc = mid.location
+         mid & {
+            location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
+         }
+   node ->
+      node
+
+shedAll{node} =
+   shed{node, 1/0}
+
+shedIndent{match node} =
+   Seq? {_, Oper? {"I("}, mid, Oper? {")I"}, _} ->
+      match mid:
+         Seq? {Text? {""}, Oper? {"NL"}, x} ->
+            x
+         Seq? {Text? {""}, Oper? {"NL"}, *rest} ->
+            Seq{*rest} &: mid
+         else ->
+            mid
+   node ->
+      node
+
+
+statements{shedIndent! match node} =
+   Seq? {_, Oper? {"NL"}, *} ->
+      [xs.reduce{++}] where xs =
+         enumerate{node} each
+            {i, x} when i mod 2 == 0 ->
+               statements{x}
+   Text? {""} ->
+      {}
+   else ->
+      {node}
+
+
+collapse{operator, node} =
+   match node.sexp{}:
+      {=== operator, l, r} ->
+         {l} ++ collapse{operator, r}
+      else ->
+         {node}
+
+
+parseSpec{match} =
+   String? spec ->
+      let ast = lang.parse{Source{spec}}
+      var top = null
+      var specificity = 0
+      rval = helper{ast, {shed = true}} where helper{match expr, opts} =
+         Text? {R"^\\(?:([^\\]*)\\)?(.*)$"! {_, match flag, name}} ->
+            "maybe" -> #put{name, true}
+            else -> #put{name, false}
+         Text? ->
+            specificity += 100
+            #eq{expr}
+         Oper? ->
+            #eq{expr}
+         Seq? {*args} and {=> operator} ->
+            specificity += 1
+            if [not top]:
+               top = operator
+            #seq{*[args each arg -> helper{arg, opts}]}
+      {top, rval, specificity}
+   {top, rval, specificity} ->
+      {top, rval, specificity}
+
+makeExtractor{parseSpec! {top, tree, specificity}} =
+   helper{match x, node} =
+      #put{v, _maybe = true} ->
+         match node:
+            Text? {""} when not _maybe ->
+               false
+            else ->
+               {v => node}
+      #eq{match} ->
+         == node -> {=}
+         else -> false
+      #seq{*subtrees} ->
+         match node:
+            Seq? {*args} when subtrees.length == args.length ->
+               rval = {=}
+               zip{subtrees, args} each {subtree, arg} ->
+                  match helper{subtree, arg}:
+                     false? ->
+                        return false
+                     vars ->
+                        rval &: vars
+               rval
+            other ->
+               false
+      #fn{f} ->
+         f{node}
+   {top, specificity, fn} where
+      fn{node} = helper{tree, node}
+
+ruleBank = {=}
+
+extractor{*rules} =
+   extractors = rules each
+      rule when ruleBank[rule] -> ruleBank[rule]
+      rule ->
+         {_, _, ex} = makeExtractor{rule}
+         ruleBank[rule] = ex
+         ex
+   f{node} =
+      extractors each ex ->
+         if [res = ex{node}]:
+            return res
+      return false
+   f[":::project"]{x} =
+      match f{x}:
+         === false ->
+            {false, null}
+         values ->
+            {true, values}
+   f
+
+
+

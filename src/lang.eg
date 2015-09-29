@@ -6,7 +6,8 @@ require:
          Tokenizer, indentTracker, inferLocation
       parse as _parse ->
          Parser, TokenGroups, PriorityOrder
-   kaiser/reg -> register-all
+   .ast ->
+      QAst, Text, Oper, Seq
 
 provide:
    tokenizer, tokenize
@@ -207,52 +208,6 @@ prio = PriorityOrder{tokgrp, priorities} where
       boundary = {left = -1, right = -1}
    }
 
-
-class QAst:
-   constructor{} =
-      pass
-   raw{} =
-      @location.text{} !! e ->
-         throw E.noraw{'Cannot get a raw string from {@}.'}
-
-_ts = Symbol{"text"}
-class Text{QAst}:
-   constructor{x} =
-      @0 = x
-      @length = 1
-   "::clone"{} =
-      Text{@0}
-   "::serialize"{} =
-      {_ts, @0}
-
-_os = Symbol{"oper"}
-class Oper{QAst}:
-   constructor{x} =
-      @0 = x
-      @length = 1
-   "::clone"{} =
-      Oper{@0}
-   "::serialize"{} =
-      {_os, @0}
-
-_ss = Symbol{"seq"}
-class Seq{QAst}:
-   constructor{*xs} =
-      self = [@]
-      enumerate{xs} each {i, x} ->
-         self[i] = x
-      @length = xs.length
-   "::clone"{} =
-      rval = Seq{*[enumerate{@} each {_, x} -> x]}
-      rval.operator = @operator
-      rval.location = @location
-      rval
-   "::serialize"{} =
-      {_ss, enumerate{@} each {_, x} -> x}
-
-register-all{{QAst.prototype, Text.prototype, Oper.prototype, Seq.prototype}} with {
-   package = require: ..package
-}
 
 
 finalize{match node} =

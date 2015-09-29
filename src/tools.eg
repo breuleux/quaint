@@ -2,8 +2,14 @@
 require:
    opg ->
       Source, Location
-   "./lang" ->
-      parse, QAst, Text, Oper, Seq
+   .lang ->
+      parse
+   .ast ->
+      QAst, Text, Oper, Seq
+      raw
+      shed, shedAll, shedIndent
+      collapse, statements
+      parseSpec, makeExtractor, extractor
 
 provide:
    next
@@ -25,15 +31,6 @@ may-fail{f} =
    catch e:
       span.error % String{e}
 
-
-raw{match x, operate = {x} -> x} =
-   QAst? -> x.raw{}
-   String? -> operate{x}
-   [genfrom %]? ->
-      genfrom %
-         generate{path, docs} =
-            raw{x.props.generate{path, docs}}
-   else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
 
 rawRelative{match x} =
    {=> location} ->
@@ -66,81 +63,6 @@ code{engine, x} =
                   res
 
 
-parseSpec{match} =
-   String? spec ->
-      let ast = parse{Source{spec}}
-      var top = null
-      var specificity = 0
-      rval = helper{ast, {shed = true}} where helper{match expr, opts} =
-         Text? {R"^\\(?:([^\\]*)\\)?(.*)$"! {_, match flag, name}} ->
-            "maybe" -> #put{name, true}
-            else -> #put{name, false}
-         Text? ->
-            specificity += 100
-            #eq{expr}
-         Oper? ->
-            #eq{expr}
-         Seq? {*args} and {=> operator} ->
-            specificity += 1
-            if [not top]:
-               top = operator
-            #seq{*[args each arg -> helper{arg, opts}]}
-      {top, rval, specificity}
-   {top, rval, specificity} ->
-      {top, rval, specificity}
-
-makeExtractor{parseSpec! {top, tree, specificity}} =
-   helper{match x, node} =
-      #put{v, _maybe = true} ->
-         match node:
-            Text? {""} when not _maybe ->
-               false
-            else ->
-               {v => node}
-      #eq{match} ->
-         == node -> {=}
-         else -> false
-      #seq{*subtrees} ->
-         match node:
-            Seq? {*args} when subtrees.length == args.length ->
-               rval = {=}
-               zip{subtrees, args} each {subtree, arg} ->
-                  match helper{subtree, arg}:
-                     false? ->
-                        return false
-                     vars ->
-                        rval &: vars
-               rval
-            other ->
-               false
-      #fn{f} ->
-         f{node}
-   {top, specificity, fn} where
-      fn{node} = helper{tree, node}
-
-ruleBank = {=}
-
-extractor{*rules} =
-   extractors = rules each
-      rule when ruleBank[rule] -> ruleBank[rule]
-      rule ->
-         {_, _, ex} = makeExtractor{rule}
-         ruleBank[rule] = ex
-         ex
-   f{node} =
-      extractors each ex ->
-         if [res = ex{node}]:
-            return res
-      return false
-   f[":::project"]{x} =
-      match f{x}:
-         === false ->
-            {false, null}
-         values ->
-            {true, values}
-   f
-
-
 extract{match} =
    Seq? {*args} ->
       Seq{args[1][0], *newargs} where newargs =
@@ -149,55 +71,6 @@ extract{match} =
                arg
    other ->
       other
-
-collapse{operator, match} =
-   ;; TODO: take width into account
-   extract! Seq? {=== operator, l, r} ->
-      {l} ++ collapse{operator, r}
-   node ->
-      {node}
-
-statements{shedIndent! match node} =
-   Seq? {_, Oper? {"NL"}, *} ->
-      [xs.reduce{++}] where xs =
-         enumerate{node} each
-            {i, x} when i mod 2 == 0 ->
-               statements{x}
-   Text? {""} ->
-      {}
-   else ->
-      {node}
-
-
-
-shed{match, n = 1} =
-   Seq? {_, ob and Oper? {"["}, mid, cb and Oper? {"]"}, _} ->
-      if n > 1:
-         shed{mid, n - 1}
-      else:
-         lw = raw{ob}.split{"["}.pop{}
-         rw = raw{cb}.split{"]"}.shift{}
-         loc = mid.location
-         mid & {
-            location = Location{loc.source, loc.start - lw.length, loc.end + rw.length}
-         }
-   node ->
-      node
-
-shedAll{node} =
-   shed{node, 1/0}
-
-shedIndent{match node} =
-   Seq? {_, Oper? {"I("}, mid, Oper? {")I"}, _} ->
-      match mid:
-         Seq? {Text? {""}, Oper? {"NL"}, x} ->
-            x
-         Seq? {Text? {""}, Oper? {"NL"}, *rest} ->
-            Seq{*rest} &: mid
-         else ->
-            mid
-   node ->
-      node
 
 
 
