@@ -83,6 +83,8 @@ class Engine:
       @plug{*plugins}
       @tools = tools
       @template = null
+      @deferred = Deferred
+      @into = Into
 
    forkPlug{*plugins} =
       @fork{}.plug{*plugins}
@@ -347,11 +349,11 @@ processDocuments{x, documents, maxiter = 10} =
                docs -> documents & docs
 
       Into? ->
-         docname = node.props.document
+         docname = node.document
          match documents[docname]:
-            undefined? when node.props.create ->
-               documents[docname] = node.props.create{}
-            undefined? when node.props.important ->
+            undefined? when node.create ->
+               documents[docname] = node.create{}
+            undefined? when node.important ->
                throw E.no_document{docname}
             else ->
                pass
@@ -362,7 +364,8 @@ processDocuments{x, documents, maxiter = 10} =
             {delay => true?} ->
                node
             doc ->
-               doc.register.apply{doc, {path} ++ node.children}
+               ;; doc.register.apply{doc, {path} ++ node.children}
+               doc.register.call{doc, path, node.value}
                ""
 
       Deferred? ->
@@ -408,7 +411,7 @@ processDocuments{x, documents, maxiter = 10} =
 
          ;; Execute generator, process new node, perform the replacement.
          replace with populate{newnode, docs, replace, path} where
-            newnode = may-fail{-> node.props.generate{path, docs}}
+            newnode = may-fail{-> node.generate{path, docs}}
 
          ;; For all modified documents, every process that accessed
          ;; them is put back in the queue for reprocessing

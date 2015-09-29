@@ -13,22 +13,13 @@ provide:
    Into, Deferred
 
 
-Into{document, value, options = {=}} =
-   genfor %
-      document = document
-      important = options.important
-      create = options.create
-      {value}
+class Into:
+   constructor{@document, @value, @options = {=}} =
+      [@] &: @options
 
-Into[Symbol.check]{x} =
-   [genfor %]? x
-
-Deferred{fn} =
-   genfrom %
-      generate = fn
-
-Deferred[Symbol.check]{x} =
-   [genfrom %]? x
+class Deferred:
+   constructor{@generate} =
+      pass
 
 
 class QAst:
