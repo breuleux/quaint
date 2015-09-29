@@ -322,7 +322,7 @@ class Engine:
 class Spec:
    constructor{makeExtractor! {@operator, @specificity, @extractor}, @gen} =
       pass
-   ":::project"{@extractor! match} =
+   [^Symbol.project-no-exc]{@extractor! match} =
       false? ->
          {false, null}
       values ->

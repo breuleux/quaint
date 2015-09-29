@@ -41,7 +41,7 @@ class Text{QAst}:
    constructor{x} =
       @0 = x
       @length = 1
-   "::clone"{} =
+   [^Symbol.clone]{} =
       Text{@0}
    "::serialize"{} =
       {_ts, @0}
@@ -51,7 +51,7 @@ class Oper{QAst}:
    constructor{x} =
       @0 = x
       @length = 1
-   "::clone"{} =
+   [^Symbol.clone]{} =
       Oper{@0}
    "::serialize"{} =
       {_os, @0}
@@ -63,7 +63,7 @@ class Seq{QAst}:
       enumerate{xs} each {i, x} ->
          self[i] = x
       @length = xs.length
-   "::clone"{} =
+   [^Symbol.clone]{} =
       rval = Seq{*[enumerate{@} each {_, x} -> x]}
       rval.operator = @operator
       rval.location = @location
@@ -209,26 +209,6 @@ makeExtractor{parseSpec! {top, tree, specificity}} =
 
 ruleBank = {=}
 
-;; extractor{*rules} =
-;;    extractors = rules each
-;;       rule when ruleBank[rule] -> ruleBank[rule]
-;;       rule ->
-;;          {_, _, ex} = makeExtractor{rule}
-;;          ruleBank[rule] = ex
-;;          ex
-;;    f{node} =
-;;       extractors each ex ->
-;;          if [res = ex{node}]:
-;;             return res
-;;       return false
-;;    f[":::project"]{x} =
-;;       match f{x}:
-;;          === false ->
-;;             {false, null}
-;;          values ->
-;;             {true, values}
-;;    f
-
 extractor{*match} =
    {rules and not String?} ->
       extractors = items{rules} each {name, match rule} ->
@@ -242,7 +222,7 @@ extractor{*match} =
             if [res = ex{node}]:
                return res &: {_which = name}
          return false
-      f[":::project"]{x} =
+      f[Symbol.project-no-exc]{x} =
          match f{x}:
             === false ->
                {false, null}
