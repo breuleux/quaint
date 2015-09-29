@@ -69,6 +69,7 @@ class Dispatcher:
 class Engine:
 
    constructor{Array! plugins} =
+      @top = true
       @is-quaint-engine = true
       @dispatch = Dispatcher{}
       @documents = {=}
@@ -78,6 +79,7 @@ class Engine:
       @resolvers = {=}
       @plug{*plugins}
       @tools = tools
+      @template = null
 
    forkPlug{*plugins} =
       @fork{}.plug{*plugins}
@@ -138,7 +140,6 @@ class Engine:
       main = processDocuments{generated, docs}
       docs &: {= main}
 
-
    translate{src, format, options = {=}} =
 
       ;; stash = {}
@@ -196,11 +197,28 @@ class Engine:
          else:
             top % results.main
 
-      match format:
+      result = match format:
          .enode -> main
          .text -> main.toString{}
          .html -> html{main}
          .dom -> dom{main}
+
+      if @template and not options.no-template:
+         r = @resolvers.template or @resolvers.default
+         if not r:
+            throw E.template.no-resolver{'Cannot resolve templates.'}
+         tsrc =
+            try:
+               match r{@template}:
+                  {=> file, => contents} -> Source{contents, file}
+                  {=> contents} or String? contents -> Source{contents, "<quaint>"}
+            catch e:
+               throw E.template.invalid{'Could not load template {@template} ({e})'}
+         @template = null
+         @setenv{.body, raw % result}
+         @translate{tsrc, format, options}
+      else:
+         result
 
    toHTML{src, options = {=}} =
       @translate{src, .html, options}
@@ -269,6 +287,7 @@ class Engine:
 
    fork{} =
       e = Engine{{}}
+      e.top = false
       e.dispatch = @dispatch.clone{}
       ;; e.documentMakers = clone{@documentMakers}
       e.evaluator = @evaluator.fork{}
@@ -277,6 +296,7 @@ class Engine:
       e.methods = clone{@methods}
       e.methods each m -> e[m] = this[m]
       e.resolvers = clone{@resolvers}
+      e.template = @template
       e
 
 

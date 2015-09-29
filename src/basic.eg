@@ -172,6 +172,14 @@ basicPlugin{@} =
                      node ->
                         engine.gen{node}
 
+      template{match engine, tpl} =
+         {top => false?} ->
+            throw E.template.syntax{'Template must be specified at top level.'}
+         {template => true? t} ->
+            throw E.template.duplicate{'Template {t} was already specified for this file.'}
+         else ->
+            engine.template = tpl.raw{}
+
       include{engine, *[{template, body} or {template} and body is null]} =
          t = template.raw{}
          r = engine.resolvers.include or engine.resolvers.default
