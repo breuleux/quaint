@@ -139,28 +139,29 @@ resolve-plugins{plugins} =
 
 
 run-template{q, source, t-specific, t-directory, verbose} =
-   res = q.toHTML{source}
-   t = normalize-qname{q.documents.meta.get{.template}??.raw{}}
-   q.documents.meta.set{.template, null}
-   if t-specific:
-      if verbose:
-         console.error with 'quaint: using template "{t-specific}"'
-      tpl =
+   read-template{normalize-qname! match name} =
+      "%%%" ->
+         if verbose:
+            console.error with 'quaint: using template "{t-specific}"'
          if R"\{"? t-specific:
             t-specific
          else:
-            fs.read-file-sync{t-specific, .utf8}
-      q.setenv{.body, raw % res}
-      run-template{q, tpl, null, t-directory or ".", verbose}
-   elif t-directory and t:
-      p = path.join{t-directory, t}
-      if verbose:
-         console.error with 'quaint: using template "{p}"'
-      tpl = fs.read-file-sync{p, .utf8}
-      q.setenv{.body, raw % res}
-      run-template{q, tpl, null, t-directory, verbose}
-   else:
-      res
+            {file = t-specific
+             contents = fs.read-file-sync{t-specific, .utf8}}
+      else ->
+         p = path.join{t-directory or ".", name}
+         if verbose:
+            console.error with 'quaint: using template "{p}"'
+         {file = p
+          contents = fs.read-file-sync{p, .utf8}}
+
+   q.register-resolvers with {
+      template = read-template
+   }
+
+   q.template = t-specific
+   q.toHTML{source}
+
 
 
 ;; Main method

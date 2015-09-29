@@ -209,12 +209,9 @@ class Engine:
          if not r:
             throw E.template.no-resolver{'Cannot resolve templates.'}
          tsrc =
-            try:
-               match r{@template}:
-                  {=> file, => contents} -> Source{contents, file}
-                  {=> contents} or String? contents -> Source{contents, "<quaint>"}
-            catch e:
-               throw E.template.invalid{'Could not load template {@template} ({e})'}
+            match r{@template}:
+               {=> file, => contents} -> Source{contents, file}
+               {=> contents} or String? contents -> Source{contents, "<quaint>"}
          @template = null
          @setenv{.body, raw % result}
          @translate{tsrc, format, options}
