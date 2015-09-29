@@ -5,8 +5,8 @@
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
-    "earlgrey-runtime": ">=0.0.10",
-    "kaiser": ">=0.0.1",
+    "earlgrey-runtime": ">=0.0.11",
+    "kaiser": ">=0.0.2",
     "opg": ">=0.0.3",
     "yargs": "^3.25.0"
   },
@@ -29,7 +29,7 @@
     "url": "https://github.com/breuleux/eg-quaint"
   },
   "keywords": [
-    "Markup language"
+    "quaint", "markup", "html"
   ],
   "author": "Olivier Breuleux",
   "license": "MIT"
