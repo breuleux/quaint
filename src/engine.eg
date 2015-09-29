@@ -76,6 +76,7 @@ class Engine:
       @methods = {}
       @macros = {=}
       @plug{*plugins}
+      @tools = tools
 
    forkPlug{*plugins} =
       @fork{}.plug{*plugins}
@@ -228,6 +229,9 @@ class Engine:
    clearRules{} =
       @dispatch = Dispatcher{}
 
+   registerRules{*args} =
+      @registerRule.apply{@, args}
+
    registerRule{*match} =
       {rule, handler} ->
          @dispatch.register{rule, handler}
@@ -240,6 +244,9 @@ class Engine:
                @registerRule{rule, handler}
          @
 
+
+   registerDocuments{*args} =
+      @registerDocument.apply{@, args}
 
    registerDocument{*match} =
       {name, maker} ->
