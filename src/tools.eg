@@ -22,6 +22,7 @@ provide:
    shed, shedAll, shedIndent
    mergeable
    normalize
+   toJSON
 
 
 next = Symbol{.next}
@@ -136,3 +137,14 @@ normalize{match node} =
       res
    else ->
       node
+
+
+toJSON{match v} =
+   {=> raw} ->
+      t = v.raw{}
+      try:
+         JSON.parse{t}
+      catch e:
+         t
+   else ->
+      v
