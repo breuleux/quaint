@@ -290,7 +290,7 @@ basicPlugin{@} =
       "` \\x"{engine, {x => shed! x}} =
          code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
 
-      "\\maybe\\lang & \\x"{engine, {x => shed! x}} =
+      "& \\x"{engine, {x => shed! x}} =
          pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
       "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
