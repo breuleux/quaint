@@ -11,7 +11,7 @@ require:
    .engine ->
       Engine, processDocuments
    .basic ->
-      basicPlugin
+      basic-plugin, lit-plugin, file-resolver
 
 provide:
    parse
@@ -24,6 +24,7 @@ provide:
    QAst, Text, Oper, Seq
    BasicDocument, SeqDocument, MapDocument
    h
+   basic-plugin, lit-plugin, file-resolver
 
 
 h{tag, match props, *children} =

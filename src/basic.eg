@@ -16,9 +16,13 @@ require:
       insertSorted
    .lang ->
       QAst, Text, Oper, Seq
+   fs, path
 
 provide:
+   BasicEvaluator
    basicPlugin
+   litPlugin
+   file-resolver
 
 
 requireWide{f}{engine, data} =
@@ -39,7 +43,6 @@ headerRule{level}{engine, {=> x}} =
             {{level, gx, lbl}}
    rval &: {block = true}
 
-
 class BasicEvaluator:
    constructor{@store = Object.create{null}} =
       pass
@@ -54,6 +57,17 @@ class BasicEvaluator:
    fork{} =
       BasicEvaluator with
          Object.create{@store}
+
+file-resolver{options = {=}}{name} =
+   with-extension = match name:
+      R"\.[a-zA-Z0-9]+$"? -> name
+      else -> '{name}.q'
+   filename = match with-extension:
+      R"^/"? -> with-extension
+      else -> path.join{options.directory or "", with-extension}
+   contents = [options.read-file or fs.read-file-sync]{filename, .utf8}
+   {file = filename
+    contents = contents}
 
 
 
@@ -72,9 +86,12 @@ basicPlugin{@} =
       sections = SeqDocument{}
    }
 
+   @registerResolvers with {
+      default = file-resolver{directory = ""}
+   }
+
    @evaluator = BasicEvaluator{}
 
-   ;; @setenv with {
    @register-macros with {
 
       store{engine, shed! raw! name, body} =
