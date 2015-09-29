@@ -143,6 +143,10 @@ describe "basic rules":
             r1 = "<tr><th>a</th><th>b</th><th>c</th></tr>"
             r2 = "<tr><td>a</td><td>b</td><td>c</td></tr>"
 
+   asserts "blockquotes":
+      q{"> hello world"} == "<blockquote> hello world</blockquote>"
+      q{"> hello\n> world"} == "<blockquote> hello world</blockquote>"
+
    asserts "headers":
       q{"= quack"} == "<h1 id=\"quack\">quack</h1>"
       q{"== quack"} == "<h2 id=\"quack\">quack</h2>"
@@ -150,6 +154,19 @@ describe "basic rules":
       q{"==== quack"} == "<h4 id=\"quack\">quack</h4>"
       q{"===== quack"} == "<h5 id=\"quack\">quack</h5>"
       q{"====== quack"} == "<h6 id=\"quack\">quack</h6>"
+
+   asserts "conditionals":
+      q{"when {true} :: A"} == "A"
+      q{"{true} ?? A"} == "A"
+      q{"{true} ?? A !! B"} == "A"
+      q{"when {false} :: A"} == ""
+      q{"{false} ?? A"} == ""
+      q{"{false} ?? A !! B"} == "B"
+      q{"meta::x !! B"} == "B"
+      q{"[meta::x=A][meta::x !! B]"} == "A"
+      q{"[meta::x:true][meta::x ?? A]"} == "A"
+      q{"[meta::x:false][meta::x ?? A]"} == ""
+      q{"[meta::x:false][meta::x !! B]"} == "B"
 
    asserts "some operators must be wide":
       q{"=quack"} == "=quack"
