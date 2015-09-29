@@ -4,7 +4,7 @@ require:
       Source, Location
       transferLocation as [<<:]
    .lang ->
-      parse, QAst, Text, Oper, Seq
+      parse, tokenize, QAst, Text, Oper, Seq
    .tools
    .doc as docs ->
       BasicDocument, SeqDocument, MapDocument
@@ -14,7 +14,7 @@ require:
       basic-plugin, lit-plugin, file-resolver
 
 provide:
-   parse
+   parse, tokenize
    Location, Source
    Engine
    create
