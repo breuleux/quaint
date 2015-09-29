@@ -10,6 +10,7 @@ require:
       raw, rawRelative, dedent, extract, collapse, statements
       shed, shedAll, shedIndent
       mergeable
+      toJSON
    .doc ->
       SeqDocument, MapDocument
    .util ->
@@ -96,18 +97,21 @@ basicPlugin{@} =
 
       store{engine, shed! raw! name, body} =
          if raw{body} == "dump!":
-            genfrom %
-               generate{path, docs} =
-                  match docs[name]:
-                     undefined? ->
-                        ""
-                     doc ->
-                        doc.entries{} each x -> engine.gen{x}
+            engine.macros.dump{engine, name}
          else:
             genfor %
                document = name
                create{} = SeqDocument{}
                {body}
+
+      dump{engine, shed! raw! name} =
+         genfrom %
+            generate{path, docs} =
+               match docs[name]:
+                  undefined? ->
+                     ""
+                  doc ->
+                     doc.entries{} each x -> engine.gen{x}
 
       css{engine, shed! body} =
          style[raw] % raw{body}
@@ -166,7 +170,7 @@ basicPlugin{@} =
                generate{path, docs} =
                   match docs.meta.get{r}:
                      undefined? ->
-                        'No meta information: {r}'
+                        throw E.no-meta{'No meta information: {r}'}
                      ENode? x or String? x ->
                         x
                      node ->
@@ -350,6 +354,9 @@ basicPlugin{@} =
             tr %
                args each arg ->
                   th % engine.gen{arg}
+
+      requireWide! "> \\x"{engine, {=> x}} =
+         mergeable{.blockquote, {" ", engine.gen{x}}}
 
       requireWide! "| \\x"{engine, {=> x}} =
          args = collapse{"|", x}
