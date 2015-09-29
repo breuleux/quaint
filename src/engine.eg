@@ -123,7 +123,10 @@ class Engine:
 
          result
 
-      x and [ENode? or Array? or String?] ->
+      null? or undefined? ->
+         ""
+
+      x and [ENode? or Array? or String? or Boolean?] ->
          x
 
       Error? e ->

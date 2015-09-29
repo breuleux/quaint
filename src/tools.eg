@@ -145,6 +145,8 @@ toJSON{match v} =
       try:
          JSON.parse{t}
       catch e:
+         if "{" in t or "[" in t:
+            throw e
          t
    else ->
       v
