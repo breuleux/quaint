@@ -313,9 +313,15 @@ adjust2{match node} =
 parser = Parser{tokenizer, prio.getOrder{}, finalize}
 
 
-tokenize{src} =
-   tokenizer.run{src}
+tokenize{match src} =
+   String? ->
+      tokenize{Source{src, "<quaint>"}}
+   else ->
+      tokenizer.run{src}
 
-parse{src} =
-   parser.parse{src} or [Text{""} <<: Location{src, 0, src.text.length}]
+parse{match src} =
+   String? ->
+      parse{Source{src, "<quaint>"}}
+   else ->
+      parser.parse{src} or [Text{""} <<: Location{src, 0, src.text.length}]
 
