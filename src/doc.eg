@@ -3,6 +3,7 @@
 require:
    "./util" ->
       findInsert, insertSorted, deleteSorted
+   .tools
 
 provide:
    comparePaths
@@ -52,7 +53,11 @@ class MapDocument{BasicDocument}:
    entries{} =
       @accessed = true
       @data.entries{}
-
+   get-value{key} =
+      tools.toJSON{@get{key}}
+   toJSON{} =
+      object with @entries{} each {k, v} ->
+         {k, tools.toJSON{v}}
 
 class SeqDocument{BasicDocument}:
    constructor{} =
