@@ -227,54 +227,56 @@ class Engine:
    toENode{src, options = {=}} =
       @translate{src, .enode, options}
 
-   registerMethods{methods} =
+
+   register-methods{methods} =
       @methods ++= keys{methods}
       this &: methods
+      @
 
-   registerMacros{macs} =
+   register-macros{macs} =
       @macros &: macs
+      @
 
-   registerReplace{*match} =
+   register-postprocessor{*match} =
       {match expr, repl} ->
          String? ->
             @regexps.push{{RegExp{expr, "g"}, repl}}
+            @
          RegExp? ->
             @regexps.push{{expr, repl}}
+            @
       {each {expr, repl}} ->
-         @registerReplace{expr, repl}
+         @register-substitutions{expr, repl}
+         @
 
-
-   clearRules{} =
+   clear-rules{} =
       @dispatch = Dispatcher{}
+      @
 
-   registerRules{*args} =
-      @registerRule.apply{@, args}
+   register-rule{*args} =
+      console.error{'Deprecated: Engine::registerRule, use Engine::registerRules'}
+      @registerRules.apply{@, args}
 
-   registerRule{*match} =
+   register-rules{*match} =
       {rule, handler} ->
          @dispatch.register{rule, handler}
          @
       {rules} ->
          items{rules} each {name, match} ->
             Function? handler ->
-               @registerRule{name, handler}
+               @dispatch.register{name, handler}
             {rule, handler} ->
-               @registerRule{rule, handler}
+               @dispatch.register{rule, handler}
          @
 
+   register-document{*args} =
+      console.error{'Deprecated: Engine::registerDocument, use Engine::registerDocuments'}
+      @registerDocuments.apply{@, args}
 
-   registerDocuments{*args} =
-      @registerDocument.apply{@, args}
-
-   registerDocument{*match} =
-      {name, maker} ->
+   register-documents{docs} =
+      items{docs} each {name, maker} ->
          @documents[name] = maker
-         @
-      {docs} ->
-         items{docs} each {name, maker} ->
-            @documents[name] = maker
-         @
-
+      @
 
    register-resolvers{*match} =
       {name, res} ->
@@ -290,7 +292,6 @@ class Engine:
       e = Engine{{}}
       e.top = false
       e.dispatch = @dispatch.clone{}
-      ;; e.documentMakers = clone{@documentMakers}
       e.evaluator = @evaluator.fork{}
       e.regexps = clone{@regexps}
       e.macros = clone{@macros}

@@ -36,14 +36,14 @@ describe "engine":
 
       describe "more specific declared first":
          testit with Engine with {@} ->
-            @registerRule with {
+            @registerRules with {
                "\\a + \\b"{*} = "rule 1"
                "\\a + \\b -- \\c"{*} = "rule 2"
                "a + \\b"{*} = "rule 3"
             }
       describe "more specific declared last":
          testit with Engine with {@} ->
-            @registerRule with {
+            @registerRules with {
                "a + \\b"{*} = "rule 3"
                "\\a + \\b -- \\c"{*} = "rule 2"
                "\\a + \\b"{*} = "rule 1"
@@ -53,7 +53,7 @@ describe "engine":
 
       describe "more specific to less specific":
          let eng = Engine with {@} ->
-            @registerRule with {
+            @registerRules with {
                "\\a + \\b -- \\c"{_, {a => match}} =
                   Text? {"hello"} -> "rule 1"
                   else -> tools.next
@@ -67,7 +67,13 @@ describe "engine":
 
       describe "second rule goes before first, does not replace it":
          let eng = Engine with {@} ->
-            @registerRule with {
+            print {
+               one = {"\\a + \\b", f} where f{*} = "rule 1"
+               two = {"\\a + \\b", f} where f{_, {a => match}} =
+                  Text? {"hello"} -> "rule 2"
+                  else -> tools.next
+            }
+            @registerRules with {
                one = {"\\a + \\b", f} where f{*} = "rule 1"
                two = {"\\a + \\b", f} where f{_, {a => match}} =
                   Text? {"hello"} -> "rule 2"

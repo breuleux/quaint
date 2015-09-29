@@ -362,10 +362,13 @@ basicPlugin{@} =
                                   body => shed! shedIndent! body}} =
          match rule:
             R"^/(.*)/$"! {_, regexp} ->
-               engine.registerReplace{regexp} with {*matches} ->
+               engine.register-postprocessor{regexp} with {*matches} ->
                   values = object with enumerate{matches} each
                      {i, m} -> {S'm{i}', m}
-                  engine.fork{}.setenv{values}.gen{body}
+                  e = engine.fork{}
+                  e.regexps = {}
+                  e.setenv{values}.translate{body, .enode}
+               null
             parseSpec! [spec and {top, match tree, specificity}] ->
                #put ->
                   throw E.too_general{rule}

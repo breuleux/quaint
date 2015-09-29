@@ -13,7 +13,7 @@ require:
 
 
 eng = Engine with {@} ->
-   @registerRule with {
+   @registerRules with {
       "\\maybe\\a | \\maybe\\b"{engine, {=> a, => b}} =
          % ["<", engine.gen{a}, "|", engine.gen{b}, ">"]
       "\\maybe\\a : \\maybe\\b"{engine, {=> a, => b}} =
