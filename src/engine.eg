@@ -191,6 +191,7 @@ class Engine:
          x -> x
 
       results = @run{src}
+
       main = normalize{collapse{top}} where top =
          if options.paragraph:
             p % results.main
@@ -383,7 +384,7 @@ processDocuments{x, documents, maxiter = 10} =
       else ->
          node
 
-   var res = populate{% x, documents, replace, {}} where
+   var res = populate{% {x}, documents, replace, {}} where
       replace{x} = res = x
 
    var niter = 0
