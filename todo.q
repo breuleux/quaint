@@ -18,7 +18,6 @@
 * `[include :: data.json]
 * Smarter link resolution for things like `[blah@@github.io/]?
 * Adjust scoping to allow function defs in environment
-* `GenFor and `GenFrom or `Deferred instead of `[genfor %] and `[genfrom %]
 * Update earlgrey-runtime to v0.0.11
 * Update README
 
@@ -30,6 +29,7 @@
 * meta error throws an actual error
 * `[meta :: key: value] (: in addition to =)
 * Replace `[::check] etc. by `[Symbol.check] etc.
+* `Into and `Deferred instead of `[genfor %] and `[genfrom %]
 
 
 == Plugins
@@ -48,6 +48,8 @@
 * math (latex)
 * biblio
 * yaml (include/format)
+* earl-quaint (macro!)
+* debug?
 
 === DONE
 

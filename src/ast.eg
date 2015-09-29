@@ -10,7 +10,25 @@ provide:
    raw, shed, shed-all, shed-indent
    parse-spec, make-extractor, extractor
    statements, collapse
+   Into, Deferred
 
+
+Into{document, value, options = {=}} =
+   genfor %
+      document = document
+      important = options.important
+      create = options.create
+      {value}
+
+Into[Symbol.check]{x} =
+   [genfor %]? x
+
+Deferred{fn} =
+   genfrom %
+      generate = fn
+
+Deferred[Symbol.check]{x} =
+   [genfrom %]? x
 
 
 class QAst:
@@ -102,10 +120,9 @@ register-all{{QAst.prototype, Text.prototype, Oper.prototype, Seq.prototype}} wi
 raw{match x, operate = {x} -> x} =
    QAst? -> x.raw{}
    String? -> operate{x}
-   [genfrom %]? ->
-      genfrom %
-         generate{path, docs} =
-            raw{x.props.generate{path, docs}}
+   Deferred? ->
+      Deferred with {path, docs} ->
+         raw{x.props.generate{path, docs}}
    else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
 
 shed{match, n = 1} =

@@ -5,7 +5,9 @@ require:
       Source
    .lang ->
       parse
+   .ast ->
       QAst, Text, Oper, Seq
+      Into, Deferred
    .tools as tools ->
       makeExtractor
       normalize
@@ -344,7 +346,7 @@ processDocuments{x, documents, maxiter = 10} =
                Function? f -> f{documents}
                docs -> documents & docs
 
-      [genfor %]? ->
+      Into? ->
          docname = node.props.document
          match documents[docname]:
             undefined? when node.props.create ->
@@ -363,7 +365,7 @@ processDocuments{x, documents, maxiter = 10} =
                doc.register.apply{doc, {path} ++ node.children}
                ""
 
-      [genfrom %]? ->
+      Deferred? ->
          forges.add{{node, documents, replace, path}}
          "PLACEHOLDER"
 

@@ -7,7 +7,7 @@ require:
    .doc ->
       SeqDocument
    .ast ->
-      QAst, Text, Oper, Seq
+      QAst, Text, Oper, Seq, Into, Deferred
       raw
       shed, shedAll, shedIndent
       collapse, statements
@@ -34,10 +34,7 @@ may-fail{f} =
    catch e:
       span.error %
          String{e}
-         genfor %
-            document = .errors
-            create{} = SeqDocument{}
-            {e}
+         Into{.errors, e, create{} = SeqDocument{}}
 
 
 rawRelative{match x} =
@@ -59,16 +56,15 @@ dedent{x} =
 
 
 code{engine, x} =
-   genfrom %
-      generate{path, documents} =
-         may-fail with ->
-            res = engine.eval{raw{x}, env, x.location} or "" where
-               env = {doc and documents = documents, = engine}
-            match res:
-               QAst? ->
-                  engine.gen{res}
-               else ->
-                  res
+   Deferred with {path, documents} ->
+      may-fail with ->
+         res = engine.eval{raw{x}, env, x.location} or "" where
+            env = {doc and documents = documents, = engine}
+         match res:
+            QAst? ->
+               engine.gen{res}
+            else ->
+               res
 
 
 extract{match} =
