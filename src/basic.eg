@@ -3,6 +3,7 @@
 require:
    opg ->
       transferLocation as [<<:]
+      Source
    .tools ->
       may-fail
       parseSpec, makeExtractor, extractor
@@ -58,7 +59,7 @@ class BasicEvaluator:
 
 litPlugin{@} =
    @clearRules{}
-   @registerRule with {
+   @registerRules with {
       "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
    }
@@ -66,7 +67,7 @@ litPlugin{@} =
 
 basicPlugin{@} =
 
-   @registerDocument with {
+   @registerDocuments with {
       meta = MapDocument{}
       sections = SeqDocument{}
    }
@@ -153,6 +154,35 @@ basicPlugin{@} =
                         x
                      node ->
                         engine.gen{node}
+
+      include{engine, *[{template, body} or {template} and body is null]} =
+         t = template.raw{}
+         r = engine.resolvers.include or engine.resolvers.default
+
+         var e = engine
+
+         if not r:
+            throw E.no-resolver{'Cannot resolve "{t}"'}
+
+         if body:
+            var assignments = false
+            e = engine.fork{}
+            body.statements{} each stmt >> stmt.extract{"\\k = \\v", "\\k: \\v"} ->
+               if stmt:
+                  e.setenv{stmt.k.raw{}, stmt.v}
+                  assignments = true
+               elif assignments:
+                  throw E.syntax with
+                     "include body should be `key = value` pairs, or a body, but not both"
+            if not assignments:
+               e.setenv{.body, body}
+
+         match r{t}:
+            {=> file, => contents} ->
+               e.gen-from-source{Source{contents, file}}
+            {=> contents} or String? contents ->
+               e.gen-from-source{Source{contents, "<unknown>"}}
+
    }
 
    @registerMethods with {
@@ -164,7 +194,7 @@ basicPlugin{@} =
          @lit{}.gen{x}
    }
 
-   @registerRule with {
+   @registerRules with {
 
       "\\maybe\\x ;; \\ignore"{engine, {=> x}} =
          engine.gen{x}
@@ -317,7 +347,7 @@ basicPlugin{@} =
                #eq{Text? {name}} ->
                   engine.setenv{name, body}
                else ->
-                  engine.registerRule{spec} with {engine, values} ->
+                  engine.registerRules{spec} with {engine, values} ->
                      engine.fork{}.setenv{values}.gen{body}
 
          ""
