@@ -23,6 +23,14 @@ provide:
    tools
    QAst, Text, Oper, Seq
    BasicDocument, SeqDocument, MapDocument
+   h
+
+
+h{tag, match props, *children} =
+   {tags => _, props => _, children => _} or String? or Number? or Boolean? ->
+      h{tag, {=}, props, *children}
+   else ->
+      ENode{tag.split{R"(?=\W)"}, props, children}
 
 provide{*plugins} =
    create{*plugins}
