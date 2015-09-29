@@ -9,6 +9,7 @@ require:
    .tools as tools ->
       makeExtractor
       normalize
+      may-fail
    .doc ->
       SeqDocument
    .util ->
@@ -124,6 +125,9 @@ class Engine:
 
       x and [ENode? or Array? or String?] ->
          x
+
+      Error? e ->
+         div.error % e.stack
 
    gen-from-source{match src} =
       String? text ->
@@ -399,7 +403,7 @@ processDocuments{x, documents, maxiter = 10} =
 
          ;; Execute generator, process new node, perform the replacement.
          replace with populate{newnode, docs, replace, path} where
-            newnode = node.props.generate{path, docs}
+            newnode = may-fail{-> node.props.generate{path, docs}}
 
          ;; For all modified documents, every process that accessed
          ;; them is put back in the queue for reprocessing

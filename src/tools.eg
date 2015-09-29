@@ -4,6 +4,8 @@ require:
       Source, Location
    .lang ->
       parse
+   .doc ->
+      SeqDocument
    .ast ->
       QAst, Text, Oper, Seq
       raw
@@ -29,7 +31,12 @@ may-fail{f} =
    try:
       f{}
    catch e:
-      span.error % String{e}
+      span.error %
+         String{e}
+         genfor %
+            document = .errors
+            create{} = SeqDocument{}
+            {e}
 
 
 rawRelative{match x} =
