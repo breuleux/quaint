@@ -323,6 +323,19 @@ class Engine:
          @
 
 
+   redefer{match node, fn} =
+      Deferred? ->
+         Deferred with {path, docs} ->
+            res =
+               try:
+                  node.generate{path, docs}
+               catch e:
+                  e
+            @redefer{res, fn}
+      else ->
+         fn{node}
+
+
 class Spec:
    constructor{makeExtractor! {@operator, @specificity, @extractor}, @gen} =
       pass

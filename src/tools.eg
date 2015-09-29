@@ -32,9 +32,11 @@ may-fail{f} =
    try:
       f{}
    catch e:
-      span.error %
+      res = span.error %
          String{e}
          Into{.errors, e, create{} = SeqDocument{}}
+      res.error = e
+      res
 
 
 rawRelative{match x} =

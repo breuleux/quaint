@@ -11,9 +11,6 @@
 * Translate directories with CLI
 * Better way to instantiate a naked Engine?
 * `[plugins :: javascript, highlight]
-* Conditionals
-  * `[cond ?? true !! false]
-  * `[when cond :: body]
 * `[format :: file], `[format fmt :: body], `[format +fmt :: body]
 * `[include :: data.json]
 * Smarter link resolution for things like `[blah@@github.io/]?
@@ -30,6 +27,9 @@
 * `[meta :: key: value] (: in addition to =)
 * Replace `[::check] etc. by `[Symbol.check] etc.
 * `Into and `Deferred instead of `[genfor %] and `[genfrom %]
+* Conditionals
+  * `[cond ?? true !! false]
+  * `[when cond :: body]
 
 
 == Plugins

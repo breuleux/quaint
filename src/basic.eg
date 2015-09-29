@@ -50,8 +50,12 @@ class BasicEvaluator:
       ;; s = Object.create{@store} &: env
       s = @store &: env
       if not Object.hasProperty.call{s, key}:
-         throw E.not_in_environment{key}
-      s[key]
+         try:
+            JSON.parse{key}
+         catch _:
+            throw E.not_in_environment{key}
+      else:
+         s[key]
    setenv{key, value} =
       @store[key] = value
    fork{} =
@@ -68,6 +72,14 @@ file-resolver{options = {=}}{name} =
    contents = [options.read-file or fs.read-file-sync]{filename, .utf8}
    {file = filename
     contents = contents}
+
+
+conditional{engine, cond, value, falsey = ""} =
+   engine.redefer{engine.gen{cond}} with {result} ->
+      if result and not Error? result and not result.error:
+         engine.gen{value}
+      else:
+         falsey and engine.gen{falsey}
 
 
 
@@ -93,6 +105,9 @@ basicPlugin{@} =
    @evaluator = BasicEvaluator{}
 
    @register-macros with {
+
+      "when"{engine, shed! cond, body} =
+         conditional{engine, cond, body}
 
       store{engine, shed! raw! name, body} =
          if raw{body} == "dump!":
@@ -382,6 +397,15 @@ basicPlugin{@} =
                      engine.fork{}.setenv{values}.gen{body}
 
          ""
+
+      "\\cond ?? \\value"{engine, {=> shed! cond, => value}} =
+         conditional{engine, cond, value}
+
+      "\\cond ?? \\value !! \\falsey"{engine, {=> shed! cond, => value, => falsey}} =
+         conditional{engine, cond, value, falsey}
+
+      "\\cond !! \\falsey"{engine, {=> shed! cond, => falsey}} =
+         conditional{engine, cond, cond, falsey}
 
       ;; newline rule is a bit more complicated
       newlineRule = {spec, fn} where
