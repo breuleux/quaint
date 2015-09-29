@@ -76,7 +76,10 @@ class Seq{QAst}:
       newargs = {}
       enumerate{@} each {match i, arg} ->
          when i mod 2 == 0 ->
-            newargs.push{arg}
+            newargs.push with
+               if recursive:
+                  then: arg.sexp{recursive}
+                  else: arg
          else ->
             operators.push{arg[0]}
       {operators.join{" "}, *newargs}
@@ -148,7 +151,7 @@ statements{shedIndent! match node} =
 
 
 collapse{operator, node} =
-   match node.sexp{}:
+   match node.sexp{false}:
       {=== operator, l, r} ->
          {l} ++ collapse{operator, r}
       else ->
