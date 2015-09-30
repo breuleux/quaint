@@ -1,6 +1,5 @@
 
-
-== 0.0.8
+== 0.0.9
 
 === TODO
 
@@ -9,14 +8,13 @@
   * `[--config]
   * `[--dump-data]
 * Translate directories with CLI
-* Better way to instantiate a naked Engine?
-* `[plugins :: javascript, highlight]
-* `[format :: file], `[format fmt :: body], `[format +fmt :: body]
-* `[include :: data.json]
 * Smarter link resolution for things like `[blah@@github.io/]?
 * Adjust scoping to allow function defs in environment
-* Update earlgrey-runtime to v0.0.11
-* Update README
+* Better way to instantiate a naked Engine?
+* Isolate the plugins in basic.eg
+
+
+== 0.0.8
 
 === DONE
 
@@ -30,6 +28,13 @@
 * Conditionals
   * `[cond ?? true !! false]
   * `[when cond :: body]
+* QAst.empty{}
+* `[format :: file], `[format fmt :: body], `[format +fmt :: body]
+* `[include :: data.json]
+* `[scope :: body]
+* `[plugins :: javascript, highlight]
+* Update earlgrey-runtime to v0.0.11
+* Update README
 
 
 == Plugins
