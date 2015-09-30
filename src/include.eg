@@ -1,0 +1,47 @@
+
+require:
+   opg -> Source
+   .tools
+
+provide:
+   Include
+
+
+class Include:
+
+   constructor{} =
+      @extensions = clone{default-extensions}
+
+   process{engine, ext, file, contents} =
+      fn = @extensions[ext]
+      if not fn:
+         throw E.no-includer{'Do not know how to include "{file}"'}
+      fn{engine, file, contents}
+
+   include{engine, match ext, body} =
+
+      null? ->
+         r = engine.resolvers.include or engine.resolvers.default
+         var e = engine
+
+         body.raw{}.split{R"[ \n,]+"} each match filename ->
+            R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
+               if not r:
+                  throw E.no-resolver{'Cannot resolve "{filename}"'}
+               match r{filename}:
+                  String? contents or {=> contents} ->
+                     @process{engine, ext, filename, contents}
+                  else ->
+                     throw E.bad-resolver{'Bad resolution for "{filename}"'}
+
+      else ->
+         @process{engine, ext, "<quaint>", tools.dedent{tools.raw-relative{body}}}
+
+
+default-extensions = {
+   q{engine, file, contents} =
+      engine.gen-from-source{Source{contents, file}}
+   json{engine, file, contents} =
+      engine.setenv{JSON.parse{contents}}
+      ""
+}
