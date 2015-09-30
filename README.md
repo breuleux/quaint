@@ -2,11 +2,13 @@
 Quaint
 ======
 
-Quaint is a markup language that's a bit similar to Markdown, but is
-more regular and easier to customize.
+[![Join the chat at https://gitter.im/breuleux/quaint](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/breuleux/quaint?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Unfortunately the markup is poorly documented at the moment, but you
-can use it interactively [here](http://breuleux.net/tryquaint/).
+Quaint is a markup language similar to Markdown, but more regular and
+easier to customize.
+
+**[Complete documentation](http://breuleux.github.io/quaint/)**
+
 
 Install
 -------
@@ -17,7 +19,7 @@ Install
 Syntax
 ------
 
-Pending.
+[Syntax](http://breuleux.github.io/quaint/syntax.html)
 
 
 Command-line
