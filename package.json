@@ -6,6 +6,7 @@
   "main": "./lib/index.js",
   "dependencies": {
     "earlgrey-runtime": ">=0.0.11",
+    "format-json": "^1.0.3",
     "globby": "^3.0.1",
     "kaiser": ">=0.0.2",
     "mkdirp": "^0.5.1",

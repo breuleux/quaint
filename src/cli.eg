@@ -9,6 +9,12 @@ get-arguments{} =
    argv = chain yargs:
       @usage{"Usage: quaint <file ...> [options]"}
 
+      ;; --config, -c
+      @alias{.c, .config}
+      @nargs{.c, 1}
+      @default{.c, "./quaint.json"}
+      @describe{.c, "Path to a configuration file with option values (must be JSON)"}
+
       ;; --data, -d
       @alias{.d, .data}
       @nargs{.d, 1}
@@ -64,22 +70,15 @@ get-arguments{} =
       @boolean{.v}
       @describe{.v, "Print information about the operations performed"}
 
+      ;; --save-meta
+      @default{"save-meta", false}
+      @describe{"save-meta", "Save meta data in a file (./meta.json if the file is not specified)"}
 
       ;; TODO
-
-      ;; --config, -c
-      @alias{.c, .config}
-      @nargs{.c, 1}
-      @default{.c, "./quaint.json"}
-      @describe{.c, "Path to a configuration file with option values (must be JSON)"}
 
       ;; ;; --save-config
       ;; @default{"save-config", false}
       ;; @describe{"save-config", "Save the given options in a JSON file (./quaint.json if the file is not specified)"}
-
-      ;; ;; --save-meta
-      ;; @default{"save-meta", true}
-      ;; @describe{"save-meta", "Save meta data in a file (./meta.json if the file is not specified)"}
 
       ;; ;; --dump-data
       ;; @default{"dump-data", true}

@@ -6,6 +6,7 @@ require:
    module
    globby
    mkdirp
+   format-json
 
 
 ;; Small helpers
@@ -47,7 +48,7 @@ normalize-qname{match t} =
 
 collate-sources{config, argv} =
    var source-dir = null
-   var files = [Array! [config.sources or {}]] ++ argv._
+   var files = [Array! [config??.sources or {}]] ++ argv._
    sources = {}
    while files.length > 0:
       match files.shift{} as filename:
@@ -79,7 +80,7 @@ collate-data{config, argv} =
       cli-error{'Error parsing JSON in {filename}'} with ->
          JSON.parse{contents}
 
-   data = config.data or {=}
+   data = config??.data or {=}
 
    [Array! data-arguments] each match entry ->
       undefined? -> pass
@@ -165,7 +166,7 @@ resolve-plugins{config, argv} =
          results.push with
             if{arg === null, pack, pack{arg}}
 
-   resolve{config.plugins} where resolve{match entry} =
+   resolve{config??.plugins or {}} where resolve{match entry} =
       Array? a ->
          a each x -> resolve{x}
       String? name ->
@@ -224,13 +225,13 @@ get-template{config, argv} =
 
 provide{argv} =
 
-   ;; DONE: help eval format data plugin out stdout template verbose
-   ;; TODO: config save-config save-meta dump-data
-   ;; TODO: translate directories
+   ;; DONE: config help eval format data plugin out
+   ;;       save-meta stdout template verbose
+   ;; TODO: save-config dump-data
 
    ;; helper function
    save-results{p >> p.replace{R".q$|$", ".html"}, contents} =
-      out = argv.out or cfg.output
+      out = argv.out or cfg??.output
       if argv.stdout or argv.eval and not out:
          print contents
       elif is-dir:
@@ -261,8 +262,6 @@ provide{argv} =
       cli-error{'Could not parse configuration file "{cfg-file}"'} with ->
          JSON.parse{cfg-contents}
 
-   print cfg
-
    ;; Collect all the source files
    {source-dir, sources} = collate-sources{cfg, argv}
 
@@ -282,6 +281,16 @@ provide{argv} =
    {t-specific, t-directory} = get-template{cfg, argv}
 
    ;; Generate
+
+   var sm = [argv.save-meta or cfg??.save-meta]
+   if sm === true:
+      sm = "meta.json"
+   meta =
+      if sm and fs.exists-sync{sm}:
+         JSON.parse{fs.read-file-sync{sm, .utf8}}
+      else:
+         {=}
+
    sources each {=> file, => contents} ->
       if argv.verbose:
          console.error with 'quaint: processing "{file}"'
@@ -297,6 +306,14 @@ provide{argv} =
                argv.verbose
             }
             save-results{file, result}
+            meta[file] = object with
+               q.documents.meta.entries{} each {k, match v} ->
+                  quaint.QAst? -> {k, v.raw{}}
+                  else -> {k, v}
          else ->
             throw E.usage-error{"Format must be html"}
+
+   if sm:
+      mkdirp.sync{path.dirname{sm}}
+      fs.write-file-sync{sm, format-json.plain{meta}}
 
