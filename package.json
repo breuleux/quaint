@@ -1,6 +1,6 @@
 {
   "name": "quaint",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "format": "cjs",
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
@@ -29,7 +29,9 @@
     "url": "https://github.com/breuleux/eg-quaint"
   },
   "keywords": [
-    "quaint", "markup", "html"
+    "quaint",
+    "markup",
+    "html"
   ],
   "author": "Olivier Breuleux",
   "license": "MIT"
