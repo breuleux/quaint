@@ -4,15 +4,12 @@
 === TODO
 
 * CLI options:
-  * `[--save-meta]
   * `[--dump-data]
-* Translate directories with CLI
 * Smarter link resolution for things like `[blah@@github.io/]?
 * Adjust scoping to allow function defs in environment
 * Better way to instantiate a naked Engine?
 * Isolate the plugins in basic.eg
 * Additional processors for format
-* Prefix option for include like -d has?
 * Way to specify column name for first row for format
 * resources ::
 
@@ -21,6 +18,9 @@
 * Arguments to plugins with -p
 * CLI options:
   * `[--config]
+  * `[--save-meta]
+* Prefix option for include like -d has?
+* Translate directories with CLI
 
 
 
