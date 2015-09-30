@@ -240,6 +240,8 @@ basicPlugin{@} =
          may-fail with ->
             fmt.format{engine, descr, body}
    }
+   @macros.format.parsers = fmt.parsers
+   @macros.format.formatters = fmt.formatters
 
    incl = Include{}
    @registerMacros with {
@@ -247,7 +249,7 @@ basicPlugin{@} =
          may-fail with ->
             incl.include{engine, ext??.raw{}, body}
    }
-
+   @macros.include.extensions = incl.extensions
 
    @registerMethods with {
       method lit{} =
