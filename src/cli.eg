@@ -28,7 +28,6 @@ get-arguments{} =
       ;; --format, -f
       @alias{.f, .format}
       @nargs{.f, 1}
-      @default{.f, .html}
       @describe{.f, "Format (only html currently supported)"}
 
       ;; --help, -h
@@ -68,11 +67,11 @@ get-arguments{} =
 
       ;; TODO
 
-      ;; ;; --config, -c
-      ;; @alias{.c, .config}
-      ;; @nargs{.c, 1}
-      ;; @default{.c, "./quaint.json"}
-      ;; @describe{.c, "Path to a configuration file with option values (must be JSON)"}
+      ;; --config, -c
+      @alias{.c, .config}
+      @nargs{.c, 1}
+      @default{.c, "./quaint.json"}
+      @describe{.c, "Path to a configuration file with option values (must be JSON)"}
 
       ;; ;; --save-config
       ;; @default{"save-config", false}
@@ -117,16 +116,16 @@ get-arguments{} =
          "quaint -e 'B' -t 'A {body} C'"
          "Inline template, prints out A B C"
       @example with
-         "quaint -e '[meta::template=tpl]BODY'"
+         "quaint -e '[template::tpl]BODY'"
          "Use template ./tpl.q"
       @example with
-         "quaint -e '[meta::template=tpl]BODY' -t templates/"
+         "quaint -e '[template::tpl]BODY' -t templates/"
          "Use template ./templates/tpl.q"
 
       @check with {argv} ->
-         if not argv.e and not argv._.length:
-            throw E.usage with
-               "You must provide one or more filenames, or a string with the -e option."
+         ;; if not argv.e and not argv._.length:
+         ;;    throw E.usage with
+         ;;       "You must provide one or more filenames, or a string with the -e option."
          if argv.e and argv._.length:
             throw E.usage with
                "You cannot translate a file if the -e option is used."

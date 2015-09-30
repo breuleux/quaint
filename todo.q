@@ -5,13 +5,23 @@
 
 * CLI options:
   * `[--save-meta]
-  * `[--config]
   * `[--dump-data]
 * Translate directories with CLI
 * Smarter link resolution for things like `[blah@@github.io/]?
 * Adjust scoping to allow function defs in environment
 * Better way to instantiate a naked Engine?
 * Isolate the plugins in basic.eg
+* Additional processors for format
+* Prefix option for include like -d has?
+* Way to specify column name for first row for format
+* resources ::
+
+=== DONE
+
+* Arguments to plugins with -p
+* CLI options:
+  * `[--config]
+
 
 
 == 0.0.8
@@ -48,6 +58,17 @@
 * python
 * ruby
 
+==== Markups and formats
+
+* sass
+* markdown
+* yaml
+* ini?
+
+==== Displayers
+
+* plot (various libraries)
+
 ==== Other
 
 * math (latex)
@@ -55,6 +76,13 @@
 * yaml (include/format)
 * earl-quaint (macro!)
 * debug?
+
+==== Resources
+
+* bootstrap
+* toc-scroll
+* jspm?
+
 
 === DONE
 
