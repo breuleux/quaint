@@ -229,7 +229,7 @@ body {
   height: 100%;
   padding-top: 40px;
   padding-bottom: 40px;
-  width: 400px;
+  width: 250px;
   box-sizing: border-box; }
   #sidebar #sidebar-contents {
     position: relative;
@@ -255,7 +255,7 @@ ul.toc {
 ul.toc li {
   padding-bottom: 0px; }
 
-@media screen and (max-width: 1250px) {
+@media screen and (max-width: 1350px) {
   #sidebar {
     display: none; } }
 
@@ -482,6 +482,14 @@ table {
     padding-left: 8px;
     padding-right: 8px; }
 
+blockquote {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 5px solid #88f; }
+
 .error {
   color: red;
   font-weight: bold; }
+
+ul.toc code {
+  font-size: 10pt; }

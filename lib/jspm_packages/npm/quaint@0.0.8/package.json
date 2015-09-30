@@ -1,0 +1,38 @@
+{
+  "name": "quaint",
+  "version": "0.0.8",
+  "format": "cjs",
+  "description": "Extensible markup language.",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "earlgrey-runtime": ">=0.0.11",
+    "kaiser": ">=0.0.2",
+    "opg": ">=0.0.3",
+    "yargs": "^3.25.0"
+  },
+  "devDependencies": {
+    "earlgrey": ">=0.0.12",
+    "mocha": "^2.2.1",
+    "earl-mocha": ">=0.0.2"
+  },
+  "bin": {
+    "quaint": "bin/quaint"
+  },
+  "scripts": {
+    "refresh": "earl compile -5vso lib/ src/",
+    "compile": "earl compile -5rvso lib/ src/",
+    "prepublish": "npm run compile",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breuleux/eg-quaint"
+  },
+  "keywords": [
+    "quaint",
+    "markup",
+    "html"
+  ],
+  "author": "Olivier Breuleux",
+  "license": "MIT"
+}

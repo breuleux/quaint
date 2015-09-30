@@ -1,0 +1,74 @@
+{
+  "name": "quaint",
+  "version": "0.0.8",
+  "format": "cjs",
+  "description": "Extensible markup language.",
+  "main": "./lib/index.js",
+  "devDependencies": {
+    "earlgrey": ">=0.0.12",
+    "mocha": "^2.2.1",
+    "earl-mocha": ">=0.0.2"
+  },
+  "bin": {
+    "quaint": "bin/quaint"
+  },
+  "scripts": {
+    "refresh": "earl compile -5vso lib/ src/",
+    "compile": "earl compile -5rvso lib/ src/",
+    "prepublish": "npm run compile",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breuleux/eg-quaint.git"
+  },
+  "keywords": [
+    "quaint",
+    "markup",
+    "html"
+  ],
+  "author": {
+    "name": "Olivier Breuleux"
+  },
+  "license": "MIT",
+  "gitHead": "de89d84abc3a50795ad94449302a07fe8144c5e6",
+  "bugs": {
+    "url": "https://github.com/breuleux/eg-quaint/issues"
+  },
+  "homepage": "https://github.com/breuleux/eg-quaint#readme",
+  "_id": "quaint@0.0.8",
+  "_shasum": "21b8a70304825facc15687ab217b7a625cd0efd6",
+  "_from": ".",
+  "_npmVersion": "2.11.2",
+  "_nodeVersion": "4.0.0",
+  "_npmUser": {
+    "name": "breuleux",
+    "email": "breuleux@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "breuleux",
+      "email": "breuleux@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "21b8a70304825facc15687ab217b7a625cd0efd6",
+    "tarball": "http://registry.npmjs.org/quaint/-/quaint-0.0.8.tgz"
+  },
+  "ignore": [
+    "node_modules"
+  ],
+  "registry": "npm",
+  "dependencies": {
+    "earlgrey-runtime": "earlgrey-runtime@*",
+    "kaiser": "kaiser@*",
+    "opg": "opg@*",
+    "yargs": "yargs@^3.25.0",
+    "systemjs-json": "github:systemjs/plugin-json@^0.1.0",
+    "fs": "github:jspm/nodelibs-fs@^0.1.0",
+    "path": "github:jspm/nodelibs-path@^0.1.0",
+    "process": "github:jspm/nodelibs-process@^0.1.0",
+    "child_process": "github:jspm/nodelibs-child_process@^0.1.0",
+    "module": "github:jspm/nodelibs-module@^0.1.0"
+  }
+}

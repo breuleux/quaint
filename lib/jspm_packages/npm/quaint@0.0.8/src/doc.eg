@@ -1,0 +1,90 @@
+
+
+require:
+   "./util" ->
+      findInsert, insertSorted, deleteSorted
+   .tools
+
+provide:
+   comparePaths
+   BasicDocument, MapDocument, SeqDocument
+
+
+comparePaths{p1, p2} =
+   zip{p1, p2} each {match x, y} ->
+      > y -> return 1
+      < y -> return -1
+      else -> pass
+   match p1.length:
+      > p2.length -> 1
+      < p2.length -> -1
+      else -> 0
+
+comparePathEntries{{p1, _}, {p2, _}} =
+   comparePaths{p1, p2}
+
+class BasicDocument:
+   constructor{} =
+      @resetFlags{}
+   resetFlags{} =
+      @accessed and @modified = false
+
+
+class MapDocument{BasicDocument}:
+   constructor{} =
+      @resetFlags{}
+      @data = new Map{}
+   register{_, *pairs} =
+      @modified = true
+      pairs each {key, value} ->
+         @data.set{key, value}
+   .has{key} =
+      @accessed = true
+      @data.has{key}
+   .get{key} =
+      @accessed = true
+      @data.get{key}
+   .set{key, value} =
+      @modified = true
+      @data.set{key, value}
+   .delete{key} =
+      @modified = true
+      @data.delete{key}
+   entries{} =
+      @accessed = true
+      @data.entries{}
+   get-value{key} =
+      tools.toJSON{@get{key}}
+   toJSON{} =
+      object with @entries{} each {k, v} ->
+         {k, tools.toJSON{v}}
+
+class SeqDocument{BasicDocument}:
+   constructor{} =
+      @resetFlags{}
+      @data = {}
+   register{path, entry} =
+      @modified = true
+      if entry === undefined:
+         deleteSorted{@data, {path, entry}, comparePathEntries}
+      elif @data.length == 0 or comparePaths{path, @data[@data.length - 1][0]} == 1:
+         ;; Usually entries should come in order, so we check
+         ;; if the new entry is the maximum
+         @data.push{{path, entry}}
+      else:
+         insertSorted{@data, {path, entry}, comparePathEntries}
+   .delete{path} =
+      @register{path, undefined}
+   entriesWithPaths{} =
+      @accessed = true
+      @data.slice{}
+   entries{} =
+      @accessed = true
+      @data each {_, e} -> e
+   entriesBefore{path} =
+      @accessed = true
+      @data each {p, e} when comparePaths{p, path} < 0 -> e
+   entriesAfter{path} =
+      @accessed = true
+      @data each {p, e} when comparePaths{p, path} > 0 -> e
+

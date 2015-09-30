@@ -13,7 +13,7 @@
     
 
 <div id="sidebar"><div id="sidebar-contents">
-  <ul class="toc"><li><a href="#basics">Basics</a></li><ul><li><a href="#emphasis">Emphasis</a></li><li><a href="#links">Links</a></li><li><a href="#headers">Headers</a></li><li><a href="#lists">Lists</a></li><li><a href="#tables">Tables</a></li><li><a href="#codeblocks">Code blocks</a></li><li><a href="#inlinecode">Inline code</a></li><li><a href="#comments">Comments</a></li></ul><li><a href="#escaping">Escaping</a></li><li><a href="#whitespaceandgrouping">Whitespace and grouping</a></li><ul><li><a href="#spacing">Spacing</a></li><li><a href="#indent">Indent</a></li><li><a href="#grouping">Grouping</a></li></ul><li><a href="#htmlgeneration">HTML Generation</a></li><ul><li><a href="#htmlmacro"><code>html</code> macro</a></li><li><a href="#injectcss">Inject CSS</a></li><li><a href="#injectjavascript">Inject JavaScript</a></li><li><a href="#htmlsandbox">HTML Sandbox</a></li></ul><li><a href="#variables">Variables</a></li><li><a href="#rules">Rules</a></li><ul><li><a href="#behavior">Behavior</a></li><li><a href="#rulesandbox">Rule Sandbox</a></li></ul><li><a href="#scripting">Scripting</a></li><li><a href="#macros">Macros</a></li><ul><li><a href="#meta"><code>meta</code></a></li><li><a href="#toc"><code>toc</code></a></li><li><a href="#store"><code>store</code></a></li><li><a href="#html"><code>html</code></a></li><li><a href="#css"><code>css</code></a></li></ul></ul></div></div>
+  <ul class="toc"><li><a href="#basics">Basics</a></li><ul><li><a href="#emphasis">Emphasis</a></li><li><a href="#links">Links</a></li><li><a href="#headers">Headers</a></li><li><a href="#lists">Lists</a></li><li><a href="#tables">Tables</a></li><li><a href="#blockquotes">Blockquotes</a></li><li><a href="#codeblocks">Code blocks</a></li><li><a href="#inlinecode">Inline code</a></li><li><a href="#comments">Comments</a></li></ul><li><a href="#escaping">Escaping</a></li><li><a href="#whitespaceandgrouping">Whitespace and grouping</a></li><ul><li><a href="#spacing">Spacing</a></li><li><a href="#indent">Indent</a></li><li><a href="#grouping">Grouping</a></li></ul><li><a href="#htmlgeneration">HTML Generation</a></li><ul><li><a href="#htmlmacro"><code class="hl">html</code> macro</a></li><li><a href="#injectcss">Inject CSS</a></li><li><a href="#injectjavascript">Inject JavaScript</a></li><li><a href="#htmlsandbox">HTML Sandbox</a></li></ul><li><a href="#variables">Variables</a></li><li><a href="#rules">Rules</a></li><ul><li><a href="#behavior">Behavior</a></li><li><a href="#rulesandbox">Rule Sandbox</a></li></ul><li><a href="#scripting">Scripting</a></li><li><a href="#conditionals">Conditionals</a></li><ul><li><a href="#whatcanbeaconditional">What can be a conditional</a></li><ul><li><a href="#metavariables">meta variables</a></li><li><a href="#variables">Variables</a></li></ul></ul><li><a href="#macros">Macros</a></li><ul><li><a href="#css"><code class="hl">css</code></a></li><li><a href="#dump"><code class="hl">dump</code></a></li><li><a href="#html"><code class="hl">html</code></a></li><li><a href="#format"><code class="hl">format</code></a></li><ul><li><a href="#json"><code class="hl">json</code></a></li><li><a href="#jsontable"><code class="hl">json:table</code></a></li><li><a href="#formatfiles">Format files</a></li></ul><li><a href="#include"><code class="hl">include</code></a></li><li><a href="#meta"><code class="hl">meta</code></a></li><li><a href="#plugin"><code class="hl">plugin</code></a></li><li><a href="#plugins"><code class="hl">plugins</code></a></li><li><a href="#scope"><code class="hl">scope</code></a></li><li><a href="#store"><code class="hl">store</code></a></li><li><a href="#template"><code class="hl">template</code></a></li><li><a href="#toc"><code class="hl">toc</code></a></li><li><a href="#when"><code class="hl">when</code></a></li></ul></ul></div></div>
 
 <div id="page">
   <div id="nav-container" class="container"><div id="nav">
@@ -29,6 +29,8 @@
   
 
 <div id="main-container" class="container"><div id="main">
+
+
 
 
 
@@ -60,8 +62,8 @@ emphasis.</p>
 
 <h2 id="links">Links</h2>
 
-<p>The <code>@@</code> operator is used to create links. On the left goes the
-link's label (optional) and on the right, the URL.</p>
+The <code class="hl">@@</code> operator is used to create links. On the left goes the
+link's label (optional) and on the right, the URL.
 
 <div class="quaint-example"><div class="input"><textarea rows="1">Google@@http://google.com</textarea></div><div class="output"><a href="http://google.com">Google</a></div></div>
 
@@ -78,14 +80,14 @@ it more convenient:</p>
 blog =&gt; http://breuleux.net/blog</textarea></div><div class="output">Check out my <a href="http://breuleux.net/blog">blog</a>!
 </div></div>
 
-<p>Also note the use of the tilde above. It is required otherwise the
-<code>!</code> is understood to be part of the URL.</p>
+Also note the use of the tilde above. It is required otherwise the
+<code class="hl">!</code> is understood to be part of the URL.
 
 
 <h2 id="headers">Headers</h2>
 
-<p>Begin a line with one equal sign for a <code>h1</code> tag, two for a <code>h2</code> tag, and
-so on:</p>
+Begin a line with one equal sign for a <code class="hl">h1</code> tag, two for a <code class="hl">h2</code> tag, and
+so on:
 
 <div class="quaint-example"><div class="input"><textarea rows="1">= h1</textarea></div><div class="output"><h1 id="h1">h1</h1></div></div>
 <div class="quaint-example"><div class="input"><textarea rows="1">== h2</textarea></div><div class="output"><h2 id="h2">h2</h2></div></div>
@@ -113,12 +115,39 @@ so on:</p>
 
 <h2 id="tables">Tables</h2>
 
-<p>A leading <code>+</code> creates a header row and a leading <code>|</code> creates a
-normal row.</p>
+A leading <code class="hl">+</code> creates a header row and a leading <code class="hl">|</code> creates a
+normal row.
 
 <div class="quaint-example"><div class="input"><textarea rows="3">+ Name   + Surname     + Job
 | Alice  | Lovelace    | Physicist
 | Harold | Worthington | Banker</textarea></div><div class="output"><table><tr><th>Name</th><th>Surname</th><th>Job</th></tr><tr><td>Alice</td><td>Lovelace</td><td>Physicist</td></tr><tr><td>Harold</td><td>Worthington</td><td>Banker</td></tr></table></div></div>
+
+<p>Of course, you may think aligning table elements is a little annoying,
+or perhaps your table is stored in a JSON file and you would like to
+make a table automatically for it.</p>
+
+<p>In those cases I recommend you use <a href="#format"><code class="hl">format</code></a> instead.</p>
+
+
+<h2 id="blockquotes">Blockquotes</h2>
+
+A prefix <code class="hl">&gt;</code> will create a blockquote. Consecutive lines will be
+merged.
+
+<div class="quaint-example"><div class="input"><textarea rows="2">&gt; Hello,
+&gt; I am a great man</textarea></div><div class="output"><blockquote> Hello, I am a great man</blockquote></div></div>
+
+<p>Although, you can use indent, too.</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">&gt; Hello,
+  I am a great man</textarea></div><div class="output"><blockquote> Hello,
+  I am a great man</blockquote></div></div>
+
+Multiple blockquote levels can be done, but they require a space
+between the <code class="hl">[&gt;]s</code>.
+
+<div class="quaint-example"><div class="input"><textarea rows="2">&gt; &gt; Hello!
+&gt; Bonjour!</textarea></div><div class="output"><blockquote> <blockquote> Hello!</blockquote> Bonjour!</blockquote></div></div>
 
 
 <h2 id="codeblocks">Code blocks</h2>
@@ -127,9 +156,9 @@ normal row.</p>
 
 <div class="quaint-example"><div class="input"><textarea rows="1">&amp; This is a code block</textarea></div><div class="output"><pre class="hl">This is a code block</pre></div></div>
 
-<p>If you wish to highlight the code in a particular language, use the
-<a href="//github.com/breuleux/quaint-highlight">quaint-highlight</a> plugin and then write out the language
-before the <code>&amp;</code>:</p>
+If you wish to highlight the code in a particular language, you need
+to use the <a href="//github.com/breuleux/quaint-highlight">quaint-highlight</a> plugin and then write out the
+language before the <code class="hl">&amp;</code>:
 
 
 
@@ -140,30 +169,32 @@ before the <code>&amp;</code>:</p>
     <span class="hljs-keyword">return</span> x * x;
 }</pre></div></div>
 
+<p>This will <em>not</em> work if you don't use the plugin.</p>
+
 
 <h2 id="inlinecode">Inline code</h2>
 
 <p>A prefix backtick makes a word into inline code.</p>
 
-<div class="quaint-example"><div class="input"><textarea rows="1">Here is `code</textarea></div><div class="output">Here is <code>code</code></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">Here is `code</textarea></div><div class="output">Here is <code class="hl">code</code></div></div>
 
 <p>Normally you will want to use brackets:</p>
 
-<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[1 + 1 = 2]</textarea></div><div class="output">Simple as <code>1 + 1 = 2</code></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[1 + 1 = 2]</textarea></div><div class="output">Simple as <code class="hl">1 + 1 = 2</code></div></div>
 
 <p>Note that only the outer bracket pair will be stripped off:</p>
 
-<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[[1 + 1 = 2]]</textarea></div><div class="output">Simple as <code>[1 + 1 = 2]</code></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">Simple as `[[1 + 1 = 2]]</textarea></div><div class="output">Simple as <code class="hl">[1 + 1 = 2]</code></div></div>
 
 <p>For the rare case where you want to show an unmatched opening or
 closing bracket as code, escape it with a backslash:</p>
 
-<div class="quaint-example"><div class="input"><textarea rows="1">`[The opening bracket is \[]</textarea></div><div class="output"><code>The opening bracket is [</code></div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">`[The opening bracket is \[]</textarea></div><div class="output"><code class="hl">The opening bracket is [</code></div></div>
 
 
 <h2 id="comments">Comments</h2>
 
-<p>Any block that comes after <code>;;</code> will be ignored by Quaint:</p>
+Any block that comes after <code class="hl">;;</code> will be ignored by Quaint:
 
 <div class="quaint-example"><div class="input"><textarea rows="3">I have nothing to hide
 ;; except the rotting corpses
@@ -182,11 +213,11 @@ meaning it may have, simply prefix it with a backslash.</p>
 
 <div class="quaint-example"><div class="input"><textarea rows="1">You\~have\~to\~escape\~tildes</textarea></div><div class="output">You~have~to~escape~tildes</div></div>
 
-<p>Also, Quaint thinks every sequence of operator characters is a
-distinct operator. So while <code>x@@#y</code> looks like a link to <code>#y</code> it is
-actually an application of the <code>@@#</code> operator, which does not
+Also, Quaint thinks every sequence of operator characters is a
+distinct operator. So while <code class="hl">x@@#y</code> looks like a link to <code class="hl">#y</code> it is
+actually an application of the <code class="hl">@@#</code> operator, which does not
 exist. Escaping an operator character makes it a word character, so in
-that case you can escape <code>#</code> to get the desired behavior:</p>
+that case you can escape <code class="hl">#</code> to get the desired behavior:
 
 <div class="quaint-example"><div class="input"><textarea rows="1">No@@#escaping</textarea></div><div class="output">No@@#escaping</div></div>
 
@@ -233,8 +264,8 @@ simply:</p>
 
 <h2 id="grouping">Grouping</h2>
 
-<p>You can group together any chunk of text by enclosing it in square
-brackets (<code>[]</code>). They effectively behave like a single word.</p>
+You can group together any chunk of text by enclosing it in square
+brackets (<code class="hl">[]</code>). They effectively behave like a single word.
 
 <div class="quaint-example"><div class="input"><textarea rows="1">[Brackets do [[[not]]] [show up]]</textarea></div><div class="output">Brackets do not show up</div></div>
 
@@ -249,8 +280,8 @@ brackets (<code>[]</code>). They effectively behave like a single word.</p>
 
 <h1 id="htmlgeneration">HTML Generation</h1>
 
-<p>The <code>%</code> operator is used to generate arbitrary HTML nodes, if you
-need to. The full syntax looks like this:</p>
+The <code class="hl">%</code> operator is used to generate arbitrary HTML nodes, if you
+need to. The full syntax looks like this:
 
 <pre class="hl">tag.class1.class2#id %
   attribute = value
@@ -258,7 +289,7 @@ need to. The full syntax looks like this:</p>
   child2
   ...</pre>
 
-<p>If there is no tag, the default is <code>div</code>.</p>
+If there is no tag, the default is <code class="hl">div</code>.
 
 <div class="quaint-example"><div class="input"><textarea rows="7">x[sup % 2]
 
@@ -273,7 +304,7 @@ span.err %
 <p><span style="color:red" class="err">An <strong>error</strong> occurred! (Not really)</span></p></div></div>
 
 
-<h2 id="htmlmacro"><code>html</code> macro</h2>
+<h2 id="htmlmacro"><code class="hl">html</code> macro</h2>
 
 <p>Alternatively, you can embed HTML directly using one of these two
 methods:</p>
@@ -398,28 +429,28 @@ syntax for a rule is:</p>
 
 <pre class="hl">[pattern] =&gt; template</pre>
 
-<p>A pattern is a normal Quaint expression, but any word which is
+A pattern is a normal Quaint expression, but any word which is
 prefixed with a backslash becomes a <em>variable</em>. The variable can be
-inserted in the template using curly brackets (<code>{variable}</code>). Here is
-an example of a rule someone may write to make superscripts easier:</p>
+inserted in the template using curly brackets (<code class="hl">{variable}</code>). Here is
+an example of a rule someone may write to make superscripts easier:
 
 <div class="quaint-example"><div class="input"><textarea rows="3">[\text ^ \superscript] =&gt;
   {text}[sup % {superscript}]
 2^3</textarea></div><div class="output">
 2<sup>3</sup></div></div>
 
-<p>Both arguments must be present in order for the rule to work. If
-either is absent, for instance <code>^2</code> lacks the <code>text</code> argument, the
+Both arguments must be present in order for the rule to work. If
+either is absent, for instance <code class="hl">^2</code> lacks the <code class="hl">text</code> argument, the
 rule will not be run. You can change this by declaring the argument
-as <code>\maybe\text</code> instead:</p>
+as <code class="hl">\maybe\text</code> instead:
 
 <div class="quaint-example"><div class="input"><textarea rows="3">[\maybe\text ^ \superscript] =&gt;
   {text}[sup % {superscript}]
 2^3 and ^3 match, but 2^ does not</textarea></div><div class="output">
 2<sup>3</sup> and <sup>3</sup> match, but 2^ does not</div></div>
 
-<p>Conversely, if you declare the pattern <code>[^ \superscript]</code>, Quaint
-requires the operator to be prefix:</p>
+Conversely, if you declare the pattern <code class="hl">[^ \superscript]</code>, Quaint
+requires the operator to be prefix:
 
 <div class="quaint-example"><div class="input"><textarea rows="3">[^ \superscript] =&gt;
   sup % {superscript}
@@ -428,12 +459,12 @@ requires the operator to be prefix:</p>
 
 <h2 id="behavior">Behavior</h2>
 
-<p>Rules do <em>not</em> modify Quaint's parser: the <code>^</code> operator has always
+Rules do <em>not</em> modify Quaint's parser: the <code class="hl">^</code> operator has always
 existed, it is just that by default it just prints itself out. This is
 an advantage, because rules in Quaint are predictable: the operator
 we just defined is right-associative, because all operators in Quaint
 are right-associative. They are sensitive to spacing like all
-operators, they can be bracketed like all operators, and so on.</p>
+operators, they can be bracketed like all operators, and so on.
 
 <div class="quaint-example"><div class="input"><textarea rows="10">[\maybe\text ^ \superscript] =&gt;
   {text}[sup % {superscript}]
@@ -486,9 +517,9 @@ site, then you can embed JS expressions:</p>
 
 <div class="quaint-example"><div class="input"><textarea rows="1">2 + 2 = {2 + 2}</textarea></div><div class="output">2 + 2 = 4</div></div>
 
-<p>You can also use JS inside rules. The variables declared by the rule
+You can also use JS inside rules. The variables declared by the rule
 are also available in JavaScript! They are not strings, but you can
-convert them into strings by calling the <code>raw</code> method on them.</p>
+convert them into strings by calling the <code class="hl">raw</code> method on them.
 
 <div class="quaint-example"><div class="input"><textarea rows="5">[shout :: \text] =&gt;
   {text.raw().toUpperCase()}
@@ -497,11 +528,11 @@ shout :: hello! I don't mean to shout, but where's the beef?</textarea></div><di
 
 <p>HELLO! I DON'T MEAN TO SHOUT, BUT WHERE'S THE BEEF?</p></div></div>
 
-<p>It is also possible to build HTML programmatically. <code>quaint-javascript</code>
-comes with the <code>h</code> function. If you use <code>h</code>, though, make sure to call
-<code>engine.gen</code> on the arguments to apply Quaint markup to them! Unless
+It is also possible to build HTML programmatically. <code class="hl">quaint-javascript</code>
+comes with the <code class="hl">h</code> function. If you use <code class="hl">h</code>, though, make sure to call
+<code class="hl">engine.gen</code> on the arguments to apply Quaint markup to them! Unless
 you are converting them to strings, that is. The markup will be lost
-if you do that.</p>
+if you do that.
 
 <div class="quaint-example"><div class="input"><textarea rows="5">[bolden :: \text] =&gt;
   {h("b", {}, engine.gen(text))}
@@ -510,22 +541,161 @@ bolden :: This is _bold!</textarea></div><div class="output">
 
 <p><b>This is <em>bold!</em></b></p></div></div>
 
-<p>With the <code>quaint</code> command line and API, you can provide environment
-variables for use inside curly brackets. See the <code>-d</code> option for the
-<code>quaint</code> command.</p>
+With the <code class="hl">quaint</code> command line and API, you can provide environment
+variables for use inside curly brackets. See the <code class="hl">-d</code> option for the
+<code class="hl">quaint</code> command.
 
+
+
+<h1 id="conditionals">Conditionals</h1>
+
+<p>Generate something different depending on the value of a variable or
+of metadata with conditionals:</p>
+
+First there is the <code class="hl">condition ?? iftrue</code> construct:
+
+<div class="quaint-example"><div class="input"><textarea rows="1">{true} ?? yes</textarea></div><div class="output">yes</div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">{false} ?? yes</textarea></div><div class="output"></div></div>
+
+You can add a branch to generate when the condition expression is
+false with the <code class="hl">!!</code> operator.
+
+<div class="quaint-example"><div class="input"><textarea rows="1">{true} ?? yes !! no</textarea></div><div class="output">yes</div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">{false} ?? yes !! no</textarea></div><div class="output">no</div></div>
+
+<code class="hl">cond !! iffalse</code> is shorthand for <code class="hl">cond ?? cond !! iffalse</code>.
+
+<div class="quaint-example"><div class="input"><textarea rows="1">{true} !! no</textarea></div><div class="output">true</div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">{false} !! no</textarea></div><div class="output">no</div></div>
+
+<h2 id="whatcanbeaconditional">What can be a conditional</h2>
+
+<code class="hl">{true}</code> and <code class="hl">{false}</code> trivially evaluate to <code class="hl">true</code> or <code class="hl">false</code>
+respectively, but they are not super useful.
+
+<h3 id="metavariables">meta variables</h3>
+
+<p>Meta variables, when they are not defined, will trigger the false
+branch:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="1">meta::x !! no</textarea></div><div class="output">no</div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="2">meta :: x = yes
+meta::x !! no</textarea></div><div class="output">
+yes</div></div>
+
+But be careful: if you want to set metadata to a falsey value, you
+need to use <code class="hl">:</code> and not <code class="hl">=</code>.
+
+<div class="quaint-example"><div class="input"><textarea rows="5">meta ::
+  a = false
+  b: false
+* meta::a ?? yes !! no
+* meta::b ?? yes !! no</textarea></div><div class="output">
+<ul><li>yes</li><li>no</li></ul></div></div>
+
+That's because the definition for <code class="hl">a</code> generates a Quaint node, that
+is to say, a string of sorts, whereas the latter tries to interpret
+the value as JSON.
+
+<h3 id="variables">Variables</h3>
+
+As conditionals, you can use variables imported with <code class="hl">include</code> @@
+#include, with the <code class="hl">-d</code> flag of the command line, or set by
+<a href="api.html#setenv"><code class="hl">setenv</code></a>
+
+<div class="quaint-example"><div class="input"><textarea rows="4">include json ::
+  {"a": true, "b": false}
+* {a} ?? yes !! no
+* {b} ?? yes !! no</textarea></div><div class="output">
+<ul><li>yes</li><li>no</li></ul></div></div>
 
 
 <h1 id="macros">Macros</h1>
 
-<p>Macros are typically written with the <code>::</code> operator, either as
-<code>macro :: body</code> or <code>macro argument :: body</code>.</p>
+Macros are typically written with the <code class="hl">::</code> operator, either as
+<code class="hl">macro :: body</code> or <code class="hl">macro argument :: body</code>.
 
 
-<h2 id="meta"><code>meta</code></h2>
+<h2 id="css"><code class="hl">css</code></h2>
 
-<p><code>meta</code> lets you declare metadata: title, author, template, and so on.
-It also lets you print out the data elsewhere in the file.</p>
+<p><a href="#injectcss">See here</a></p>
+
+
+<h2 id="dump"><code class="hl">dump</code></h2>
+
+<p><a href="#store">See <code class="hl">store</code></a></p>
+
+
+<h2 id="html"><code class="hl">html</code></h2>
+
+<p><a href="#htmlmacro">See here</a></p>
+
+
+<h2 id="format"><code class="hl">format</code></h2>
+
+<code class="hl">format</code> lets you format JSON (and eventually other formats through
+plugins) as lists, tables and so on.
+
+<h4 id="json"><code class="hl">json</code></h4>
+
+<div class="quaint-example"><div class="input"><textarea rows="4">format json :: {
+  "Name": "Bob",
+  "Surname": "Smith"
+}</textarea></div><div class="output"><table><tr><td>Name</td><td>Bob</td></tr><tr><td>Surname</td><td>Smith</td></tr></table></div></div>
+
+<p>The JSON is formatted recursively, and Quaint markup inside strings
+will be evaluated:</p>
+
+<div class="quaint-example"><div class="input"><textarea rows="4">format json :: {
+  "fruits": ["Apple", "__Banana"],
+  "desserts": ["Cake", "Pie"]
+}</textarea></div><div class="output"><table><tr><td>fruits</td><td><ul><li>Apple</li><li><strong>Banana</strong></li></ul></td></tr><tr><td>desserts</td><td><ul><li>Cake</li><li>Pie</li></ul></td></tr></table></div></div>
+
+<h4 id="jsontable"><code class="hl">json:table</code></h4>
+
+But wait! There's more! You can tell not only how to parse the data,
+but how to show it. For instance, <code class="hl">json:table</code> will find a way to make
+a table out of what you have:
+
+<div class="quaint-example"><div class="input"><textarea rows="5">format json:table :: [
+  ["one", "two", "three"],
+  ["un", "deux", "trois"],
+  ["eins", "zwei", "drei"]
+]</textarea></div><div class="output"><table><tr><td>one</td><td>two</td><td>three</td></tr><tr><td>un</td><td>deux</td><td>trois</td></tr><tr><td>eins</td><td>zwei</td><td>drei</td></tr></table></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="8">format json:table :: {
+  "Alice":
+    {"age": 14, "job": "student"},
+  "Bob":
+    {"age": 43, "job": "baker"},
+  "Catherine":
+    {"age": 31, "job": "senator"}
+}</textarea></div><div class="output"><table><tr><th></th><th>age</th><th>job</th></tr><tr><td>Alice</td><td>14</td><td>student</td></tr><tr><td>Bob</td><td>43</td><td>baker</td></tr><tr><td>Catherine</td><td>31</td><td>senator</td></tr></table></div></div>
+
+<h4 id="formatfiles">Format files</h4>
+
+<p>If your data is in a file, you can import it like such:</p>
+
+<pre class="hl">format data.json:table ::</pre>
+
+
+<h2 id="include"><code class="hl">include</code></h2>
+
+<code class="hl">include</code> reads a file and then does something special with it:
+
+<ul><li>The contents of a <strong>quaint</strong> (.q) file are inserted in place.</li><li>The contents of a <strong>JSON</strong> (.json) file are imported as variables in
+  an environment.</li></ul>
+
+<pre class="hl">include :: template
+include :: template.q
+include :: data.json, other-data.json</pre>
+
+
+<h2 id="meta"><code class="hl">meta</code></h2>
+
+<code class="hl">meta</code> lets you declare metadata: title, author, and so on.  It also
+lets you print out the data elsewhere in the file.
 
 <div class="quaint-example"><div class="input"><textarea rows="6">meta ::
   title = My Life
@@ -535,11 +705,147 @@ You are reading meta::title by meta::author.</textarea></div><div class="output"
 
 <p>You are reading My Life by Me!.</p></div></div>
 
+You may define a field either with <code class="hl">=</code> or <code class="hl">:</code>. The difference is
+that the former is interpreted with Quaint and the latter as JSON or
+as a plain string. You can see the difference in those examples:
 
-<h2 id="toc"><code>toc</code></h2>
+<div class="quaint-example"><div class="input"><textarea rows="5">meta ::
+  a = __Hello
+  b: __Hello
+* meta :: a
+* meta :: b</textarea></div><div class="output">
+<ul><li><strong>Hello</strong></li><li>__Hello</li></ul></div></div>
 
-<p><code>toc</code> prints out a table of contents based on the headers declared in
-the markup. It can be used anywhere in the file.</p>
+<div class="quaint-example"><div class="input"><textarea rows="5">meta ::
+  a = [1, 2, 3]
+  b: [1, 2, 3]
+* meta :: a
+* meta :: b</textarea></div><div class="output">
+<ul><li>1, 2, 3</li><li>123</li></ul></div></div>
+
+<div class="quaint-example"><div class="input"><textarea rows="5">meta ::
+  a = false
+  b: false
+* meta::a ?? yes !! no
+* meta::b ?? yes !! no</textarea></div><div class="output">
+<ul><li>yes</li><li>no</li></ul></div></div>
+
+
+<h2 id="plugin"><code class="hl">plugin</code></h2>
+
+<p>This imports a plugin directly from Quaint. It won't work here in the
+browser, but it will offline.</p>
+
+<p>The syntax works like this:</p>
+
+<pre class="hl">plugin name ::
+  option = value
+  ...</pre>
+
+<p>For example:</p>
+
+<pre class="hl">plugin highlight ::
+  defaultLanguage = python</pre>
+
+You will need to install the corresponding packages locally. For
+instance, for the <code class="hl">highlight</code> plugin to work, you need to execute this
+command beforehand:
+
+<pre class="hl">npm install quaint-highlight</pre>
+
+
+<h2 id="plugins"><code class="hl">plugins</code></h2>
+
+<p>This is shorthand to import plugins with their default options:</p>
+
+<pre class="hl">plugins :: highlight javascript</pre>
+
+This will import <code class="hl">quaint-highlight</code> and <code class="hl">quaint-javascript</code> with their
+default options.
+
+
+<h2 id="scope"><code class="hl">scope</code></h2>
+
+<code class="hl">scope</code> creates a new scope, so that all variables declared in the body
+are only visible inside that body.
+
+<div class="quaint-example"><div class="input"><textarea rows="5">y =&gt; 123
+scope ::
+  x =&gt; 456
+  &lt;inside {x} {y}&gt;
+&lt;outside {x} {y}&gt;</textarea></div><div class="output">
+
+  
+  &lt;inside 456 123&gt;
+&lt;outside <span class="error">ReferenceError: x is not defined <a href="#ERR25">[#25]</a></span> 123&gt;</div></div>
+
+(Note that <code class="hl">scope</code> doesn't work well in the browser because
+limitations, in other words, it'll stop working if you edit the box
+above.)
+
+
+<h2 id="store"><code class="hl">store</code></h2>
+
+<code class="hl">store</code> is mostly useful in conjunction with the <a href="/quaint/api.html">API</a> and/or
+templates. With this macro you can push data to an internal "document"
+(a list of references, or a list of script tags to put in &lt;head&gt; for
+instance), and then dump that document somewhere convenient. You don't
+have to dump after everything has been stored.
+
+<div class="quaint-example"><div class="input"><textarea rows="8">store names ::
+  Bob
+  Clara
+
+dump :: names
+
+store names ::
+  Damian</textarea></div><div class="output">
+
+<p>
+  Bob
+  Clara
+  Damian</p>
+
+</div></div>
+
+One use case of <code class="hl">store</code> is in Quaint's very documentation. The code for
+this page declares:
+
+<pre class="hl">store sidebar ::
+  toc::</pre>
+
+<p>That is to say, "put the table of contents in the sidebar". Then, the
+template it is using dumps the contents of the sidebar document in the
+sidebar.</p>
+
+
+<h2 id="template"><code class="hl">template</code></h2>
+
+<p>Define the template to use for this file. For example, if you specify</p>
+
+<pre class="hl">template :: boilerplate</pre>
+
+<p>The Quaint compiler will go through the following steps:</p>
+
+<ol><li>Generate the HTML for the whole file</li><li>Put the HTML in the variable <code class="hl">body</code></li><li>Fetch <code class="hl">boilerplate.q</code></li><li>Go to 1 (with the original in the variable <code class="hl">body</code>)</li></ol>
+
+<p>So if boilerplate.q contains:</p>
+
+<pre class="hl">#header % header
+{body}
+#footer % footer</pre>
+
+<p>Then any file that uses it as a template will generate a header div
+above and a footer div below.</p>
+
+The CLI lets you specify a template directory with the <code class="hl">-t</code>
+options. You can also customize how files are read.
+
+
+<h2 id="toc"><code class="hl">toc</code></h2>
+
+<code class="hl">toc</code> prints out a table of contents based on the headers declared in
+the markup. It can be used anywhere in the file.
 
 <div class="quaint-example"><div class="input"><textarea rows="6">toc::
 = One
@@ -554,48 +860,15 @@ the markup. It can be used anywhere in the file.</p>
 <h1 id="three">Three</h1></div></div>
 
 
-<h2 id="store"><code>store</code></h2>
+<h2 id="when"><code class="hl">when</code></h2>
 
-<p><code>store</code> is mostly useful in conjunction with the <a href="/quaint/api.html">API</a> and/or
-templates. With this macro you can push data to an internal "document"
-(a list of references, or a list of script tags to put in &lt;head&gt; for
-instance), and then dump that document somewhere convenient. You don't
-have to dump after everything has been stored.</p>
+Alternative notation for the <code class="hl">??</code> operator. They both work
+identically.
 
-<div class="quaint-example"><div class="input"><textarea rows="8">store names ::
-  Bob
-  Clara
+<div class="quaint-example"><div class="input"><textarea rows="1">when {true} :: hello</textarea></div><div class="output">hello</div></div>
+<div class="quaint-example"><div class="input"><textarea rows="1">when {false} :: hello</textarea></div><div class="output"></div></div>
 
-store names :: dump!
-
-store names ::
-  Damian</textarea></div><div class="output">
-
-<p>
-  Bob
-  Clara
-  Damian</p>
-
-</div></div>
-
-<p>One use case of <code>store</code> is in Quaint's very documentation. The code for
-this page declares:</p>
-
-<pre class="hl">store sidebar ::
-  toc::</pre>
-
-<p>That is to say, "put the table of contents in the sidebar". Then, the
-template it is using dumps the contents of the sidebar document in the
-sidebar.</p>
-
-
-<h2 id="html"><code>html</code></h2>
-
-<p><a href="#htmlmacro">See here</a></p>
-
-<h2 id="css"><code>css</code></h2>
-
-<p><a href="#injectcss">See here</a></p>
+<p><a href="#conditionals">See conditionals</a></p>
 
 
 
@@ -644,7 +917,7 @@ sidebar.</p>
   <div id="foot-container" class="container"><div id="foot"></div></div></div>
 
     <script>
-                                    System.import("edit").then(function(x){
-                                       if(x.main) x.main();
-                                    })
-                                 </script></body></html>
+                                 System.import("edit").then(function(x){
+                                    if(x.main) x.main();
+                                 })
+                              </script></body></html>

@@ -34,20 +34,22 @@
 
 
 
+
+
 <h1 id="install">Install</h1>
 
-<p>Very simple. Assuming you have <code>npm</code> installed, write the command:</p>
+Very simple. Assuming you have <code class="hl">npm</code> installed, write the command:
 
 <pre class="hl">npm install quaint -g</pre>
 
-<p>This will install a <code>quaint</code> command globally. It will be your main
+This will install a <code class="hl">quaint</code> command globally. It will be your main
 tool unless you want to use the <a href="/quaint/api.html">API</a> directly or write your own
-plugins.</p>
+plugins.
 
 
 <h1 id="usage">Usage</h1>
 
-<p>Here's the help for the <code>quaint</code> command:</p>
+Here's the help for the <code class="hl">quaint</code> command:
 
 <pre class="hl">Usage: quaint &lt;file ...&gt; [options]
 
@@ -74,8 +76,8 @@ Options:
 
 <h1 id="templates">Templates</h1>
 
-<p>Templates are an important part of <code>quaint</code>. They are very simple and
-let you avoid repeating yourself.</p>
+Templates are an important part of <code class="hl">quaint</code>. They are very simple and
+let you avoid repeating yourself.
 
 <p>Let's make a simple boilerplate template with the doctype, &lt;html&gt; tag
 and whatnot. You might actually want to save this one!</p>
@@ -97,16 +99,17 @@ html %
   body %
     {body}</pre>
 
-<p>Notice the line that reads <code>{body}</code>: this is the place in the template
-where the contents of our post will be inserted.</p>
+Notice the line that reads <code class="hl">{body}</code>: this is the place in the template
+where the contents of our post will be inserted.
 
 <p>Now you can write the post:</p>
 
 <p><strong>post.q</strong></p>
 
-<pre class="hl">meta ::
+<pre class="hl">template :: boilerplate
+
+meta ::
   title = New post!
-  template = boilerplate
 
 Hello! This is a new post!</pre>
 
@@ -117,16 +120,16 @@ Hello! This is a new post!</pre>
 <p>Quaint will automatically fetch the template and fill it. It will also
 use the meta-information for the title and put it at the right place!</p>
 
-<p>Alternatively the <code>-t</code> flag can be used to either force a template or
-point Quaint to a template directory (so you can be neatly organized):</p>
+Alternatively the <code class="hl">-t</code> flag can be used to either force a template or
+point Quaint to a template directory (so you can be neatly organized):
 
 <pre class="hl">quaint post.q -t tpl.q      <span class="hljs-comment"># Will use tpl.q instead of boilerplate.q</span>
 quaint post.q -t templates/ <span class="hljs-comment"># Will use templates/boilerplate.q</span></pre>
 
-<p>Lastly: it is possible for a template to have a template (using the
-same <code>meta :: template = xyz</code> syntax that we saw). This is not a
-problem at all unless you create a cycle (in which case <code>quaint</code> will
-crash).</p>
+Lastly: it is possible for a template to have a template (using the
+same <code class="hl">template :: xyz</code> syntax that we saw). This is not a
+problem at all unless you create a cycle (in which case <code class="hl">quaint</code> will
+crash).
 
 
 <h1 id="plugins">Plugins</h1>
@@ -142,25 +145,25 @@ javascript &amp;
       return x * x;
   }</pre>
 
-<p>By default, Quaint will not do it. But the <code>quaint-highlight</code> plugin
-will do it.</p>
+By default, Quaint will not do it. But the <code class="hl">quaint-highlight</code> plugin
+will do it.
 
 <p>First you can install it globally (locally will work too):</p>
 
 <pre class="hl">npm install quaint-highlight -g</pre>
 
-<p>Once this is done you can refer to it by name (without the <code>quaint-</code>
-part):</p>
+Once this is done you can refer to it by name (without the <code class="hl">quaint-</code>
+part):
 
 <pre class="hl">quaint -p highlight post.q</pre>
 
-<p>This will save the result in <code>post.html</code>. This uses
+This will save the result in <code class="hl">post.html</code>. This uses
 <a href="https://highlightjs.org/">highlight.js</a>.
 You will need to include a stylesheet as well. They are available
-<a href="https://github.com/isagalaev/highlight.js/tree/master/src/styles">here</a>.</p>
+<a href="https://github.com/isagalaev/highlight.js/tree/master/src/styles">here</a>.
 
-<p>You may of course use as many plugins as you want, just use the <code>-p</code>
-option multiple times or separate each plugin with a comma. For instance:</p>
+You may of course use as many plugins as you want, just use the <code class="hl">-p</code>
+option multiple times or separate each plugin with a comma. For instance:
 
 <pre class="hl">quaint -p highlight -p javascript post.q
 quaint -p earlgrey,highlight post.q</pre>
@@ -171,7 +174,7 @@ quaint -p earlgrey,highlight post.q</pre>
 
 <p>Let's create two files:</p>
 
-<ul><li><code>post.q</code> will contain the Quaint markup we want to render</li><li><code>data.json</code> will contain data for the render</li></ul>
+<ul><li><code class="hl">post.q</code> will contain the Quaint markup we want to render</li><li><code class="hl">data.json</code> will contain data for the render</li></ul>
 
 <p><strong>post.q</strong></p>
 
@@ -202,10 +205,10 @@ this:</p>
 
 <pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> <span class="hljs-string">'{"surname": "Pottergeist"}'</span></pre>
 
-<p>If you use the <code>quaint-javascript</code> plugin, all of the JSON contents
+If you use the <code class="hl">quaint-javascript</code> plugin, all of the JSON contents
 become top-level variables. This means that you could, for instance,
 calculate Alice's age from her birthdate as an expression inside curly
-braces. Use this tip wisely.</p>
+braces. Use this tip wisely.
 
 
 

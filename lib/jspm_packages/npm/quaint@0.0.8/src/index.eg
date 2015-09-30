@@ -1,0 +1,52 @@
+
+require:
+   opg ->
+      Source, Location
+      transferLocation as [<<:]
+   .lang ->
+      parse, tokenize, QAst, Text, Oper, Seq
+   .ast ->
+      Into, Deferred
+   .tools
+   .doc as docs ->
+      BasicDocument, SeqDocument, MapDocument
+   .engine ->
+      Engine, processDocuments
+   .basic ->
+      basic-plugin, lit-plugin, file-resolver
+
+provide:
+   parse, tokenize
+   Location, Source
+   Engine
+   create
+   toENode, toHTML, translate
+   processDocuments
+   tools
+   QAst, Text, Oper, Seq
+   Into, Deferred
+   BasicDocument, SeqDocument, MapDocument
+   h
+   basic-plugin, lit-plugin, file-resolver
+
+
+h{tag, match props, *children} =
+   {tags => _, props => _, children => _} or String? or Number? or Boolean? ->
+      h{tag, {=}, props, *children}
+   else ->
+      ENode{tag.split{R"(?=\W)"}, props, children}
+
+provide{*plugins} =
+   create{*plugins}
+
+create{*plugins} =
+   Engine with {basicPlugin, *plugins}
+
+translate{text, format, options = {=}} =
+   create{}.translate{text, format, options}
+
+toENode{text, options = {=}} =
+   create{}.translate{text, .enode, options}
+
+toHTML{text, options = {=}} =
+   create{}.translate{text, .html, options}

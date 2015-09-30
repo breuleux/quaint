@@ -1,0 +1,157 @@
+
+require:
+   opg ->
+      Source, Location
+   .lang ->
+      parse
+   .doc ->
+      SeqDocument
+   .ast ->
+      QAst, Text, Oper, Seq, Into, Deferred
+      raw
+      shed, shedAll, shedIndent
+      collapse, statements
+      parseSpec, makeExtractor, extractor
+
+provide:
+   next
+   may-fail
+   raw, rawRelative, dedent, code
+   parseSpec, makeExtractor, extractor
+   extract, collapse, statements
+   shed, shedAll, shedIndent
+   mergeable
+   normalize
+   toJSON
+
+
+next = Symbol{.next}
+
+var errn = 0
+
+may-fail{f} =
+   try:
+      f{}
+   catch e:
+      errn += 1
+      res = span.error %
+         String{e}
+         " "
+         a %
+            href = '#ERR{errn}'
+            '[#{errn}]'
+         Into{.errors, e, create{} = SeqDocument{}}
+      res.error = e
+      res.error.id = errn
+      res
+
+
+rawRelative{match x} =
+   {=> location} ->
+      {{_, c}, _} = location.linecol{}
+      padding = [1..c each i -> " "].join{""}
+      padding + location.text{}
+   String? -> x
+   else -> throw E.noraw{S'Cannot get a raw string from {x}.'}
+
+dedent{x} =
+   lines = x.split{"\n"}
+   indents = lines each
+      R"^( *)(?! |$)"! {_, pfx} -> pfx.length
+      else -> continue
+   min = Math.min{*indents}
+   newlines.join{"\n"} where
+      newlines = lines each line -> line.slice{min}
+
+
+code{engine, x} =
+   Deferred with {path, documents} ->
+      may-fail with ->
+         res = engine.eval{raw{x}, env, x.location} or "" where
+            env = {doc and documents = documents, = engine}
+         match res:
+            QAst? ->
+               engine.gen{res}
+            else ->
+               res
+
+
+extract{match} =
+   Seq? {*args} ->
+      Seq{args[1][0], *newargs} where newargs =
+         enumerate{args} each
+            {i, arg} when i mod 2 == 0 ->
+               arg
+   other ->
+      other
+
+
+
+mergeable{tag, child, block = true} =
+   merge{match node} =
+      [^tag %]! {tags, props, children} ->
+         this.children ++= children
+         this
+      other ->
+         false
+   node = ^tag % child
+   node.block = block
+   node.merge = merge
+   node
+
+
+blockElements = [object with elems.split{R"[\n ]+"} each x -> {x, true}] where
+   elems = """
+      address article aside audio
+      blockquote
+      canvas
+      dd div dl
+      fieldset figcaption figure footer form
+      h1 h2 h3 h4 h5 h6 header hgroup hr
+      main
+      nav noscript
+      ol output
+      p pre
+      section
+      table tfoot
+      ul
+      video
+      html head body link script
+      raw top
+   """
+
+normalize{match node} =
+   ENode? {tags => {.p}, props => == {=}, children => {R"^[\n ]*$"?} or {}} ->
+      ""
+   ENode? {tags => match tags, props => props == {=}, => children} ->
+      {.p} ->
+         ch = normalize{children}
+         ch each
+            ENode? {=> tags} when tags.some{t -> blockElements[t]} ->
+               return ch
+            else ->
+               pass
+         ENode{tags, props, ch}
+      else ->
+         ENode{tags, props, normalize{children}}
+   Array? children ->
+      var res = {}
+      children each normalize! match ->
+         Array? a -> res ++= a
+         other -> res.push{other}
+      res
+   else ->
+      node
+
+
+toJSON{match v} =
+   {=> raw} ->
+      t = v.raw{}
+      try:
+         JSON.parse{t}
+      catch e:
+         if "{" in t or "[" in t:
+            throw e
+         t
+   else ->
+      v

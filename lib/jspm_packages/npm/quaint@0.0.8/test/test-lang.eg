@@ -1,0 +1,107 @@
+
+requireMacros:
+   "earl-mocha" ->
+      describe, it, before, after
+      assert, asserts
+      xdescribe, xit
+
+require:
+   "../src/index" ->
+      Engine
+   "../src/lang" ->
+      parse, tokenize
+
+
+eng = Engine with {@} ->
+   @registerRules with {
+      "\\maybe\\a | \\maybe\\b"{engine, {=> a, => b}} =
+         % ["<", engine.gen{a}, "|", engine.gen{b}, ">"]
+      "\\maybe\\a : \\maybe\\b"{engine, {=> a, => b}} =
+         % ["<", engine.gen{a}, ":", engine.gen{b}, ">"]
+      "\\maybe\\a , \\maybe\\b"{engine, {=> a, => b}} =
+         % ["<", engine.gen{a}, ",", engine.gen{b}, ">"]
+   }
+
+q{txt} = eng.translate{txt, .text}
+
+tr{x, y} =
+   ;; 1. x translates to y
+   ;; 2. [x] translates to [y]
+   q{x} == y
+   \ and q{S'[{x}]'} == S'[{y}]'
+   \ and q{"\n" + x + "\n"} == "\n" + y + "\n"
+
+same{x} =
+   tr{x, x}
+
+
+
+describe "basic rules":
+
+   asserts "sanity checks":
+      same{""}, same{"   "}, same{"\n\n"}
+      same{"hello world"}
+      same{"there is __NOTHING to do here!"}
+
+   asserts "which operators whitespace goes to":
+      tr{"a | [b] | c", "<a|<[b]|c>>"}
+      tr{"a|[ b | c ]", "<a|[ <b|c> ]>"}
+
+   asserts "whitespace-based priority":
+      tr{"a + b|c", "a + <b|c>"}
+      tr{"a|b + c", "<a|b> + c"}
+
+   asserts "indent":
+      q{"a |\n b"} == "<a|\n b>"
+      q{"a|\n b"} == "<a|>\n b"
+      q{"|\n b"} == "<|\n b>"
+      q{"| \n b"} == "<| \n b>"
+      q{"\na |\n b\n"} == "\n<a|\n b>\n"
+      q{"\n|\n b\n"} == "\n<|\n b>\n"
+
+   describe "associativity":
+      asserts "wide":
+         tr{"a + b | c", "a + <b|c>"}
+         tr{"a | b + c", "<a|b + c>"}
+         tr{"a | b | c", "<a|<b|c>>"}
+         tr{"a | b | c + d", "<a|<b|c + d>>"}
+      asserts "short":
+         tr{"a+b|c", "a+<b|c>"}
+         tr{"a|b+c", "<a|b+c>"}
+         tr{"a|b|c", "<a|<b|c>>"}
+         tr{"a|b|c+d", "<a|<b|c+d>>"}
+
+   asserts "prefix and suffix":
+      tr{"| a", "<|a>"}
+      tr{"a |", "<a|>"}
+      tr{"x |a", "x <|a>"}
+      tr{"a| x", "<a|> x"}
+      tr{"a b|", "a <b|>"}
+      tr{"a b |", "<a b|>"}
+      tr{"|a b", "<|a> b"}
+      tr{"| a b", "<|a b>"}
+
+   asserts "priority between prefix, infix and suffix":
+      tr{"a|b+", "<a|b+>"}
+      tr{"|b+c", "<|b+c>"}
+      tr{"|b+", "<|b+>"}
+
+   describe "exceptions":
+      asserts "period":
+         tr{"a|b.", "<a|b>."}
+         tr{"a|b.c", "<a|b.c>"}
+         tr{"a | b.", "<a|b.>"}
+      asserts "colon and comma":
+         tr{"a: b", "<a:b>"}
+         tr{"a :b", "a <:b>"}
+         tr{"a, b", "<a,b>"}
+         tr{"a ,b", "a <,b>"}
+
+   describe "edge cases":
+      it "short suffix then comma":
+         assert tr{"a|, b", "<<a|>,b>"}
+
+   xdescribe "pending":
+      it "should preserve whitespace at beginning and end":
+         assert same{"  a  "}
+
