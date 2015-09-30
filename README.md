@@ -7,7 +7,9 @@ Quaint
 Quaint is a markup language similar to Markdown, but more regular and
 easier to customize.
 
-**[Complete documentation](http://breuleux.github.io/quaint/)**
+**[Documentation](http://breuleux.github.io/quaint/)**
+
+Quaint is written in [Earl Grey](http://breuleux.github.io/earl-grey/)
 
 
 Install
@@ -30,6 +32,8 @@ Quaint comes with the `quaint` command.
     Usage: quaint <file ...> [options]
     
     Options:
+      -c, --config    Path to a configuration file with option values (must be JSON)
+                                                          [default: "./quaint.json"]
       -d, --data      JSON string or file(s) defining field:value pairs to be made
                       available inside markup (as {field}):
                       * key:value
@@ -48,7 +52,9 @@ Quaint comes with the `quaint` command.
       -s, --stdout    Print to standard out               [boolean] [default: false]
       -t, --template  Quaint file to use as template, or template directory
       -v, --verbose   Print information about the operations performed     [boolean]
-    
+      --save-meta     Save meta data in a file (./meta.json if the file is not
+                      specified)                                    [default: false]
+
     Examples:
       quaint myfile.q                           Translate to myfile.html
       quaint file1.q file2.q file3.q -v         Translate multiple files
@@ -59,8 +65,8 @@ Quaint comes with the `quaint` command.
       quaint file1.q file2.q -p prelude.q       Prepend prelude to each file
       quaint file.q -t tpl                      Use template ./tpl.q
       quaint -e 'B' -t 'A {body} C'             Inline template, prints out A B C
-      quaint -e '[meta::template=tpl]BODY'      Use template ./tpl.q
-      quaint -e '[meta::template=tpl]BODY' -t   Use template ./templates/tpl.q
+      quaint -e '[template::tpl]BODY'           Use template ./tpl.q
+      quaint -e '[template::tpl]BODY' -t        Use template ./templates/tpl.q
         templates/
 
 
