@@ -197,6 +197,9 @@ basicPlugin{@} =
             throw E.template.duplicate{'Template {t} was already specified for this file.'}
          else ->
             engine.template = tpl.raw{}
+
+      scope{engine, body} =
+         engine.fork{}.gen{body}
    }
 
    fmt = Format{}
