@@ -34,9 +34,16 @@ class Format:
                         throw E.bad-resolver{'Bad resolution for "{f}"'}
                else ->
                   {f, d, tools.dedent{tools.raw-relative{body}}}
+            when not body ->
+               throw E.format with
+                  'You must provide a filename, if there is no body to format.'
+            {f} ->
+               {f, .auto, tools.dedent{tools.raw-relative{body}}}
+            {} ->
+               {.json, .auto, tools.dedent{tools.raw-relative{body}}}
             else ->
                throw E.format with
-                  'Please use the syntax "format:display", e.g."' +
+                  'Please use the syntax "lang:format", or "format" e.g."' +
                   \ '"json:table", after the format keyword'
 
       parse = @parsers[lang]
