@@ -102,6 +102,14 @@ basicPlugin{@} =
 
    @registerResolvers with {
       default = file-resolver{directory = ""}
+      plugin{name} =
+         try:
+            __require{'quaint-{name}'}
+         catch e1:
+            try:
+               __require{name}
+            catch e2:
+               throw e1
    }
 
    @evaluator = BasicEvaluator{}
@@ -200,6 +208,30 @@ basicPlugin{@} =
 
       scope{engine, body} =
          engine.fork{}.gen{body}
+
+      plugins{engine, shed-all! raw! body} =
+         r = engine.resolvers.plugin
+         if not r:
+            throw E.plugin{'Cannot resolve plugins.'}
+         body.split{R"[ \n,]+"} each name ->
+            p = r{name}
+            p{engine}
+         ""
+
+      plugin{engine, raw! name, values} =
+         r = engine.resolvers.plugin
+         if not r:
+            throw E.plugin{'Cannot resolve plugins.'}
+         p = r{name}
+         ex = extractor{"\\k = \\v", "\\k: \\v", "\\k => \\v"}
+         options = object with
+            values.statements{} each
+               ex! {=> raw! k, => v} ->
+                  {k, toJSON{v}}
+               else ->
+                  throw E.plugin{'Invalid option for plugin "{name}"'}
+         p{engine, options}
+         ""
    }
 
    fmt = Format{}
