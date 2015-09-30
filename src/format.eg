@@ -1,0 +1,144 @@
+
+require:
+   .tools
+
+provide:
+   Format
+
+
+class Format:
+
+   constructor{} =
+      @parsers = clone{default-parsers}
+      @formatters = clone{default-formatters}
+
+   format{engine, descr, body} =
+      ;; format json :: ...
+      ;; format json:table :: ...
+      ;; format json:plot :: ...
+      ;; format data.json:table ::
+      {lang, format, contents} =
+         match descr.shed{}.raw{}.split{":"} as x:
+            {match f, d} ->
+               R"\.([a-zA-Z0-9]+)$"! {_, ext} ->
+                  if not body.empty{}:
+                     throw E.format with
+                        "Do not provide both a filename and a body for format."
+                  r = engine.resolvers.format or engine.resolvers.default
+                  if not r:
+                     throw E.no-resolver{'Cannot resolve "{f}"'}
+                  match r{f}:
+                     String? contents or {=> contents} ->
+                        {ext, d, contents}
+                     else ->
+                        throw E.bad-resolver{'Bad resolution for "{f}"'}
+               else ->
+                  {f, d, tools.dedent{tools.raw-relative{body}}}
+            else ->
+               throw E.format with
+                  'Please use the syntax "format:display", e.g."' +
+                  \ '"json:table", after the format keyword'
+
+      parse = @parsers[lang]
+      if not parse:
+         throw E.no-parser with
+            'Cannot parse "{lang}". You probably need to load a plugin.'
+
+      res = parse{contents}
+
+      form = @formatters[format]
+      if not form:
+         throw E.no-format with
+            'Cannot format as "{format}". You probably need to load a plugin.'
+
+      form{engine, res}
+
+
+default-parsers = {
+   json{contents} =
+      JSON.parse{contents}
+}
+
+
+auto-format{engine, match obj} =
+   Array? ->
+      ul %
+         obj each entry ->
+            li % auto-format{engine, entry}
+
+   String? or Number? or Boolean? or null? or undefined? ->
+      engine.gen-from-source{String{obj}}
+
+   else ->
+      table %
+         items{obj} each {k, v} ->
+            tr %
+               td % auto-format{engine, k}
+               td % auto-format{engine, v}
+
+
+detect-columns{list} =
+   if not Array? list:
+      return false
+   counts = {=}
+   var len = 0
+   list each match entry ->
+      Array? entry ->
+         if keys{counts} != {}:
+            return false
+         if entry.length > len:
+            len = entry.length
+      when len > 0 ->
+         return false
+      String? or Number? or Boolean? or null? or undefined? ->
+         return false
+      items! things ->
+         things each {k, v} ->
+            counts[k] or= 0
+            counts[k] += 1
+      else ->
+         return false
+   len or keys{counts}
+
+make-table{engine, ks, rows and detect-columns! match} =
+   false? ->
+      false
+   Number? ->
+      table %
+         zip{rows, ks or {}} each {row, key} ->
+            tr %
+               if{key, td % key, ""}
+               row each entry ->
+                  td % auto-format{engine, entry}
+   Array? columns ->
+      table %
+         tr %
+            if{ks, th % "", ""}
+            columns each col -> th % col
+         zip{rows, ks or {}} each {row, key} ->
+            tr %
+               if{key, td % key, ""}
+               columns each col ->
+                  td % auto-format{engine, row[col] or ""}
+
+
+default-formatters = {
+
+   auto{engine, obj} =
+      auto-format{engine, obj}
+
+   list{engine, obj} =
+      auto-format{engine, obj}
+
+   table{engine, match obj} =
+      Array? ->
+         make-table{engine, null, obj} or
+            throw E.format.table with
+               'The object cannot be formatted as a table.' +
+               \ 'The rows may not be regular enough.'
+      else ->
+         make-table{engine, keys{obj}, items{obj} each {k, v} -> v} or
+            auto-format{engine, obj}
+}
+
+

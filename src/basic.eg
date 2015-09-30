@@ -18,6 +18,7 @@ require:
    .ast ->
       QAst, Text, Oper, Seq
       Into, Deferred
+   .format -> Format
    fs, path
 
 provide:
@@ -223,8 +224,15 @@ basicPlugin{@} =
                e.gen-from-source{Source{contents, file}}
             {=> contents} or String? contents ->
                e.gen-from-source{Source{contents, "<unknown>"}}
-
    }
+
+   fmt = Format{}
+   @registerMacros with {
+      format{engine, *[{descr, body} or {descr} and body is null]} =
+         may-fail with ->
+            fmt.format{engine, descr, body}
+   }
+
 
    @registerMethods with {
       method lit{} =
