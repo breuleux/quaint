@@ -27,15 +27,22 @@ provide:
 
 next = Symbol{.next}
 
+var errn = 0
 
 may-fail{f} =
    try:
       f{}
    catch e:
+      errn += 1
       res = span.error %
          String{e}
+         " "
+         a %
+            href = '#ERR{errn}'
+            '[#{errn}]'
          Into{.errors, e, create{} = SeqDocument{}}
       res.error = e
+      res.error.id = errn
       res
 
 
