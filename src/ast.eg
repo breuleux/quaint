@@ -29,6 +29,9 @@ class QAst:
       @location.text{} !! e ->
          throw E.noraw{'Cannot get a raw string from {@}.'}
 
+   empty{} =
+      @raw{}.trim{} == ""
+
    .statements{} =
       statements{@}
    .shed{n = 1} =
