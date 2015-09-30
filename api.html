@@ -13,7 +13,7 @@
     
 
 <div id="sidebar"><div id="sidebar-contents">
-  <ul class="toc"><li><a href="#overview">Overview</a></li><li><a href="#interface">Interface</a></li><li><a href="#qast">QAst</a></li><ul><li><a href="#treestructure">Tree structure</a></li><li><a href="#usefulmethods">Useful methods</a></li><li><a href="#args"><code>args</code></a></li><li><a href="#collapse"><code>collapse</code></a></li><li><a href="#empty"><code>empty</code></a></li><li><a href="#extract"><code>extract</code></a></li><li><a href="#raw"><code>raw</code></a></li><li><a href="#sexp"><code>sexp</code></a></li><li><a href="#shed"><code>shed</code></a></li><li><a href="#shedAll"><code>shedAll</code></a></li><li><a href="#shedIndent"><code>shedIndent</code></a></li><li><a href="#statements"><code>statements</code></a></li></ul><li><a href="#engine">Engine</a></li><ul><li><a href="#notablemethods">Notable methods</a></li><ul><li><a href="#userfacing">User-facing</a></li><li><a href="#pluginfacing">Plugin-facing</a></li></ul><li><a href="#deferred"><code>deferred</code></a></li><li><a href="#eval"><code>eval</code></a></li><li><a href="#fork"><code>fork</code></a></li><li><a href="#gen"><code>gen</code></a></li><li><a href="#genFromSource"><code>genFromSource</code></a></li><li><a href="#into"><code>into</code></a></li><li><a href="#plug"><code>plug</code></a></li><li><a href="#redefer"><code>redefer</code></a></li><li><a href="#registerDocuments"><code>registerDocuments</code></a></li><li><a href="#registerMacros"><code>registerMacros</code></a></li><li><a href="#registerMethods"><code>registerMethods</code></a></li><li><a href="#registerResolvers"><code>registerResolvers</code></a></li><li><a href="#registerRules"><code>registerRules</code></a></li><li><a href="#setenv"><code>setenv</code></a></li><li><a href="#toENode"><code>toENode</code></a></li><li><a href="#toHTML"><code>toHTML</code></a></li><li><a href="#translate"><code>translate</code></a></li></ul><li><a href="#examples">Examples</a></li></ul></div></div>
+  <ul class="toc"><li><a href="#overview">Overview</a></li><li><a href="#interface">Interface</a></li><li><a href="#qast">QAst</a></li><ul><li><a href="#treestructure">Tree structure</a></li><li><a href="#usefulmethods">Useful methods</a></li><li><a href="#args"><code>args</code></a></li><li><a href="#collapse"><code>collapse</code></a></li><li><a href="#empty"><code>empty</code></a></li><li><a href="#extract"><code>extract</code></a></li><li><a href="#raw"><code>raw</code></a></li><li><a href="#sexp"><code>sexp</code></a></li><li><a href="#shed"><code>shed</code></a></li><li><a href="#shedAll"><code>shedAll</code></a></li><li><a href="#shedIndent"><code>shedIndent</code></a></li><li><a href="#statements"><code>statements</code></a></li></ul><li><a href="#engine">Engine</a></li><ul><li><a href="#notablemethods">Notable methods</a></li><ul><li><a href="#userfacing">User-facing</a></li><li><a href="#pluginfacing">Plugin-facing</a></li></ul><li><a href="#deferred"><code>deferred</code></a></li><li><a href="#eval"><code>eval</code></a></li><li><a href="#fork"><code>fork</code></a></li><li><a href="#gen"><code>gen</code></a></li><li><a href="#genFromSource"><code>genFromSource</code></a></li><li><a href="#into"><code>into</code></a></li><li><a href="#plug"><code>plug</code></a></li><li><a href="#redefer"><code>redefer</code></a></li><li><a href="#registerDocuments"><code>registerDocuments</code></a></li><li><a href="#registerMacros"><code>registerMacros</code></a></li><li><a href="#registerMethods"><code>registerMethods</code></a></li><li><a href="#registerResolvers"><code>registerResolvers</code></a></li><li><a href="#registerRules"><code>registerRules</code></a></li><li><a href="#setenv"><code>setenv</code></a></li><li><a href="#toENode"><code>toENode</code></a></li><li><a href="#toHTML"><code>toHTML</code></a></li><li><a href="#translate"><code>translate</code></a></li></ul></ul></div></div>
 
 <div id="page">
   <div id="nav-container" class="container"><div id="nav">
@@ -563,37 +563,6 @@ q.toHTML(<span class="hljs-string">"{a + b}"</span>); <span class="hljs-comment"
   <ul><li><code class="hl">paragraph</code>: wrap the result in a paragraph tag (default false)</li><li><code class="hl">noTemplate</code>: avoid executing templates (default false)</li></ul></div></div>
 
 
-
-
-
-<h1 id="examples">Examples</h1>
-
-<p>Calculator example:</p>
-
-<pre class="hl"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">calc</span>(<span class="hljs-params">node</span>) </span>{
-    <span class="hljs-keyword">var</span> r = node.extract({
-        bra: <span class="hljs-string">"(\\a)"</span>,
-        add: <span class="hljs-string">"\\a + \\b"</span>,
-        sub: <span class="hljs-string">"\\a - \\b"</span>,
-        mul: <span class="hljs-string">"\\a * \\b"</span>,
-        div: <span class="hljs-string">"\\a / \\b"</span>,
-        num: <span class="hljs-string">"\\a"</span>
-    });
-    <span class="hljs-keyword">switch</span> (r._which) {
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"bra"</span>: <span class="hljs-keyword">return</span> calc(r.a);
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"add"</span>: <span class="hljs-keyword">return</span> calc(r.a) + calc(r.b);
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"sub"</span>: <span class="hljs-keyword">return</span> calc(r.a) - calc(r.b);
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"mul"</span>: <span class="hljs-keyword">return</span> calc(r.a) * calc(r.b);
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"div"</span>: <span class="hljs-keyword">return</span> calc(r.a) / calc(r.b);
-    <span class="hljs-keyword">case</span> <span class="hljs-string">"num"</span>: <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseFloat</span>(r.a.raw());
-    }
-}
-q.registerMacros({
-    calculate: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, node</span>) </span>{ <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>(calc(node)); }
-});
-
-<span class="hljs-comment">// Note that this returns 14, not 10, because Quaint's operators are right-associative</span>
-<span class="hljs-keyword">var</span> html = q.toHTML(<span class="hljs-string">"calculate :: 2 * 3 + 4"</span>)</pre>
 
 
 
