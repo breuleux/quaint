@@ -285,6 +285,41 @@ basicPlugin{@} =
          @lit{}.gen{x}
    }
 
+   percent-syntax{engine, descr, contents} =
+      leng = engine.lit{}
+
+      ex = extractor{"\\key = \\value"}
+      props = {=}
+      stmts = statements{contents} each
+         ex! {key => raw! key, => value} ->
+            props[key] = leng.gen{value}
+            continue
+         stmt ->
+            stmt
+      children =
+         if props != {=}:
+            [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
+         else:
+            s = shedIndent{contents}
+            if s == Text{""}:
+               {}
+            else:
+               {engine.gen{s}}
+
+      parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+      var id = null
+      tags = {}
+      parts each
+         "" ->
+            pass
+         R"^#(.*)"! {_, _id} ->
+            id = _id
+         tag ->
+            tags.push with tag
+      if id: props.id = id
+      ENode{tags, props, children}
+
+
    @registerRules with {
 
       "\\maybe\\x ;; \\ignore"{engine, {=> x}} =
@@ -366,39 +401,13 @@ basicPlugin{@} =
       "\\url @@ image"{engine, {url => shed! url}} =
          img % src = engine.litgen{url}
 
-      requireWide! "\\descr % \\maybe\\contents"{engine, var {=> descr, => contents}} =
-         leng = engine.lit{}
+      "\\descr % \\contents"{engine, spec} =
+         spec as {=> shed! descr, => contents}
+         percent-syntax{engine, descr, contents}
 
-         ex = extractor{"\\key = \\value"}
-         props = {=}
-         stmts = statements{contents} each
-            ex! {key => raw! key, => value} ->
-               props[key] = leng.gen{value}
-               continue
-            stmt ->
-               stmt
-         children =
-            if props != {=}:
-               [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
-            else:
-               s = shedIndent{contents}
-               if s == Text{""}:
-                  {}
-               else:
-                  {engine.gen{s}}
-
-         parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
-         var id = null
-         tags = {}
-         parts each
-            "" ->
-               pass
-            R"^#(.*)"! {_, _id} ->
-               id = _id
-            tag ->
-               tags.push with tag
-         if id: props.id = id
-         ENode{tags, props, children}
+      requireWide! "\\descr % \\maybe\\contents"{engine, spec} =
+         spec as {=> shed! descr, => contents}
+         percent-syntax{engine, descr, contents}
 
       requireWide! "= \\x" = headerRule{1}
       requireWide! "== \\x" = headerRule{2}
