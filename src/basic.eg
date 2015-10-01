@@ -50,16 +50,20 @@ headerRule{level}{engine, {=> x}} =
 class BasicEvaluator:
    constructor{@store = Object.create{null}} =
       pass
-   eval{key, env = {=}, loc = null} =
+   eval{expr, env = {=}, loc = null} =
+      {key, *fields} = expr.split{"."}
+
       ;; s = Object.create{@store} &: env
       s = @store &: env
       if not Object.hasProperty.call{s, key}:
          try:
-            JSON.parse{key}
+            JSON.parse{expr}
          catch _:
             throw E.not_in_environment{key}
       else:
-         s[key]
+         var v = s[key]
+         fields each field -> v = v[field]
+         v
    setenv{key, value} =
       @store[key] = value
    fork{} =
