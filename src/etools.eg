@@ -6,6 +6,7 @@ provide:
    collapse
    inherit
    merge-children
+   enode-to-data
 
 
 inherit{node, tags, props, children} =
@@ -68,6 +69,53 @@ merge-children{match node, recursive = true, finalize = null} =
    ENode? ->
       new-children = merge-children{node.children, recursive, finalize}
       inherit{node, node.tags, node.props, new-children}
+   else ->
+      node
+
+
+enode-to-data{match node} =
+
+   [ul %]? or [ol %]? ->
+      node.children each match child ->
+         [li %]? -> child.children
+         else -> continue
+
+   [table %]? ->
+      columns = {}
+      rows = enumerate{node.children} each {i, match row} ->
+         [tr %]? ->
+            enumerate{row.children} each {j, match child} ->
+               [th %]? when i !== 0 ->
+                  throw E.enode-conversion{"th elements should only be in the first row"}
+               [th %]? ->
+                  columns.push{String{child.children}}
+                  null
+               [td %]? ->
+                  child.children
+               else -> continue
+         else ->
+            continue
+      if columns.length !== 0:
+         rows.slice{1} each row ->
+            object with zip{columns, row} each {name, x} -> {name, x}
+      else:
+         rows
+
+   ;; TODO: <dl>
+
+   ENode? {tags => {}, props => == {=}} when not node.block ->
+      var candidate = null
+      merge-children{node.children, false} each match child ->
+         R"[ \n\t]+"? -> pass
+         when candidate ->
+            throw E"each"{"Cannot run each:: on this data."}
+         else ->
+            candidate = child
+      enode-to-data{candidate}
+
+   ENode? ->
+      throw E.enode-conversion{"Cannot convert element to data"}
+
    else ->
       node
 

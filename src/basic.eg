@@ -5,7 +5,7 @@ require:
       transferLocation as [<<:]
       Source
    .etools ->
-      merge-children
+      enode-to-data
    .tools ->
       may-fail
       parseSpec, makeExtractor, extractor
@@ -123,28 +123,7 @@ basicPlugin{@} =
 
       "each"{engine, shed! list, *variables, body} =
          engine.redefer{engine.gen{list}} with {results} ->
-            to-iterate = geti{results} where geti{match x} =
-               [ul %]? or [ol %]? ->
-                  x.children each match child ->
-                     [li %]? -> child.children
-                     else -> continue
-               [table %]? ->
-                  x.children each match row ->
-                     [tr %]? ->
-                        row.children each match child ->
-                           [td %]? -> child.children
-                           else -> continue
-                     else ->
-                        continue
-               ENode? {tags => {}, props => == {=}} when not x.block ->
-                  var candidate = null
-                  merge-children{x.children, false} each match child ->
-                     R"[ \n\t]+"? -> pass
-                     when candidate ->
-                        throw E"each"{"Cannot run each:: on this data."}
-                     else ->
-                        candidate = child
-                  geti{candidate}
+            to-iterate = match enode-to-data{results} as x:
                {^Symbol.iterator => true?} ->
                   x
                else ->
