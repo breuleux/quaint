@@ -12,6 +12,7 @@
 * Additional processors for format
 * Way to specify column name for first row for format
 * resources ::
+* Label sections with the same name differently
 
 === DONE
 
@@ -21,7 +22,7 @@
   * `[--save-meta]
 * Prefix option for include like -d has?
 * Translate directories with CLI
-
+* each::
 
 
 == 0.0.8

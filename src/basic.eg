@@ -360,19 +360,6 @@ basicPlugin{@} =
                      f2 = engine.eval{rf, {=}, fn.location}
                      f2.apply{null, {engine, *args, body}} or ""
 
-         ;; try:
-         ;;    match fn:
-         ;;       extract! Seq? {"J", fn, *args} ->
-         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
-         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
-         ;;          f{engine, *args, body} or ""
-         ;;       else ->
-         ;;          ;; f = engine.eval{raw{fn}, {=}, fn.location}
-         ;;          f = engine.macros[raw{fn}] or engine.eval{raw{fn}, {=}, fn.location}
-         ;;          f{engine, body} or ""
-         ;; catch e:
-         ;;    span.error % String{e}
-
       "_ \\x"{engine, {=> x}} =
          em % engine.gen{x}
 
@@ -508,13 +495,6 @@ basicPlugin{@} =
                x when isFirst ->
                   isFirst = false
                   last = x
-               ;; x when last and last.merge ->
-               ;;    match last.merge{x}:
-               ;;       false? ->
-               ;;          add{}
-               ;;          last = x
-               ;;       newx ->
-               ;;          last = newx
                x ->
                   add{}
                   last = x

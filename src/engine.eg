@@ -117,15 +117,6 @@ class Engine:
                   == tools.next -> pass
                   result -> return result
             % [parts each part -> @gen{part}]
-
-         ;; match result:
-         ;;    ENode? {tags => {}, props => == {=}, => children} or Array? children
-         ;;    \ when children.every{x -> String? x} ->
-         ;;       r = children.join{""}
-         ;;       if{result.block, % r, r}
-         ;;    else ->
-         ;;       result
-
          result
 
       null? or undefined? ->
