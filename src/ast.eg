@@ -150,13 +150,30 @@ shedIndent{match node} =
 
 
 statements{shedIndent! match node} =
+
    Seq? {_, Oper? {"NL"}, *} ->
       [xs.reduce{++}] where xs =
          enumerate{node} each
             {i, x} when i mod 2 == 0 ->
                statements{x}
+
+   Seq? {_, Oper? {"J"}, *} ->
+      var juxt-syntax = true
+      results =
+         node.args{} each arg ->
+            if arg.extract{"[\\m]"} as vars:
+               vars.m
+            else:
+               juxt-syntax = false
+               break
+      if juxt-syntax:
+         results
+      else:
+         {node}
+
    Text? {""} ->
       {}
+
    else ->
       {node}
 
