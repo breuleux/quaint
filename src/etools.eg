@@ -82,10 +82,12 @@ enode-to-data{match node} =
 
    [table %]? ->
       columns = {}
-      rows = enumerate{node.children} each {i, match row} ->
+      var row-num = 0
+      rows = node.children each match row ->
          [tr %]? ->
-            enumerate{row.children} each {j, match child} ->
-               [th %]? when i !== 0 ->
+            row-num += 1
+            row.children each match child ->
+               [th %]? when row-num !== 1 ->
                   throw E.enode-conversion{"th elements should only be in the first row"}
                [th %]? ->
                   columns.push{String{child.children}}
