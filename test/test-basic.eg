@@ -133,19 +133,19 @@ describe "basic rules":
 
    asserts "lists":
       q{"* hello"} == "<ul><li>hello</li></ul>"
-      q{"* hello\n* world"} == "<ul><li>hello</li><li>world</li></ul>"
+      q{"* hello\n* world"} == "<ul><li>hello</li>\n<li>world</li></ul>"
 
    asserts "tables":
       q{"+ a + b + c"} == "<table><tr><th>a</th><th>b</th><th>c</th></tr></table>"
       q{"| a | b | c"} == "<table><tr><td>a</td><td>b</td><td>c</td></tr></table>"
       q{"+ a + b + c\n| a | b | c"} ==
-         S'<table>{r1}{r2}</table>' where
+         S'<table>{r1}\n{r2}</table>' where
             r1 = "<tr><th>a</th><th>b</th><th>c</th></tr>"
             r2 = "<tr><td>a</td><td>b</td><td>c</td></tr>"
 
    asserts "blockquotes":
       q{"> hello world"} == "<blockquote> hello world</blockquote>"
-      q{"> hello\n> world"} == "<blockquote> hello world</blockquote>"
+      q{"> hello\n> world"} == "<blockquote> hello\n world</blockquote>"
 
    asserts "headers":
       q{"= quack"} == "<h1 id=\"quack\">quack</h1>"

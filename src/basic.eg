@@ -4,6 +4,8 @@ require:
    opg ->
       transferLocation as [<<:]
       Source
+   .etools ->
+      merge-children
    .tools ->
       may-fail
       parseSpec, makeExtractor, extractor
@@ -118,6 +120,46 @@ basicPlugin{@} =
 
       "when"{engine, shed! cond, body} =
          conditional{engine, cond, body}
+
+      "each"{engine, shed! list, *variables, body} =
+         engine.redefer{engine.gen{list}} with {results} ->
+            to-iterate = geti{results} where geti{match x} =
+               [ul %]? or [ol %]? ->
+                  x.children each match child ->
+                     [li %]? -> child.children
+                     else -> continue
+               [table %]? ->
+                  x.children each match row ->
+                     [tr %]? ->
+                        row.children each match child ->
+                           [td %]? -> child.children
+                           else -> continue
+                     else ->
+                        continue
+               ENode? {tags => {}, props => == {=}} when not x.block ->
+                  var candidate = null
+                  merge-children{x.children, false} each match child ->
+                     R"[ \n\t]+"? -> pass
+                     when candidate ->
+                        throw E"each"{"Cannot run each:: on this data."}
+                     else ->
+                        candidate = child
+                  geti{candidate}
+               {^Symbol.iterator => true?} ->
+                  x
+               else ->
+                  items{x}
+            vs = variables each v -> v.shed{}.raw{}
+            enumerate{to-iterate} each {i, value} ->
+               e = engine.fork{}
+               e.setenv{"$i", i}
+               match vs:
+                  {} -> e.setenv{"$x", value}
+                  {v} -> e.setenv{v, value}
+                  else ->
+                     zip{vs, value} each {v, x} ->
+                        e.setenv{v, x}
+               e.gen{body}
 
       store{engine, shed! raw! name, body} =
          if raw{body} == "dump!":
@@ -270,8 +312,10 @@ basicPlugin{@} =
          middle = engine.gen{x}
          end = raw{c}.replace{"]", ""}
          res =
-            if beg or end or middle.block:
+            if beg or end:
                % [beg, middle, end]
+            elif middle.block:
+               % middle
             else:
                middle
          if middle.block:
@@ -470,13 +514,13 @@ basicPlugin{@} =
                x when isFirst ->
                   isFirst = false
                   last = x
-               x when last and last.merge ->
-                  match last.merge{x}:
-                     false? ->
-                        add{}
-                        last = x
-                     newx ->
-                        last = newx
+               ;; x when last and last.merge ->
+               ;;    match last.merge{x}:
+               ;;       false? ->
+               ;;          add{}
+               ;;          last = x
+               ;;       newx ->
+               ;;          last = newx
                x ->
                   add{}
                   last = x

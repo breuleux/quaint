@@ -1,0 +1,73 @@
+
+require:
+   .util -> transform
+
+provide:
+   collapse
+   inherit
+   merge-children
+
+
+inherit{node, tags, props, children} =
+   rval = ENode{tags, props, children}
+   if node.merge: rval.merge = node.merge
+   if node.block: rval.block = node.merge
+   rval
+
+
+collapse{match node, finalize = null} =
+
+   ENode? {tags => {}, props => == {=}, => children} or Array? children ->
+      fn{*match} =
+         {String? s, String? t} ->
+            #replace{s + t}
+         {x, ENode? {tags => {}, props => == {=}, => children} or Array? children} ->
+            #splice{*children}
+         {x, y} ->
+            #push{collapse{y}}
+      r = transform{children, fn, ""}
+      if finalize:
+         r each x -> finalize{x}
+      else:
+         r
+
+   ENode? {=> tags, => props, => children} ->
+      inherit{node, tags, props, collapse{children}}
+
+   else -> node
+
+
+merge-children{match node, recursive = true, finalize = null} =
+   Array? ->
+      children = collapse{node, finalize}
+      if children.length > 1:
+         new-children = {}
+         {var last, *rest} = children
+         push{} =
+            new-children.push{last}
+         rest each match child ->
+            when last and last.merge ->
+               match last.merge{child} as new-child:
+                  false? ->
+                     push{}
+                     last = child
+                  else ->
+                     pass
+            else ->
+               push{}
+               last = child
+         push{}
+         if recursive:
+            new-children each child -> merge-children{child, recursive, finalize}
+         else:
+            new-children
+      elif recursive:
+         children each child -> merge-children{child, recursive, finalize}
+      else:
+         children
+   ENode? ->
+      new-children = merge-children{node.children, recursive, finalize}
+      inherit{node, node.tags, node.props, new-children}
+   else ->
+      node
+

@@ -8,6 +8,7 @@ require:
    .ast ->
       QAst, Text, Oper, Seq
       Into, Deferred
+   .etools
    .tools as tools ->
       makeExtractor
       normalize
@@ -185,23 +186,8 @@ class Engine:
             s
          x -> x
 
-      collapse{match, ndone = 0} =
-
-         ENode? {tags => {}, props => == {=}, => children} or Array? children ->
-            fn{*match} =
-               {String? s, String? t} ->
-                  #replace{s + t}
-               {x, ENode? {tags => {}, props => == {=}, => children} or Array? children} ->
-                  #splice{*children}
-               {x, y} ->
-                  #push{collapse{y}}
-            r = transform{children, fn, ""}
-            r each x -> finalize{x, ndone}
-
-         ENode? {=> tags, => props, => children} ->
-            ENode{tags, props, collapse{children}}
-
-         x -> x
+      collapse{x} =
+         etools.merge-children{x, true, {x} -> finalize{x, 0}}
 
       results = @run{src}
 
@@ -388,7 +374,7 @@ processDocuments{x, documents, maxiter = 10} =
          "PLACEHOLDER"
 
       ENode? ->
-         rval = ENode{tags, props, children} where
+         rval = etools.inherit{node, tags, props, children} where
             tags = node.tags
             props = object with items{node.props} each {k, match v} ->
                _ -> {k, populate{v, documents, replace, path ++ {k}}} where

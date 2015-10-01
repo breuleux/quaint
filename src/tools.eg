@@ -92,6 +92,9 @@ mergeable{tag, child, block = true} =
       [^tag %]! {tags, props, children} ->
          this.children ++= children
          this
+      R"^[ \n\t]*$"? ->
+         this.children.push{node}
+         true
       other ->
          false
    node = ^tag % child
