@@ -357,9 +357,11 @@ basicPlugin{@} =
             if{label == Text{""}, url2, engine.gen{label}}
 
       "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+         lbl = engine.litgen{label}
          img %
             src = engine.litgen{url}
-            alt = engine.gen{label}
+            alt = lbl
+            title = lbl
 
       "\\url @@ image"{engine, {url => shed! url}} =
          img % src = engine.litgen{url}
