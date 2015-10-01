@@ -261,7 +261,7 @@ basicPlugin{@} =
 
    fmt = Format{}
    @registerMacros with {
-      format{engine, *[{descr, body} or {descr} and body is null]} =
+      format{engine, *[{shed! raw! descr, body} or {body} and descr is "json"]} =
          may-fail with ->
             fmt.format{engine, descr, body}
    }
