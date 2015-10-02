@@ -24,8 +24,8 @@
     },
     "dependencies": {
       "earlgrey-runtime": "npm:earlgrey-runtime@^0.0.11",
-      "quaint": "npm:quaint@^0.0.8",
-      "quaint-highlight": "npm:quaint-highlight@^0.0.4",
+      "quaint": "npm:quaint@^0.0.9",
+      "quaint-highlight": "npm:quaint-highlight@^0.0.5",
       "quaint-javascript": "npm:quaint-javascript@^0.0.4",
       "vm": "github:jspm/nodelibs-vm@^0.1.0"
     },

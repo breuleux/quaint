@@ -39,7 +39,7 @@
 
 <h1 id="overview">Overview</h1>
 
-Install <code class="hl">quaint</code> locally in order to use its programmatic interface:
+<p>Install <code class="hl">quaint</code> locally in order to use its programmatic interface:</p>
 
 <pre class="hl">npm install quaint</pre>
 
@@ -80,16 +80,22 @@ q.registerRules({
 extending Quaint and writing plugins:</p>
 
 <ul><li>The <strong><code class="hl">Engine</code></strong> contains all of Quaint's rules, macros, and so on,
-  and it controls generation.</li><li><strong><code class="hl">QAst</code></strong> nodes represent parsed segments of Quaint. You can get the
+  and it controls generation.</li>
+
+<li><strong><code class="hl">QAst</code></strong> nodes represent parsed segments of Quaint. You can get the
   source code behind them easily with <code class="hl">raw()</code> or extract its structure
   with <code class="hl">extract()</code>. There are three types of nodes:
-  <ul><li><strong><code class="hl">Text</code></strong> is a leaf that represents a word</li><li><strong><code class="hl">Oper</code></strong> is a leaf that represents an operator</li><li><strong><code class="hl">Seq</code></strong> is an inner node</li></ul></li><li>Rules are given an <code class="hl">Engine</code> and <code class="hl">QAst</code> arguments, and they must return
+  <ul><li><strong><code class="hl">Text</code></strong> is a leaf that represents a word</li>
+  <li><strong><code class="hl">Oper</code></strong> is a leaf that represents an operator</li>
+  <li><strong><code class="hl">Seq</code></strong> is an inner node</li></ul></li>
+
+<li>Rules are given an <code class="hl">Engine</code> and <code class="hl">QAst</code> arguments, and they must return
   an <strong><code class="hl">ENode</code></strong>, an array or a string (null is ignored and any other
   type is converted to a string). ENodes are a lightweight structure
   with tags, properties and children and HTML can easily be generated
-  from them.</li></ul>
+  from them.</li>
 
-<p>Now, if you were to add a rule to Quaint it might look like this:</p>
+</ul><p>Now, if you were to add a rule to Quaint it might look like this:</p>
 
 <pre class="hl">engine = quaint();
 engine.registerRules({
@@ -104,27 +110,38 @@ engine.registerRules({
 
 <p>Salient points:</p>
 
-<ul><li><code class="hl">quaint()</code> returns an <code class="hl">Engine</code></li><li>A rule is registered on an <code class="hl">Engine</code></li><li>A rule defines <em>parameters</em> marked with a backslash
+<ul><li><code class="hl">quaint()</code> returns an <code class="hl">Engine</code></li>
+<li>A rule is registered on an <code class="hl">Engine</code></li>
+<li>A rule defines <em>parameters</em> marked with a backslash
   (but you need to
-  put two because it's in a JavaScript string).</li><li>When triggered, a rule receives the <code class="hl">Engine</code> and an object with the
-  parameters (we call it <code class="hl">vars</code> here).</li><li>Each of the rule's named parameters is a field in <code class="hl">vars</code></li><li><code class="hl">vars</code> has special fields:
-  <ul><li><code class="hl">vars._node</code> contains the whole node that the rule matched</li><li><code class="hl">vars._op</code> contains the operator token</li><li><code class="hl">vars._wide</code>, (the only one shown), is true if the rule was applied
+  put two because it's in a JavaScript string).</li>
+<li>When triggered, a rule receives the <code class="hl">Engine</code> and an object with the
+  parameters (we call it <code class="hl">vars</code> here).</li>
+<li>Each of the rule's named parameters is a field in <code class="hl">vars</code></li>
+<li><code class="hl">vars</code> has special fields:
+  <ul><li><code class="hl">vars._node</code> contains the whole node that the rule matched</li>
+  <li><code class="hl">vars._op</code> contains the operator token</li>
+  <li><code class="hl">vars._wide</code>, (the only one shown), is true if the rule was applied
     to <code class="hl">x &lt;=&gt; y</code> (there is whitespace around <code class="hl">&lt;=&gt;</code>, so it's "wide")
-    and false if it was applied to <code class="hl">x&lt;=&gt;y</code> (no whitespace around it).</li></ul></li><li><code class="hl">vars.a</code> and <code class="hl">vars.b</code> are <code class="hl">QAst</code> instances.</li><li>You process these instances recursively by calling <code class="hl">engine.gen</code> on them.</li><li>The <code class="hl">quaint.h</code> function produces an <code class="hl">ENode</code>.</li><li>That <code class="hl">ENode</code> will be transformed in the string <code class="hl">&lt;div class="swapped"&gt;...</code></li></ul>
+    and false if it was applied to <code class="hl">x&lt;=&gt;y</code> (no whitespace around it).</li></ul></li>
+<li><code class="hl">vars.a</code> and <code class="hl">vars.b</code> are <code class="hl">QAst</code> instances.</li>
+<li>You process these instances recursively by calling <code class="hl">engine.gen</code> on them.</li>
+<li>The <code class="hl">quaint.h</code> function produces an <code class="hl">ENode</code>.</li>
+<li>That <code class="hl">ENode</code> will be transformed in the string <code class="hl">&lt;div class="swapped"&gt;...</code></li></ul>
 
 
 <h1 id="qast">QAst</h1>
 
-<code class="hl">QAst</code> is the class all the nodes in Quaint's syntax tree are an
-instance of.
+<p><code class="hl">QAst</code> is the class all the nodes in Quaint's syntax tree are an
+instance of.</p>
 
 <h2 id="treestructure">Tree structure</h2>
 
-That tree is in the same order as the source, which is to say, if you
+<p>That tree is in the same order as the source, which is to say, if you
 iterate over a <code class="hl">QAst</code> tree depth first and print out the the leaves as
 you encounter them, you recover the original source code exactly. This
 is not literally what you get, but to put it simply, the parser
-returns something like this:
+returns something like this:</p>
 
 <pre class="hl">quaint.parse("(x + y) - z")
 =&gt; [["", "(", ["x", " + ", "y"], ")", ""], " - ", "z"]</pre>
@@ -133,22 +150,25 @@ returns something like this:
 you don't have to worry about leading or trailing whitespace on the
 operands.</p>
 
-Note that there are indeed empty nodes before and after the
+<p>Note that there are indeed empty nodes before and after the
 parentheses. This is useful because it preserves the invariant that
-every element at an <em>odd</em> index is an operator (an <code class="hl">Oper</code> leaf).
+every element at an <em>odd</em> index is an operator (an <code class="hl">Oper</code> leaf).</p>
 
 <h2 id="usefulmethods">Useful methods</h2>
 
 
 
-<ul><li><a href="#raw"><code>raw</code></a> extracts the source code for the node. Very useful.</li><li><a href="#empty"><code>empty</code></a> tells you whether a node is only whitespace.</li><li><a href="#extract"><code>extract</code></a> lets you apply rules to a node directly.</li><li><a href="#shed"><code>shed</code></a>, <a href="#shedAll"><code>shedAll</code></a> and <a href="#shedIndent"><code>shedIndent</code></a> removes outer brackets or indent.</li></ul>
+<ul><li><a href="#raw"><code>raw</code></a> extracts the source code for the node. Very useful.</li>
+<li><a href="#empty"><code>empty</code></a> tells you whether a node is only whitespace.</li>
+<li><a href="#extract"><code>extract</code></a> lets you apply rules to a node directly.</li>
+<li><a href="#shed"><code>shed</code></a>, <a href="#shedAll"><code>shedAll</code></a> and <a href="#shedIndent"><code>shedIndent</code></a> removes outer brackets or indent.</li></ul>
 
 
 
 
 <div class="qmethod"><h2 id="args"><code>args()</code></h2><div class="qmethod-description">
 
-  This is shorthand for <code class="hl">node.sexp(false).slice(1)</code>. In short:
+  <p>This is shorthand for <code class="hl">node.sexp(false).slice(1)</code>. In short:</p>
 
   <pre class="hl">quaint.parse("a + b").args() ==&gt; [a, b]</pre></div></div>
 
@@ -174,8 +194,8 @@ q.toHTML(<span class="hljs-string">"sum :: 1 / 20 / 34"</span>); <span class="hl
 
 <div class="qmethod"><h2 id="empty"><code>empty()</code></h2><div class="qmethod-description">
 
-  Returns true if the node is whitespace. That is to say, <code class="hl">node.empty()</code>
-  is equivalent to <code class="hl">node.raw().trim() === ""</code>.</div></div>
+  <p>Returns true if the node is whitespace. That is to say, <code class="hl">node.empty()</code>
+  is equivalent to <code class="hl">node.raw().trim() === ""</code>.</p></div></div>
 
 
 <div class="qmethod"><h2 id="extract"><code>extract(rules)</code></h2><div class="qmethod-description">
@@ -197,10 +217,10 @@ q.toHTML(<span class="hljs-string">"sum :: 1 / 20 / 34"</span>); <span class="hl
 });
 q.toHTML(<span class="hljs-string">"[addition :: 12 + 3] [addition :: hello]"</span>); <span class="hljs-comment">// 15 NO</span></pre>
 
-  If there are several rules, they can either be given as multiple
+  <p>If there are several rules, they can either be given as multiple
   arguments to <code class="hl">extract</code> or as a dictionary that maps a name to a
   rule. The <code class="hl">_which</code> field of the returned object will contain the
-  index or the name of the matching rule.
+  index or the name of the matching rule.</p>
 
   <pre class="hl">q.registerMacros({
     check: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, x</span>) </span>{
@@ -216,8 +236,8 @@ q.toHTML(<span class="hljs-string">"[check :: 12 + 3 - 7] [check :: hello]"</spa
 
 <div class="qmethod"><h2 id="raw"><code>raw()</code></h2><div class="qmethod-description">
 
-  <code class="hl">node.raw()</code> returns the source code that produced the node as a
-  string. 
+  <p><code class="hl">node.raw()</code> returns the source code that produced the node as a
+  string.</p> 
 
   <pre class="hl">q.registerMacros({
     shout: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, text</span>) </span>{
@@ -240,9 +260,9 @@ q.toHTML(<span class="hljs-string">"shout :: hello!"</span>); <span class="hljs-
 
 <div class="qmethod"><h2 id="shed"><code>shed(n [= 1])</code></h2><div class="qmethod-description">
 
-  The <code class="hl">shed</code> method removes one (or <code class="hl">n</code>) outer layer of square grouping
+  <p>The <code class="hl">shed</code> method removes one (or <code class="hl">n</code>) outer layer of square grouping
   brackets <code class="hl">[]</code>. If there are no outer brackets, this does nothing
-  and returns the node itself.
+  and returns the node itself.</p>
 
   <pre class="hl">q.registerMacros({
     shout2: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, text</span>) </span>{
@@ -254,8 +274,8 @@ q.toHTML(<span class="hljs-string">"shout2 :: [[[hello friends!]]]"</span>); <sp
 
 <div class="qmethod"><h2 id="shedAll"><code>shedAll()</code></h2><div class="qmethod-description">
 
-  This is the same as <code class="hl">shed(Infinity)</code>: it sheds all outer square
-  brackets.
+  <p>This is the same as <code class="hl">shed(Infinity)</code>: it sheds all outer square
+  brackets.</p>
 
   <p>Note that Quaint does not display brackets by default, so you only
   really need to do this if you need to dig inside a node, either
@@ -273,17 +293,17 @@ q.toHTML(<span class="hljs-string">"shout3 :: [[[hello friends!]]]"</span>); <sp
 
 <div class="qmethod"><h2 id="shedIndent"><code>shedIndent()</code></h2><div class="qmethod-description">
 
-  An indented block is a special node in Quaint (the <code class="hl">I( )I</code>
+  <p>An indented block is a special node in Quaint (the <code class="hl">I( )I</code>
   operator, to be exact). It is sometimes useful to shed that node so
-  that we can better get to what's inside it.</div></div>
+  that we can better get to what's inside it.</p></div></div>
 
 
 <div class="qmethod"><h2 id="statements"><code>statements()</code></h2><div class="qmethod-description">
 
-  The <code class="hl">statements</code> method transforms a newline-separated "body" into a
+  <p>The <code class="hl">statements</code> method transforms a newline-separated "body" into a
   list of statements. This is handy if you want to implement something
   like the <code class="hl">meta</code> macro, or simply apply a rule to every element in a
-  list.
+  list.</p>
 
   <pre class="hl">q.registerMacros({
     greet: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, body</span>) </span>{
@@ -300,8 +320,8 @@ q.toHTML(<span class="hljs-string">"greet ::\n Alice\n Bob\n Charlie"</span>);
 
 <h1 id="engine">Engine</h1>
 
-Quaint's <code class="hl">Engine</code> encapsulates most functionality. Extensions and
-plugins all operate on it.
+<p>Quaint's <code class="hl">Engine</code> encapsulates most functionality. Extensions and
+plugins all operate on it.</p>
 
 
 <h2 id="notablemethods">Notable methods</h2>
@@ -311,37 +331,47 @@ the plugin-facing methods:</p>
 
 <h3 id="userfacing">User-facing</h3>
 
-<ul><li><a href="#toHTML"><code>toHTML</code></a> transforms a string to HTML.</li><li><a href="#toENode"><code>toENode</code></a> transforms a string to ENode, which is the intermediate
-  format before HTML conversion.</li></ul>
+<ul><li><a href="#toHTML"><code>toHTML</code></a> transforms a string to HTML.</li>
 
-<h3 id="pluginfacing">Plugin-facing</h3>
+<li><a href="#toENode"><code>toENode</code></a> transforms a string to ENode, which is the intermediate
+  format before HTML conversion.</li>
+
+</ul><h3 id="pluginfacing">Plugin-facing</h3>
 
 <ul><li><a href="#gen"><code>gen</code></a> transforms a <code class="hl">QAst</code> instance into an <code class="hl">ENode</code> using the defined
   rules. You have the responsibility to call it recursively in your
-  own rules.</li><li><a href="#registerRules"><code>registerRules</code></a>, <a href="#registerMacros"><code>registerMacros</code></a>, etc. let you register
-  extensions to extend the <code class="hl">Engine's</code> functionality.</li><li><a href="#setenv"><code>setenv</code></a> sets variables for the embedded language.</li><li><a href="#into"><code>into</code></a> generates data into different "documents". Such nodes will
-  disappear from the output, but...</li><li><a href="#deferred"><code>deferred</code></a> lets you generate something after everything else was
+  own rules.</li>
+
+<li><a href="#registerRules"><code>registerRules</code></a>, <a href="#registerMacros"><code>registerMacros</code></a>, etc. let you register
+  extensions to extend the <code class="hl">Engine's</code> functionality.</li>
+
+<li><a href="#setenv"><code>setenv</code></a> sets variables for the embedded language.</li>
+
+<li><a href="#into"><code>into</code></a> generates data into different "documents". Such nodes will
+  disappear from the output, but...</li>
+
+<li><a href="#deferred"><code>deferred</code></a> lets you generate something after everything else was
   generated. This is usually used to format the documents that were
-  generated <a href="#into"><code>into</code></a>.</li></ul>
+  generated <a href="#into"><code>into</code></a>.</li>
 
 
-<div class="qmethod"><h2 id="deferred"><code>deferred(function)</code></h2><div class="qmethod-description">
+</ul><div class="qmethod"><h2 id="deferred"><code>deferred(function)</code></h2><div class="qmethod-description">
 
-  By using <code class="hl">deferred</code> you can delay the generation of the node at this
+  <p>By using <code class="hl">deferred</code> you can delay the generation of the node at this
   position. Typically this is because you may need information that is
   located below, and you need to let the engine fill it in. For
   example, a table of contents needs to know about all the sections in
   the document, but these sections come later, so it will use
-  <code class="hl">deferred</code>.
+  <code class="hl">deferred</code>.</p>
 
-  The function given to <code class="hl">deferred</code> must take two arguments, <code class="hl">path</code> and
+  <p>The function given to <code class="hl">deferred</code> must take two arguments, <code class="hl">path</code> and
   <code class="hl">documents</code>. <code class="hl">path</code> is a unique identifier for the location of the
   node in the source. <code class="hl">documents</code> is the same as <code class="hl">engine.documents</code>, and
   it contains various "documents" such as a sections document, a meta
-  document, and so on.
+  document, and so on.</p>
 
-  Consider the following macro that gets the title meta-information
-  from the <code class="hl">meta</code> document:
+  <p>Consider the following macro that gets the title meta-information
+  from the <code class="hl">meta</code> document:</p>
 
   <pre class="hl">q.registerMacros({
     title: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, body</span>) </span>{
@@ -352,8 +382,8 @@ the plugin-facing methods:</p>
 });
 q.toHTML(<span class="hljs-string">"[title ::][meta :: title = hello]"</span>); <span class="hljs-comment">// hello</span></pre>
 
-  Even though the meta-information is set <em>after</em> the macro call,
-  <code class="hl">deferred</code> waits for it to be set before executing the function.
+  <p>Even though the meta-information is set <em>after</em> the macro call,
+  <code class="hl">deferred</code> waits for it to be set before executing the function.</p>
 
   <p>Now, you may wonder what happens if the title was set by another
   deferred, and this other deferred came after. The answer is that it
@@ -379,59 +409,59 @@ q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"<
 
 <div class="qmethod"><h2 id="fork"><code>fork()</code></h2><div class="qmethod-description">
 
-  Create a new <code class="hl">Engine</code> from the current one. The new <code class="hl">Engine</code> has its
+  <p>Create a new <code class="hl">Engine</code> from the current one. The new <code class="hl">Engine</code> has its
   own scope, meaning that rules and environment variables set on it
-  will not affect its parent.</div></div>
+  will not affect its parent.</p></div></div>
 
 
 <div class="qmethod"><h2 id="gen"><code>gen(node)</code></h2><div class="qmethod-description">
 
-  Generate an <code class="hl">ENode</code> from a <code class="hl">QAst</code> using all the <code class="hl">Engine</code>'s rules and
+  <p>Generate an <code class="hl">ENode</code> from a <code class="hl">QAst</code> using all the <code class="hl">Engine</code>'s rules and
   macros. Unlike <a href="#toENode"><code>toENode</code></a>, however, <code class="hl">gen</code> does not evaluate
-  <a href="#deferred"><code class="hl">Deferred</code></a> nodes.
+  <a href="#deferred"><code class="hl">Deferred</code></a> nodes.</p>
 
-  <code class="hl">gen</code> is the method that should be used to recursively process nodes
-  in a rule or macro (if such processing is desired).</div></div>
+  <p><code class="hl">gen</code> is the method that should be used to recursively process nodes
+  in a rule or macro (if such processing is desired).</p></div></div>
 
 
 <div class="qmethod"><h2 id="genFromSource"><code>genFromSource(src)</code></h2><div class="qmethod-description">
 
-  This is just like <a href="#gen"><code>gen</code></a>, but instead of taking a <code class="hl">QAst</code> as input, it
+  <p>This is just like <a href="#gen"><code>gen</code></a>, but instead of taking a <code class="hl">QAst</code> as input, it
   takes a source string, which it parses and then processes. It is
-  basically equivalent to:
+  basically equivalent to:</p>
 
   <pre class="hl">node.genFromSource(x) &lt;=&gt; node.gen(quaint.parse(x))</pre></div></div>
 
 
 <div class="qmethod"><h2 id="into"><code>into(document, value)</code></h2><div class="qmethod-description">
 
-  <code class="hl">into</code> lets you generate data into a "document" which isn't the main
+  <p><code class="hl">into</code> lets you generate data into a "document" which isn't the main
   one. For instance, <code class="hl">meta :: title = hello</code> generates a key/value
   pair in the <code class="hl">meta</code> document, whereas a header may generate
   information in the <code class="hl">sections</code> document, an error handler may register
-  the error into the <code class="hl">errors</code> document, and so on.
+  the error into the <code class="hl">errors</code> document, and so on.</p>
 
   <p>The result of this operation will not show in the output, unless a
   different operation decides to display the stashed value.</p>
 
-  Also, note that even though the return value of <code class="hl">into</code> is not
+  <p>Also, note that even though the return value of <code class="hl">into</code> is not
   displayed, it has to be present in the returned tree in order to be
-  effective.</div></div>
+  effective.</p></div></div>
 
 
 <div class="qmethod"><h2 id="plug"><code>plug(plugin, ...)</code></h2><div class="qmethod-description">
 
-  Execute one or more plugins on the <code class="hl">Engine</code>.</div></div>
+  <p>Execute one or more plugins on the <code class="hl">Engine</code>.</p></div></div>
 
 
 <div class="qmethod"><h2 id="redefer"><code>redefer(node, function)</code></h2><div class="qmethod-description">
 
-  If a macro or rule wishes to execute a deferred to inspect its
+  <p>If a macro or rule wishes to execute a deferred to inspect its
   contents, for instance to implement a conditional, <code class="hl">redefer</code> will
   take a generated result (which may be an <code class="hl">ENode</code>, a string, a
   <code class="hl">Deferred</code>, and so on) and a function, and it will execute the
   function on the node either immediately (if the node is not a
-  <code class="hl">Deferred</code>) or when the <code class="hl">Deferred</code> is executed.
+  <code class="hl">Deferred</code>) or when the <code class="hl">Deferred</code> is executed.</p>
 
   <p>For example:</p>
 
@@ -447,16 +477,16 @@ q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"<
 });
 q.toHTML(<span class="hljs-string">"[if meta::x :: hi][meta :: x: true]"</span>); <span class="hljs-comment">// hi</span></pre>
 
-  Thanks to <code class="hl">redefer</code> we can ensure that the condition is computed
+  <p>Thanks to <code class="hl">redefer</code> we can ensure that the condition is computed
   after the meta-information is set. In fact, <code class="hl">redefer</code> is more or less
-  required for it to work.</div></div>
+  required for it to work.</p></div></div>
 
 
 <div class="qmethod"><h2 id="registerDocuments"><code>registerDocuments(documents)</code></h2><div class="qmethod-description">
 
-  Register new documents. You would use this if you wanted to create a
+  <p>Register new documents. You would use this if you wanted to create a
   <code class="hl">references</code> document for bibliographies, or a <code class="hl">links</code> document that
-  gathers all links on the page, and so on.
+  gathers all links on the page, and so on.</p>
 
   <p>There are two document types you may instantiate:</p>
 
@@ -468,8 +498,8 @@ q.toHTML(<span class="hljs-string">"[if meta::x :: hi][meta :: x: true]"</span>)
 
 <div class="qmethod"><h2 id="registerMacros"><code>registerMacros(macros)</code></h2><div class="qmethod-description">
 
-  A macro named <code class="hl">m</code> is meant to be used as <code class="hl">m :: body</code> or
-  <code class="hl">m arg :: body</code>, or even <code class="hl">m arg1 arg2 :: body</code>, and so on.
+  <p>A macro named <code class="hl">m</code> is meant to be used as <code class="hl">m :: body</code> or
+  <code class="hl">m arg :: body</code>, or even <code class="hl">m arg1 arg2 :: body</code>, and so on.</p>
 
   <pre class="hl">q.registerMacros({
     ignore: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, body</span>) </span>{
@@ -478,14 +508,14 @@ q.toHTML(<span class="hljs-string">"[if meta::x :: hi][meta :: x: true]"</span>)
 });
 q.toHTML(<span class="hljs-string">"1[ignore :: 2]3"</span>); <span class="hljs-comment">// 13</span></pre>
 
-  The first argument is always the <code class="hl">Engine</code>. The last is always the
-  body.</div></div>
+  <p>The first argument is always the <code class="hl">Engine</code>. The last is always the
+  body.</p></div></div>
 
 
 <div class="qmethod"><h2 id="registerMethods"><code>registerMethods(methods)</code></h2><div class="qmethod-description">
 
-  The object given as <code class="hl">methods</code> is merged with the <code class="hl">Engine</code>, in other
-  words, this adds methods to the <code class="hl">Engine</code>.
+  <p>The object given as <code class="hl">methods</code> is merged with the <code class="hl">Engine</code>, in other
+  words, this adds methods to the <code class="hl">Engine</code>.</p>
 
   <pre class="hl">engine.registerMethods({berry: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{ <span class="hljs-keyword">return</span> <span class="hljs-string">"juicy!"</span>; }});
 engine.berry()  <span class="hljs-comment">// "juicy!"</span></pre></div></div>
@@ -499,10 +529,10 @@ engine.berry()  <span class="hljs-comment">// "juicy!"</span></pre></div></div>
 
   <pre class="hl">template :: xyz</pre>
 
-  This will resolve <code class="hl">xyz</code> by calling <code class="hl">engine.resolvers.template("xyz")</code>.
+  <p>This will resolve <code class="hl">xyz</code> by calling <code class="hl">engine.resolvers.template("xyz")</code>.
   Each macro that may import files has a resolver, and there is a
   default resolver as well (which just assumes the path is relative to
-  the current working directory).
+  the current working directory).</p>
 
   <pre class="hl">include :: file.json   ;; engine.resolvers.include("file.json")</pre>
   <pre class="hl">format file.json ::    ;; engine.resolvers.format("file.json")</pre>
@@ -539,16 +569,16 @@ q.toHTML(<span class="hljs-string">"{a + b}"</span>); <span class="hljs-comment"
 
 <div class="qmethod"><h2 id="toENode"><code>toENode(src, options)</code></h2><div class="qmethod-description">
 
-  Generate an <code class="hl">ENode</code> from text.
+  <p>Generate an <code class="hl">ENode</code> from text.
   Same as <code class="hl">translate(src, "enode", options)</code>.
-  See <a href="#translate"><code>translate</code></a> for the options.</div></div>
+  See <a href="#translate"><code>translate</code></a> for the options.</p></div></div>
 
 
 <div class="qmethod"><h2 id="toHTML"><code>toHTML(src, options)</code></h2><div class="qmethod-description">
 
-  Generate <code class="hl">HTML</code> from text.
+  <p>Generate <code class="hl">HTML</code> from text.
   Same as <code class="hl">translate(src, "html", options)</code>.
-  See <a href="#translate"><code>translate</code></a> for the options.</div></div>
+  See <a href="#translate"><code>translate</code></a> for the options.</p></div></div>
 
 
 <div class="qmethod"><h2 id="translate"><code>translate(src, format, options)</code></h2><div class="qmethod-description">
@@ -557,10 +587,12 @@ q.toHTML(<span class="hljs-string">"{a + b}"</span>); <span class="hljs-comment"
   desired format.</p>
 
   Available formats:
-  <ul><li><code class="hl">"enode"</code></li><li><code class="hl">"html"</code></li></ul>
+  <ul><li><code class="hl">"enode"</code></li>
+  <li><code class="hl">"html"</code></li></ul>
 
   Options:
-  <ul><li><code class="hl">paragraph</code>: wrap the result in a paragraph tag (default false)</li><li><code class="hl">noTemplate</code>: avoid executing templates (default false)</li></ul></div></div>
+  <ul><li><code class="hl">paragraph</code>: wrap the result in a paragraph tag (default false)</li>
+  <li><code class="hl">noTemplate</code>: avoid executing templates (default false)</li></ul></div></div>
 
 
 

@@ -493,3 +493,44 @@ blockquote {
 
 ul.toc code {
   font-size: 10pt; }
+
+#comparison .comparison {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  width: 1000px;
+  margin: auto;
+  line-height: 140%; }
+  #comparison .comparison > :first-child .lang {
+    background: #aaa; }
+  #comparison .comparison > * {
+    background-color: white;
+    margin: 10px;
+    border-radius: 10px;
+    width: 50%;
+    height: 380px;
+    overflow: auto; }
+    #comparison .comparison > * > * {
+      padding: 8px; }
+    #comparison .comparison > * pre {
+      border-left: 0px;
+      font-size: 12pt;
+      word-wrap: break-word;
+      white-space: pre-wrap; }
+    #comparison .comparison > * .lang {
+      font-size: 16pt;
+      background: #5e2d0c;
+      text-align: center;
+      font-weight: bold;
+      color: white;
+      font-family: Alegreya; }

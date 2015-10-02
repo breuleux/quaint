@@ -7,7 +7,7 @@
     <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
     <title>Quaint</title>
     <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
-    <script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script></head>
+    <script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.carousel.css"><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.theme.css"><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.transitions.css"><script src="/quaint/resources/owl/jquery-1.9.1.min.js"></script><script src="/quaint/resources/owl/owl.carousel.js"></script></head>
 
   <body>
     
@@ -60,9 +60,111 @@
         Plugins can be written in JavaScript in a matter of
         minutes. Macros can be written in a matter of seconds.</div></div></div></div></div>
 
-<div class="spacer1"></div>
+
+
+
+
+
+
+
+
+
+<p><div id="comparison" class="owl-carousel owl-theme">
+  <div class="comparison">
+    <div>
+      <div class="lang">Markdown</div>
+      <pre class="hl">There are many wild animals in
+[Canada](//wikipedia.org/wiki/Canada).
+They include
+[bears](//wikipedia.org/wiki/Bear),
+[moose](//wikipedia.org/wiki/Moose) and
+[beavers](//wikipedia.org/wiki/Beaver).</pre></div>
+    <div>
+      <div class="lang">Quaint</div>
+      <pre class="hl">[? \name] =&gt;
+  {name} @@ //wikipedia.org/wiki/{name}
+
+There are many wild animals in ?Canada. They include ?bears, ?moose and ?beavers.</pre></div></div>
+  <div class="comparison">
+    <div>
+      <div class="lang">Markdown</div>
+      <pre class="hl">Check out these packages!
+* [quaint][0]
+* [quaint-javascript][1]
+* [quaint-earlgrey][2]
+* [quaint-highlight][3]
+
+[0](//npmjs.com/package/quaint)
+[1](//npmjs.com/package/quaint-javascript)
+[2](//npmjs.com/package/quaint-earlgrey)
+[3](//npmjs.com/package/quaint-highlight)</pre></div>
+    <div>
+      <div class="lang">Quaint</div>
+      <pre class="hl">[npm: \name] =&gt;
+  {name} @@
+     //npmjs.com/package/{name}
+
+I don't like to repeat myself!
+* npm: quaint
+* npm: quaint-javascript
+* npm: quaint-earlgrey
+* npm: quaint-highlight</pre></div></div>
+  <div class="comparison">
+    <div>
+      <div class="lang">HTML</div>
+      <pre class="hl">&lt;div id="page"&gt;
+  &lt;div class="post"&gt;
+    &lt;div class="author"&gt;
+      Albert Einstein
+    &lt;/div&gt;
+    &lt;div class="postbody"&gt;
+      I fart like &lt;span class="yellow"&gt;
+      thunder&lt;/span&gt;.
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre></div>
+    <div>
+      <div class="lang">Quaint</div>
+      <pre class="hl">#page
+  .post
+    .author %
+      Albert Einstein
+    .postbody %
+      I fart like [span.yellow % thunder].</pre></div></div>
+  <div class="comparison">
+    <div>
+      <div class="lang">HTML</div>
+      <pre class="hl">&lt;dl&gt;
+  &lt;dt&gt;Manganese&lt;/dt&gt;
+  &lt;dd&gt;The 25th element&lt;/dd&gt;
+  &lt;dt&gt;Football&lt;/dt&gt;
+  &lt;dd&gt;A &lt;strong&gt;sport&lt;/strong&gt;&lt;/dd&gt;
+&lt;/dl&gt;</pre></div>
+    <div>
+      <div class="lang">Quaint</div>
+      <pre class="hl">dl %
+  dt % Manganese
+  dd % The 25th element
+  dt % Football
+  dd % A __sport</pre></div></div></div></p>
+
+<p><script>
+  $(document).ready(function() {
+    $("#comparison").owlCarousel({
+      // navigation: true,
+      autoPlay: 8000,
+      stopOnHover: true,
+      mouseDrag: false,
+      singleItem: true,
+      transitionStyle: "goDown"
+    });
+  });</script></p>
+
 
 <div id="main">
+
+
+<div class="spacer1"></div>
 
 <div id="instructions"><div class="quaint-example"><div class="input"><textarea rows="50">;; Edit me!!!
 
@@ -106,7 +208,7 @@ div %
 
 <h1 id="whatisit">What is it?</h1>
 
-<strong>Quaint</strong> is a <em>markup language</em> that you can use to write documents. It is similar to <code class="hl">Markdown</code>, but it is <strong>more powerful</strong> and <strong>more extensible</strong>.
+<p><strong>Quaint</strong> is a <em>markup language</em> that you can use to write documents. It is similar to <code class="hl">Markdown</code>, but it is <strong>more powerful</strong> and <strong>more extensible</strong>.</p>
 
 
 
@@ -116,7 +218,7 @@ div %
 
 <pre class="hl">npm install quaint -g</pre>
 
-This will install the <code class="hl">quaint</code> command on your system. Then you can convert quaint markup to HTML! See <a href="usage.html">usage</a>.
+<p>This will install the <code class="hl">quaint</code> command on your system. Then you can convert quaint markup to HTML! See <a href="usage.html">usage</a>.</p>
 
 <p>;)</p>
 
@@ -125,14 +227,16 @@ This will install the <code class="hl">quaint</code> command on your system. The
 <h1 id="learn">Learn</h1>
 
 <ul><li><a href="
-    /quaint/syntax.html">Learn the syntax!</a></li><li><a href="/quaint/api.html">JavaScript API</a></li><li><a href="
+    /quaint/syntax.html">Learn the syntax!</a></li>
+<li><a href="/quaint/api.html">JavaScript API</a></li>
+<li><a href="
     /quaint/plugins/index.html">Check out the plugins</a></li></ul>
 
 
 
 <div style="
     text-align:center;
-    margin-top:50px"><img src="assets/quaint-small.png" alt=""></div></div></div></div>
+    margin-top:50px"><img src="assets/quaint-small.png" alt="" title=""></div></div></div></div>
 
 </div>
 
