@@ -110,6 +110,7 @@ basicPlugin{@} =
    @registerDocuments with {
       meta = MapDocument{}
       sections = SeqDocument{}
+      flags = MapDocument{}
    }
 
    @registerResolvers with {
@@ -162,6 +163,8 @@ basicPlugin{@} =
                undefined? ->
                   ""
                doc ->
+                  if name !== "flags":
+                     docs.flags.set{'{name}$dumped', true}
                   doc.entries{} each x -> engine.gen{x}
 
       css{engine, shed! body} =

@@ -27,24 +27,34 @@ provide:
 
 next = Symbol{.next}
 
-var errn = 0
-
 may-fail{f} =
+   var done = false
    try:
       f{}
    catch e:
-      errn += 1
-      res = span.error %
-         String{e}
-         " "
-         a %
-            href = '#ERR{errn}'
-            '[#{errn}]'
-         Into{.errors, e, create{} = SeqDocument{}}
-      res.error = e
-      res.error.id = errn
-      res
-
+      Deferred with {engine, docs} ->
+         if not done:
+            done = true
+            docs.errors or= SeqDocument{}
+            docs.errors.errn or= 0
+            docs.errors.errn += 1
+         errn = docs.errors.errn
+         res =
+            span.error %
+               String{e}
+               if docs.flags.get{"errors$dumped"}:
+                  then: {
+                     " "
+                     a %
+                        href = '#ERR{errn}'
+                        '[#{errn}]'
+                  }
+                  else:
+                     ""
+               Into{.errors, e}
+         res.error = e
+         res.error.id = errn
+         res
 
 rawRelative{match x} =
    {=> location} ->

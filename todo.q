@@ -19,7 +19,6 @@
 
 === TODO
 
-* Error numerotation?
 * Clean up NL rule
 
 === DONE
@@ -27,6 +26,7 @@
 * doctype ::
 * Label sections with the same name differently
 * include :: html
+* Fix error numerotation
 
 
 == 0.0.9
