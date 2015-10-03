@@ -15,7 +15,7 @@ class Include:
    process{engine, ext, file, contents} =
       fn = @extensions[ext]
       if not fn:
-         throw E.no-includer{'Do not know how to include "{file}"'}
+         throw E.no-includer{'Do not know how to include "{file}" with format "{ext}"'}
       fn{engine, file, contents}
 
    include{engine, match ext, body} =
@@ -35,12 +35,14 @@ class Include:
                      throw E.bad-resolver{'Bad resolution for "{filename}"'}
 
       else ->
-         @process{engine, ext, "<quaint>", tools.dedent{tools.raw-relative{body}}}
+         @process{engine, ext, "<inline>", tools.dedent{tools.raw-relative{body}}}
 
 
 default-extensions = {
    q{engine, file, contents} =
       engine.gen-from-source{Source{contents, file}}
+   html{engine, file, contents} =
+      raw % contents
    json{engine, file, contents} =
       engine.setenv{JSON.parse{contents}}
       ""

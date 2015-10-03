@@ -21,12 +21,12 @@
 
 * Error numerotation?
 * Clean up NL rule
-* include :: html
 
 === DONE
 
 * doctype ::
 * Label sections with the same name differently
+* include :: html
 
 
 == 0.0.9
