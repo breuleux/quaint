@@ -39,7 +39,13 @@ requireWide{f}{engine, data} =
 
 headerRule{level}{engine, {=> x}} =
    gx = engine.gen{x}
-   lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
+   var lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
+   used = [engine.documents.sections._used or= {=}]
+   if used[lbl] as u:
+      used[lbl] += 1
+      lbl += '${u}'
+   else:
+      used[lbl] = 1
    rval =
       ^[S'h{level}'] %
          id = lbl
