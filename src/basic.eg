@@ -167,6 +167,9 @@ basicPlugin{@} =
       js{engine, shed! body} =
          script[raw] % raw{body}
 
+      doctype{engine, shed! body} =
+         raw % '<!DOCTYPE {body.raw{}}>'
+
       toc{engine, body} =
          Deferred with {path, docs} ->
             rval = [ul.toc %]
