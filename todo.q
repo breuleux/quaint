@@ -1,7 +1,6 @@
 
-== 0.0.9
 
-=== TODO
+== Future
 
 * CLI options:
   * `[--dump-data]
@@ -12,7 +11,25 @@
 * Additional processors for format
 * Way to specify column name for first row for format
 * resources ::
+* Make it suitable for live templating by running the document loop
+  continuously
+
+
+== 0.0.10
+
+=== TODO
+
+* Error numerotation?
+* Clean up NL rule
+* include :: html
+
+=== DONE
+
+* doctype ::
 * Label sections with the same name differently
+
+
+== 0.0.9
 
 === DONE
 
