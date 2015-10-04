@@ -481,39 +481,18 @@ basicPlugin{@} =
          spec = {"NL", #fn{filter}, 1}
 
          fn{engine, {_node => node and Seq? {*elems}, => args}} =
-            results = {}
             wide = node.width == .wide
-            var last = null
-            _gen = engine.gen.bind{engine}
-            var i = -3
-
-            add{addblank = true} =
-               results.push with
-                  match last:
+            results = enumerate{elems} each {match i, elem} ->
+               when [i mod 2] === 0 ->
+                  match engine.gen{elem} as x:
                      [div %]? or {block => true?} ->
-                        last
+                        x
                      != "" when wide ->
-                        p % last
+                        p % x
                      else ->
-                        last
-               if addblank:
-                  results.push with
-                     raw{elems[i]}
-
-            var isFirst = true
-            args each [_gen! match] ->
-               do:
-                  i += 2
-               x when isFirst ->
-                  isFirst = false
-                  last = x
-               x ->
-                  add{}
-                  last = x
-            i += 2
-            if last:
-               add{false}
-
+                        x
+               else ->
+                  raw{elem}
             match results:
                {result} ->
                   result

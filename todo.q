@@ -13,13 +13,10 @@
 * resources ::
 * Make it suitable for live templating by running the document loop
   continuously
+* Centralized list of format parsers?
 
 
 == 0.0.10
-
-=== TODO
-
-* Clean up NL rule
 
 === DONE
 
@@ -27,6 +24,7 @@
 * Label sections with the same name differently
 * include :: html
 * Fix error numerotation
+* Clean up NL rule
 
 
 == 0.0.9
