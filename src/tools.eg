@@ -28,17 +28,16 @@ provide:
 next = Symbol{.next}
 
 may-fail{f} =
-   var done = false
+   var errn = null
    try:
       f{}
    catch e:
       Deferred with {engine, docs} ->
-         if not done:
-            done = true
+         if errn == null:
             docs.errors or= SeqDocument{}
             docs.errors.errn or= 0
             docs.errors.errn += 1
-         errn = docs.errors.errn
+            errn = docs.errors.errn
          res =
             span.error %
                String{e}

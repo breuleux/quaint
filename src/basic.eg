@@ -111,6 +111,7 @@ basicPlugin{@} =
       meta = MapDocument{}
       sections = SeqDocument{}
       flags = MapDocument{}
+      errors = SeqDocument{}
    }
 
    @registerResolvers with {
