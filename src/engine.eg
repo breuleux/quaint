@@ -126,9 +126,13 @@ class Engine:
          x
 
       Error? e ->
-         div.error %
-            id = 'ERR{e.id or ""}'
-            e.stack
+         if e.id as id:
+            div.error %
+               id = 'ERR{id}'
+               '[#{id}] '
+               e.stack
+         else:
+            div.error % e.stack
 
    gen-from-source{match src} =
       String? text ->
