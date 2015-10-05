@@ -77,6 +77,7 @@ Plugins
 * [quaint-earlgrey](https://github.com/breuleux/quaint-earlgrey)
 * [quaint-coffeescript](https://github.com/breuleux/quaint-coffeescript)
 * [quaint-highlight](https://github.com/breuleux/quaint-highlight)
+* [quaint-sass](https://github.com/breuleux/quaint-sass)
 * [quaint-yaml](https://github.com/breuleux/quaint-yaml)
 
 
