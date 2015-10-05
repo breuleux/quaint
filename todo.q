@@ -6,14 +6,27 @@
   * `[--dump-data]
 * Smarter link resolution for things like `[blah@@github.io/]?
 * Adjust scoping to allow function defs in environment
-* Better way to instantiate a naked Engine?
-* Isolate the plugins in basic.eg
 * Additional processors for format
 * Way to specify column name for first row for format
 * resources ::
 * Make it suitable for live templating by running the document loop
   continuously
 * Centralized list of format parsers?
+
+
+== 0.0.12
+
+=== TODO
+
+* Better way to instantiate a naked Engine?
+* Isolate the plugins in basic.eg
+
+
+== 0.0.11
+
+=== DONE
+
+* Fix error numerotation
 
 
 == 0.0.10
