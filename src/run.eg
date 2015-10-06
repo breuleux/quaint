@@ -153,7 +153,7 @@ resolve-plugins{config, argv} =
          resolve-string{n, JSON.parse{arg}}
 
       R"^(\.+)([^/.]|$)"! {_, dots, _} ->
-         resolve-string{dots + "/" + name.slice{dots.length}}
+         resolve-string{dots + "/" + name.slice{dots.length}, arg}
 
       R"\.q$"? ->
          inj.push with fs.read-file-sync{name, .utf8}
