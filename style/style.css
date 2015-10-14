@@ -7,7 +7,7 @@
   height: 50px; }
 
 html {
-  height: 100%; }
+  min-height: 100vh; }
 
 body {
   display: -webkit-box;
@@ -23,7 +23,7 @@ body {
   font-family: 'Alegreya', serif;
   /* font-family: 'Exo 2', sans-serif */
   font-size: 14pt;
-  height: 100%;
+  min-height: 100vh;
   margin: 0px; }
 
 #page {
@@ -36,7 +36,7 @@ body {
   -webkit-flex-direction: column;
       -ms-flex-direction: column;
           flex-direction: column;
-  height: 100%; }
+  min-height: 100vh; }
 
 #logo-link {
   display: -webkit-box;
@@ -314,65 +314,6 @@ ul.toc li {
 #instructions .quaint-example .output {
   border-left: 0px; }
 
-#tryit {
-  margin-top: 40px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  /* padding-left: 40px */
-  /* padding-right: 40px */
-  background-color: #eee;
-  -webkit-box-flex: 1;
-  -webkit-flex-grow: 1;
-      -ms-flex-positive: 1;
-          flex-grow: 1;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-  -webkit-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center; }
-  #tryit .quaint-example {
-    width: 1300px;
-    -webkit-box-align: stretch;
-    -webkit-align-items: stretch;
-        -ms-flex-align: stretch;
-            align-items: stretch;
-    -webkit-box-flex: 1;
-    -webkit-flex-grow: 1;
-        -ms-flex-positive: 1;
-            flex-grow: 1; }
-    #tryit .quaint-example .input {
-      display: -webkit-box;
-      display: -webkit-flex;
-      display: -ms-flexbox;
-      display: flex;
-      -webkit-box-orient: vertical;
-      -webkit-box-direction: normal;
-      -webkit-flex-direction: column;
-          -ms-flex-direction: column;
-              flex-direction: column; }
-    #tryit .quaint-example .input textarea {
-      -webkit-box-flex: 1;
-      -webkit-flex-grow: 1;
-          -ms-flex-positive: 1;
-              flex-grow: 1;
-      height: 100%;
-      background-color: white;
-      z-index: 100; }
-    #tryit .quaint-example .input {
-      border-left: 0px;
-      width: 500px; }
-    #tryit .quaint-example .output {
-      border-left: 0px;
-      width: 700px; }
-
 .ornate {
   display: -webkit-box;
   display: -webkit-flex;
@@ -491,6 +432,15 @@ blockquote {
   color: red;
   font-weight: bold; }
 
+div.error {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  white-space: pre;
+  font-size: 11pt;
+  color: red;
+  line-height: 120%;
+  font-weight: bold; }
+
 ul.toc code {
   font-size: 10pt; }
 
@@ -534,3 +484,15 @@ ul.toc code {
       font-weight: bold;
       color: white;
       font-family: Alegreya; }
+
+@media screen and (max-width: 1350px) {
+  #comparison .comparison {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+            flex-direction: column; } }

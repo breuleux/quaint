@@ -390,9 +390,9 @@ q.toHTML(<span class="hljs-string">"[title ::][meta :: title = hello]"</span>); 
   will still work, because <strong>Quaint may execute a deferred multiple
   times</strong>. Essentially, Quaint detects what documents are consulted by
   a deferred, and it executes it again if these change, until an
-  equilibrium is achieved. It is therefore possible (but unlikely) to
-  get stuck in a neverending cycle, if a deferred undoes what another
-  does.</p></div></div>
+  equilibrium is achieved, or a maximum number of iterations is
+  reached (currently that maximum is 10, so buggy or ill-behaved
+  deferred can only do limited damage).</p></div></div>
 
 
 <div class="qmethod"><h2 id="eval"><code>eval(expr, env)</code></h2><div class="qmethod-description">
@@ -404,7 +404,9 @@ q.toHTML(<span class="hljs-string">"[title ::][meta :: title = hello]"</span>); 
 
   <pre class="hl">q.plug(quaint-javascript);
 q.eval(<span class="hljs-string">"2 + 2"</span>) <span class="hljs-comment">// 4</span>
-q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"</span>: <span class="hljs-number">1</span>, <span class="hljs-string">"b"</span>: <span class="hljs-number">8</span>}) <span class="hljs-comment">// 9</span></pre></div></div>
+q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"</span>: <span class="hljs-number">1</span>, <span class="hljs-string">"b"</span>: <span class="hljs-number">8</span>}) <span class="hljs-comment">// 9</span></pre>
+
+  <p>Environment variables may also be set with <a href="#setenv"><code class="hl">setenv</code></a>.</p></div></div>
 
 
 <div class="qmethod"><h2 id="fork"><code>fork()</code></h2><div class="qmethod-description">
@@ -442,11 +444,18 @@ q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"<
   the error into the <code class="hl">errors</code> document, and so on.</p>
 
   <p>The result of this operation will not show in the output, unless a
-  different operation decides to display the stashed value.</p>
+  different operation decides to display the stashed value (for
+  example, headers stash information into <code class="hl">sections</code>, and
+  <a href="syntax.html#toc"><code class="hl">toc</code></a> extracts it to display a table of contents).</p>
 
-  <p>Also, note that even though the return value of <code class="hl">into</code> is not
-  displayed, it has to be present in the returned tree in order to be
-  effective.</p></div></div>
+  <p>Also, note that <code class="hl">into</code> is <strong>declarative</strong>, it doesn't actually have
+  side-effects when called. Therefore, even though the return value of
+  <code class="hl">into</code> is not displayed, a plugin needs to return it, or embed it in
+  the return value, in order for it to do anything.</p>
+
+  <p>Extracting values stashed in sub-documents with <code class="hl">into</code> is typically
+  done with <a href="#deferred"><code class="hl">deferred</code></a>. This ensures the extraction
+  operates after all the stashing is done.</p></div></div>
 
 
 <div class="qmethod"><h2 id="plug"><code>plug(plugin, ...)</code></h2><div class="qmethod-description">
@@ -456,11 +465,11 @@ q.eval(<span class="hljs-string">"a + b"</span>, {<span class="hljs-string">"a"<
 
 <div class="qmethod"><h2 id="redefer"><code>redefer(node, function)</code></h2><div class="qmethod-description">
 
-  <p>If a macro or rule wishes to execute a deferred to inspect its
-  contents, for instance to implement a conditional, <code class="hl">redefer</code> will
-  take a generated result (which may be an <code class="hl">ENode</code>, a string, a
-  <code class="hl">Deferred</code>, and so on) and a function, and it will execute the
-  function on the node either immediately (if the node is not a
+  <p>If a macro or rule wishes to execute a <a href="#deferred"><code class="hl">deferred</code></a> to
+  inspect its contents, for instance to implement a conditional,
+  <code class="hl">redefer</code> will take a generated result (which may be an <code class="hl">ENode</code>, a
+  string, a <code class="hl">Deferred</code>, and so on) and a function, and it will execute
+  the function on the node either immediately (if the node is not a
   <code class="hl">Deferred</code>) or when the <code class="hl">Deferred</code> is executed.</p>
 
   <p>For example:</p>
@@ -479,7 +488,12 @@ q.toHTML(<span class="hljs-string">"[if meta::x :: hi][meta :: x: true]"</span>)
 
   <p>Thanks to <code class="hl">redefer</code> we can ensure that the condition is computed
   after the meta-information is set. In fact, <code class="hl">redefer</code> is more or less
-  required for it to work.</p></div></div>
+  required for it to work.</p>
+
+  <p>Just like <code class="hl">deferred</code>, <strong><code class="hl">redefer</code> may be executed multiple
+  times</strong>. For instance, it is possible that as a result of the order
+  in which some operations are done, the value of a condition changes,
+  and then the <code class="hl">if</code> will be recomputed.</p></div></div>
 
 
 <div class="qmethod"><h2 id="registerDocuments"><code>registerDocuments(documents)</code></h2><div class="qmethod-description">

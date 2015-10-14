@@ -13,7 +13,7 @@
     
 
 <div id="sidebar"><div id="sidebar-contents">
-  <ul class="toc"><li><a href="#install">Install</a></li><li><a href="#usage">Usage</a></li><li><a href="#templates">Templates</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#datainjection">Data injection</a></li></ul></div></div>
+  <ul class="toc"><li><a href="#install">Install</a></li><li><a href="#usage">Usage</a></li><li><a href="#templates">Templates</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#datainjection">Data injection</a></li><li><a href="#configurationfile">Configuration file</a></li></ul></div></div>
 
 <div id="page">
   <div id="nav-container" class="container"><div id="nav">
@@ -38,13 +38,13 @@
 
 <h1 id="install">Install</h1>
 
-<p>Very simple. Assuming you have <code class="hl">npm</code> installed, write the command:</p>
+<p>Assuming you have <code class="hl">npm</code> installed:</p>
 
 <pre class="hl">npm install quaint -g</pre>
 
 <p>This will install a <code class="hl">quaint</code> command globally. It will be your main
-tool unless you want to use the <a href="/quaint/api.html">API</a> directly or write your own
-plugins.</p>
+tool unless you want to use the <a href="/quaint/api.html">API</a> directly or <a href="/quaint/plugins/write.html">write your own
+plugins</a>.</p>
 
 
 <h1 id="usage">Usage</h1>
@@ -54,6 +54,8 @@ plugins.</p>
 <pre class="hl">Usage: quaint &lt;file ...&gt; [options]
 
 Options:
+  -c, --config    Path to a configuration file with option values (must be JSON)
+                                                      [default: "./quaint.json"]
   -d, --data      JSON string or file(s) defining field:value pairs to be made
                   available inside markup (as {field}):
                   * key:value
@@ -71,7 +73,9 @@ Options:
                   * Global npm module
   -s, --stdout    Print to standard out               [boolean] [default: false]
   -t, --template  Quaint file to use as template, or template directory
-  -v, --verbose   Print information about the operations performed     [boolean]</pre>
+  -v, --verbose   Print information about the operations performed     [boolean]
+  --save-meta     Save meta data in a file (./meta.json if the file is not
+                  specified)                                    [default: false]</pre>
 
 
 <h1 id="templates">Templates</h1>
@@ -84,14 +88,14 @@ and whatnot. You might actually want to save this one!</p>
 
 <p><strong>boilerplate.q</strong></p>
 
-<pre class="hl">raw % &lt;!DOCTYPE html&gt;
+<pre class="hl">doctype :: html
 html %
   head %
     meta %
        http-equiv = Content-type
        content = text/html
        charset = UTF-8
-    title % meta :: title
+    title % [meta :: title] !! Untitled
     link %
        rel = stylesheet
        type = text/css
@@ -134,7 +138,7 @@ crash).</p>
 
 <h1 id="plugins">Plugins</h1>
 
-<p>Say you want to highlight some JavaScript in a post:</p>
+<p>Say you want to highlight some Javascript in a post:</p>
 
 <p><strong>post.q</strong></p>
 
@@ -163,11 +167,18 @@ You will need to include a stylesheet as well. They are available
 <a href="https://github.com/isagalaev/highlight.js/tree/master/src/styles">here</a>.</p>
 
 <p>You may of course use as many plugins as you want, just use the <code class="hl">-p</code>
-option multiple times or separate each plugin with a comma. For instance:</p>
+option multiple times. For instance:</p>
 
-<pre class="hl">quaint -p highlight -p javascript post.q
-quaint -p earlgrey,highlight post.q</pre>
+<pre class="hl">quaint -p highlight -p javascript post.q</pre>
 
+<p>If plugins can take options, you can provide them on the command line
+by writing them out as JSON next to the plugin name, like this:</p>
+
+<pre class="hl">quaint -p <span class="hljs-string">'highlight{"defaultLanguage: "python"}'</span> post.q</pre>
+
+<p>Note that you can specify and configure plugins inside a Quaint file
+with the <a href="syntax.html#plugin"><code class="hl">plugin</code></a> macro, although that will
+only work on a per-file basis.</p>
 
 
 <h1 id="datainjection">Data injection</h1>
@@ -209,13 +220,46 @@ this:</p>
 <p>If you use the <code class="hl">quaint-javascript</code> plugin, all of the JSON contents
 become top-level variables. This means that you could, for instance,
 calculate Alice's age from her birthdate as an expression inside curly
-braces. Use this tip wisely.</p>
+braces.</p>
 
 
 
+<h1 id="configurationfile">Configuration file</h1>
 
+<p>If there is a <code class="hl">quaint.json</code> file in the current directory, its contents
+will be used to fill in the options for generation. You can also
+specify a different configuration file with the <code class="hl">-c</code> option.</p>
 
+<p>Here is a sample <code class="hl">quaint.json</code> file:</p>
 
+<pre class="hl">{
+    "<span class="hljs-attribute">sources</span>": <span class="hljs-value"><span class="hljs-string">"src"</span></span>,
+    "<span class="hljs-attribute">output</span>": <span class="hljs-value"><span class="hljs-string">"out"</span></span>,
+    "<span class="hljs-attribute">template</span>": <span class="hljs-value"><span class="hljs-string">"templates"</span></span>,
+    "<span class="hljs-attribute">data</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"Roland"</span></span>,
+        "<span class="hljs-attribute">surname</span>": <span class="hljs-value"><span class="hljs-string">"Worthington"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">plugins</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">javascript</span>": <span class="hljs-value">{}</span>,
+        "<span class="hljs-attribute">highlight</span>": <span class="hljs-value">{"<span class="hljs-attribute">defaultLanguage</span>": <span class="hljs-value"><span class="hljs-string">"python"</span></span>}
+    </span>}
+</span>}</pre>
+
+<p>Then, executing <code class="hl">quaint</code> with no arguments, or <code class="hl">quaint -c
+quaint.json</code>, will be equivalent to running it with the following
+options:</p>
+
+<pre class="hl">quaint \
+  -o out \
+  -t templates \
+  -d'{"name": ...}' \
+  -p javascript \
+  -p 'highlight{"defaultLanguage": "python"}' \
+  src</pre>
+
+<p>Options in the configuration file can be supplemented (or overriden)
+with command line options.</p>
 
 </div></div>
 

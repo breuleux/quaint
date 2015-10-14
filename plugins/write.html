@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <title>Writing plugins</title>
+    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
+    <script src="/quaint/lib/toc-scroll.js"></script></head>
+
+  <body>
+    
+
+<div id="sidebar"><div id="sidebar-contents">
+  <ul class="toc"><li><a href="#writingplugins">Writing plugins</a></li><ul><li><a href="#template">Template</a></li></ul><li><a href="#example">Example</a></li><li><a href="#testing">Testing</a></li><li><a href="#publishing">Publishing</a></li><li><a href="#pluginlist">Plugin list</a></li></ul></div></div>
+
+<div id="page">
+  <div id="nav-container" class="container"><div id="nav">
+      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
+<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
+      <div class="filler"></div>
+      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
+      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
+      <div class="navlink"><a href="/quaint/api.html">API</a></div>
+      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
+      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
+      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
+  
+
+<div id="main-container" class="container"><div id="main">
+
+
+
+
+
+
+
+
+<h1 id="writingplugins">Writing plugins</h1>
+
+
+<p>Writing a plugin for Quaint is easy. You need to write a module that
+exports a single function. That function should support the following
+three call formats:</p>
+
+<ul><li><strong><code class="hl">myplugin(quaintEngine, options)</code></strong> (call with Engine and options)</li>
+<li><strong><code class="hl">myplugin(quaintEngine)</code></strong> (call with Engine, use default options)</li>
+<li><strong><code class="hl">myplugin(options)(quaintEngine)</code></strong> (call with options, call result with Engine)</li></ul>
+
+<p><code class="hl">quaintEngine</code> is an instance of <a href="/quaint/api.html#engine"><code class="hl">Engine</code></a>. If you
+want to know whether an object is an <code class="hl">Engine</code> or not, just check the
+<code class="hl">isQuaintEngine</code> property.</p>
+
+<h2 id="template">Template</h2>
+
+<p>In the spirit of keeping things simple, I suggest you copy the
+following template and don't worry about it:</p>
+
+<pre class="hl">
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">myplugin</span>(<span class="hljs-params">quaintEngine, options</span>) </span>{
+
+    <span class="hljs-comment">// An Engine defines isQuaintEngine = true</span>
+    <span class="hljs-keyword">if</span> (!quaintEngine.isQuaintEngine) {
+        <span class="hljs-comment">// Not an Engine, so the options are the first argument:</span>
+        options = quaintEngine;
+        <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">realQuaintEngine</span>) </span>{
+            <span class="hljs-keyword">return</span> myplugin(realQuaintEngine, options);
+        }
+    }
+
+    <span class="hljs-comment">// Initialize options to an empty object if no options are given</span>
+    options = options || {};
+
+    <span class="hljs-comment">// The interface is satisfied, we have an Engine, we have options,</span>
+    <span class="hljs-comment">// do stuff with them!</span>
+    doSomethingWith(quaintEngine, options);
+}
+
+<span class="hljs-comment">// Quaint expects you to export the plugin function directly.</span>
+<span class="hljs-comment">// Just do this:</span>
+<span class="hljs-built_in">module</span>.exports = myplugin;</pre>
+
+
+<p>As for the plugin itself, I recommend reading the <a href="/quaint/api.html">api</a> document
+for an overview of the <code class="hl">Engine</code> and <code class="hl">QAst</code> interfaces.</p>
+
+
+<h1 id="example">Example</h1>
+
+<p>Here is an example to get you started.</p>
+
+
+<p><strong><code class="hl">myplugin.js</code></strong></p>
+
+<pre class="hl"><span class="hljs-comment">// Use h to build HTML. If you try to return HTML as a string,</span>
+<span class="hljs-comment">// Quaint will sanitize it, so it won't work.</span>
+<span class="hljs-keyword">var</span> h = <span class="hljs-built_in">require</span>(<span class="hljs-string">"quaint"</span>).h;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">myplugin</span>(<span class="hljs-params">engine, options</span>) </span>{
+
+    <span class="hljs-keyword">if</span> (!engine.isQuaintEngine) {
+        options = engine;
+        <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">realEngine</span>) </span>{
+            <span class="hljs-keyword">return</span> myplugin(realEngine, options);
+        }
+    }
+
+    options = options || {};
+
+    <span class="hljs-comment">// $thing ==&gt; &lt;options.dollarTag&gt;thing&lt;/options.dollarTag&gt;</span>
+    engine.registerRules({
+        <span class="hljs-string">"$ \\x"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, vars</span>) </span>{
+            <span class="hljs-keyword">return</span> h(options.dollarTag || <span class="hljs-string">"span"</span>,
+                     engine.gen(vars.x));
+        }
+    });
+
+    <span class="hljs-comment">// color red :: hello ==&gt; &lt;span style="color:red"&gt;hello&lt;/span&gt;</span>
+    engine.registerMacros({
+        <span class="hljs-string">"color"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">engine, color, body</span>) </span>{
+            <span class="hljs-keyword">return</span> h(<span class="hljs-string">"span"</span>,
+                     {style: <span class="hljs-string">"color:"</span> + color.raw()},
+                     engine.gen(body));
+        }
+    });
+
+}
+
+<span class="hljs-built_in">module</span>.exports = myplugin;</pre>
+
+
+<p>Copy this in a file, and then you can test it with <code class="hl">quaint</code>
+immediately, like this:</p>
+
+<pre class="hl">quaint -p .myplugin <span class="hljs-operator">-e</span> <span class="hljs-string">'Hello $world'</span>
+quaint -p .myplugin <span class="hljs-operator">-e</span> <span class="hljs-string">'color green :: grass'</span>
+quaint -p <span class="hljs-string">'.myplugin{"dollarTag": "s"}'</span> <span class="hljs-operator">-e</span> <span class="hljs-string">'Hello $world universe'</span></pre>
+
+<p>The leading dot on <code class="hl">myplugin</code> is needed to tell Quaint to get the
+package in the current working directory. If you create a package, you
+use the package name without the dot and without the <code class="hl">quaint-</code> prefix
+if applicable. Note that it has to be installed locally or globally at
+the invocation point.</p>
+
+
+
+<h1 id="testing">Testing</h1>
+
+<p>Assuming your plugin is in the file <code class="hl">../index.js</code>, the following code
+will create and execute Quaint instances with it:</p>
+
+<pre class="hl"><span class="hljs-keyword">var</span> quaint = <span class="hljs-built_in">require</span>(<span class="hljs-string">"quaint"</span>);
+<span class="hljs-keyword">var</span> myplugin = <span class="hljs-built_in">require</span>(<span class="hljs-string">"../index.js"</span>);
+
+<span class="hljs-comment">// Default options</span>
+<span class="hljs-keyword">var</span> q1 = quaint(myplugin);
+
+<span class="hljs-comment">// Setting different options</span>
+<span class="hljs-keyword">var</span> q2 = quaint(myplugin({option: value, ...});
+
+<span class="hljs-comment">// Generating HTML</span>
+<span class="hljs-keyword">var</span> html = q2.toHTML(<span class="hljs-string">"some markup"</span>);</pre>
+
+<p>This should be easy to adapt to your favorite test framework.</p>
+
+
+
+<h1 id="publishing">Publishing</h1>
+
+<p>Publish your plugin on <a href="https://npmjs.org">npm</a> under a descriptive name and the
+prefix <code class="hl">quaint-</code>. For instance, if you are writing a plugin that adds
+a rule for Wikipedia links you could name it <code class="hl">quaint-wikilinks</code>.</p>
+
+<p>Then, users will be able to install and then use your plugin like
+this:</p>
+
+<pre class="hl"><span class="hljs-comment"># Install</span>
+npm install quaint-wikilinks -g
+<span class="hljs-comment"># Use</span>
+quaint -p wikilinks post.q</pre>
+
+
+
+<h1 id="pluginlist">Plugin list</h1>
+
+<p>For convenience there is a <a href="/quaint/plugins/index.html">list of plugins</a> on
+Quaint's website.</p>
+
+<p>The source for that page is located <a href="https://github.com/breuleux/quaint-doc/blob/master/content/plugins/index.q">here</a>. If you write a new
+plugin, please add it to the list at an appropriate place (you can
+create a new section if needed) and make a pull request :)</p>
+
+
+
+
+</div></div>
+
+  <div id="foot-container" class="container"><div id="foot"></div></div></div>
+
+    </body></html>
