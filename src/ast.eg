@@ -2,7 +2,7 @@
 require:
    opg ->
       Location, Source
-   kaiser/reg -> register-all
+   kaiser/reg -> register
    .lang
 
 provide:
@@ -102,8 +102,28 @@ class Seq{QAst}:
       collapse{@[1][0], @}
 
 
-register-all{{QAst.prototype, Text.prototype, Oper.prototype, Seq.prototype}} with {
+register{QAst.prototype} with {
    package = require: ..package
+   name-variant = .QAst
+   on-duplicate = .warn-replace
+}
+
+register{Text.prototype} with {
+   package = require: ..package
+   name-variant = .Text
+   on-duplicate = .warn-replace
+}
+
+register{Oper.prototype} with {
+   package = require: ..package
+   name-variant = .Oper
+   on-duplicate = .warn-replace
+}
+
+register{Seq.prototype} with {
+   package = require: ..package
+   name-variant = .Seq
+   on-duplicate = .warn-replace
 }
 
 
