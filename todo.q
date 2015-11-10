@@ -8,13 +8,15 @@
 * Adjust scoping to allow function defs in environment
 * Additional processors for format
 * Way to specify column name for first row for format
-* resources ::
+
+* Centralized list of format parsers?
 * Make it suitable for live templating by running the document loop
   continuously
-* Centralized list of format parsers?
+* resources ::
+* Make compatible with Promises, async/await
 
 
-== 0.0.12
+== 0.0.13
 
 === TODO
 
