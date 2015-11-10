@@ -167,17 +167,18 @@ class Engine:
                String? ->
                   s = s.replace{r, repl}
                Function? f or f is [-> repl] ->
-                  parts = {}
-                  var index = 0
-                  var curr = null
-                  while [curr = r.exec{s}]:
-                     parts.push{s[index...curr.index]}
-                     index = curr.index + curr[0].length
-                     parts.push{f{*curr}}
-                     if not "g" in r.flags:
-                        break
-                  parts.push{s.slice{index}}
-                  return collapse{parts, ndone + i + 1}
+                  s = s.replace{r, repl}
+                  ;; parts = {}
+                  ;; var index = 0
+                  ;; var curr = null
+                  ;; while [curr = r.exec{s}]:
+                  ;;    parts.push{s[index...curr.index]}
+                  ;;    index = curr.index + curr[0].length
+                  ;;    parts.push{f{*curr}}
+                  ;;    if not "g" in r.flags:
+                  ;;       break
+                  ;; parts.push{s.slice{index}}
+                  ;; return collapse{parts, ndone + i + 1}
             s
          x -> x
 
@@ -283,6 +284,7 @@ class Engine:
       e = Engine{{}}
       e.top = false
       e.dispatch = @dispatch.clone{}
+      e.documents = @documents
       e.evaluator = @evaluator.fork{}
       e.regexps = clone{@regexps}
       e.macros = clone{@macros}
