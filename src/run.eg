@@ -109,7 +109,9 @@ resolve-plugins{config, argv} =
 
    m = module-here{}
 
-   r{p} = module._load{p, m, true}
+   r{p} =
+      x = module._load{p, m, true}
+      x??.quaint-plugin or x
 
    inj = {}
    results = {}

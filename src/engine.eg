@@ -220,6 +220,15 @@ class Engine:
       @translate{src, .enode, options}
 
 
+   register-document{*args} =
+      console.error{'Deprecated: Engine::registerDocument, use Engine::registerDocuments'}
+      @registerDocuments.apply{@, args}
+
+   register-documents{docs} =
+      items{docs} each {name, maker} ->
+         @documents[name] = maker
+      @
+
    register-methods{methods} =
       @methods ++= keys{methods}
       this &: methods
@@ -241,9 +250,14 @@ class Engine:
          @register-substitutions{expr, repl}
          @
 
-   clear-rules{} =
-      @dispatch = Dispatcher{}
-      @
+   register-resolvers{*match} =
+      {name, res} ->
+         @resolvers[name] = res
+         @
+      {docs} ->
+         items{docs} each {name, res} ->
+            @resolvers[name] = res
+         @
 
    register-rule{*args} =
       console.error{'Deprecated: Engine::registerRule, use Engine::registerRules'}
@@ -261,23 +275,9 @@ class Engine:
                @dispatch.register{rule, handler}
          @
 
-   register-document{*args} =
-      console.error{'Deprecated: Engine::registerDocument, use Engine::registerDocuments'}
-      @registerDocuments.apply{@, args}
-
-   register-documents{docs} =
-      items{docs} each {name, maker} ->
-         @documents[name] = maker
+   clear-rules{} =
+      @dispatch = Dispatcher{}
       @
-
-   register-resolvers{*match} =
-      {name, res} ->
-         @resolvers[name] = res
-         @
-      {docs} ->
-         items{docs} each {name, res} ->
-            @resolvers[name] = res
-         @
 
 
    fork{} =

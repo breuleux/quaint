@@ -19,11 +19,9 @@ class Include:
       fn{engine, file, contents}
 
    include{engine, match ext, body} =
-
       null? ->
          r = engine.resolvers.include or engine.resolvers.default
          var e = engine
-
          body.raw{}.split{R"[ \n,]+"} each match filename ->
             R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
                if not r:

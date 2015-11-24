@@ -26,18 +26,18 @@ require:
 
 provide:
    BasicEvaluator
-   basicPlugin
-   litPlugin
+   basic-plugin
+   lit-plugin
    file-resolver
 
 
-requireWide{f}{engine, data} =
+require-wide{f}{engine, data} =
    if data._wide:
       f.call{this, engine, data}
    else:
       tools.next
 
-headerRule{level}{engine, {=> x}} =
+header-rule{level}{engine, {=> x}} =
    gx = engine.gen{x}
    var lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
    used = [engine.documents.sections._used or= {=}]
@@ -97,33 +97,35 @@ conditional{engine, cond, value, falsey = ""} =
 
 
 
-litPlugin{@} =
-   @clearRules{}
-   @registerRules with {
+lit-plugin{@} =
+   @clear-rules{}
+   @register-rules with {
       "{\\x}"{engine, {=> x}} =
          tools.code{engine, x}
    }
 
 
-basicPlugin{@} =
+basic-plugin{@} =
 
-   @registerDocuments with {
+   @register-documents with {
       meta = MapDocument{}
       sections = SeqDocument{}
       flags = MapDocument{}
       errors = SeqDocument{}
    }
 
-   @registerResolvers with {
+   @register-resolvers with {
       default = file-resolver{directory = ""}
       plugin{name} =
-         try:
-            __require{'quaint-{name}'}
-         catch e1:
+         m =
             try:
-               __require{name}
-            catch e2:
-               throw e1
+               __require{'quaint-{name}'}
+            catch e1:
+               try:
+                  __require{name}
+               catch e2:
+                  throw e1
+         m??.quaint-plugin or m
    }
 
    @evaluator = BasicEvaluator{}
@@ -251,7 +253,7 @@ basicPlugin{@} =
          r = engine.resolvers.plugin
          if not r:
             throw E.plugin{'Cannot resolve plugins.'}
-         body.split{R"[ \n,]+"} each name ->
+         body.split{R"[ \n,]+"} each name when name !== "" ->
             p = r{name}
             p{engine}
          ""
@@ -273,7 +275,7 @@ basicPlugin{@} =
    }
 
    fmt = Format{}
-   @registerMacros with {
+   @register-macros with {
       format{engine, *[{shed! raw! descr, body} or {body} and descr is "json"]} =
          may-fail with ->
             fmt.format{engine, descr, body}
@@ -282,14 +284,14 @@ basicPlugin{@} =
    @macros.format.formatters = fmt.formatters
 
    incl = Include{}
-   @registerMacros with {
+   @register-macros with {
       include{engine, *[{ext, body} or {body} and ext is null]} =
          may-fail with ->
             incl.include{engine, ext??.raw{}, body}
    }
    @macros.include.extensions = incl.extensions
 
-   @registerMethods with {
+   @register-methods with {
       method lit{} =
          p = @fork-plug{litPlugin}
          p.evaluator = @evaluator
@@ -333,7 +335,7 @@ basicPlugin{@} =
       ENode{tags, props, children}
 
 
-   @registerRules with {
+   @register-rules with {
 
       "\\maybe\\x ;; \\ignore"{engine, {=> x}} =
          engine.gen{x}
@@ -405,34 +407,34 @@ basicPlugin{@} =
          spec as {=> shed! descr, => contents}
          percent-syntax{engine, descr, contents}
 
-      requireWide! "\\descr % \\maybe\\contents"{engine, spec} =
+      require-wide! "\\descr % \\maybe\\contents"{engine, spec} =
          spec as {=> shed! descr, => contents}
          percent-syntax{engine, descr, contents}
 
-      requireWide! "= \\x" = headerRule{1}
-      requireWide! "== \\x" = headerRule{2}
-      requireWide! "=== \\x" = headerRule{3}
-      requireWide! "==== \\x" = headerRule{4}
-      requireWide! "===== \\x" = headerRule{5}
-      requireWide! "====== \\x" = headerRule{6}
+      require-wide! "= \\x" = header-rule{1}
+      require-wide! "== \\x" = header-rule{2}
+      require-wide! "=== \\x" = header-rule{3}
+      require-wide! "==== \\x" = header-rule{4}
+      require-wide! "===== \\x" = header-rule{5}
+      require-wide! "====== \\x" = header-rule{6}
 
-      requireWide! "# \\x"{engine, {=> x}} =
+      require-wide! "# \\x"{engine, {=> x}} =
          mergeable{.ol, li % engine.gen{x}}
 
-      requireWide! "* \\x"{engine, {=> x}} =
+      require-wide! "* \\x"{engine, {=> x}} =
          mergeable{.ul, li % engine.gen{x}}
 
-      requireWide! "+ \\x"{engine, {=> x}} =
+      require-wide! "+ \\x"{engine, {=> x}} =
          args = collapse{"+", x}
          mergeable{.table} with
             tr %
                args each arg ->
                   th % engine.gen{arg}
 
-      requireWide! "> \\x"{engine, {=> x}} =
+      require-wide! "> \\x"{engine, {=> x}} =
          mergeable{.blockquote, {" ", engine.gen{x}}}
 
-      requireWide! "| \\x"{engine, {=> x}} =
+      require-wide! "| \\x"{engine, {=> x}} =
          args = collapse{"|", x}
          mergeable{.table} with
             tr %
@@ -456,7 +458,7 @@ basicPlugin{@} =
                #eq{Text? {name}} ->
                   engine.setenv{name, body}
                else ->
-                  engine.registerRules{spec} with {engine, values} ->
+                  engine.register-rules{spec} with {engine, values} ->
                      engine.fork{}.setenv{values}.gen{body}
 
          ""
