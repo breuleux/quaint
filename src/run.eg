@@ -7,6 +7,7 @@ require:
    globby
    mkdirp
    format-json
+   filendir
 
 
 ;; Small helpers
@@ -188,7 +189,7 @@ resolve-plugins{config, argv} =
     plugins = results}
 
 
-run-template{q, source, t-specific, t-directory, verbose} =
+run-template{q, source, t-specific, t-directory, verbose, options} =
    read-template{normalize-qname! match name} =
       "%%%" ->
          if verbose:
@@ -210,7 +211,8 @@ run-template{q, source, t-specific, t-directory, verbose} =
    }
 
    q.template = t-specific
-   q.toHTML{source}
+   ;; q.toHTML{source}
+   q.translate{source, .html, options}
 
 
 get-template{config, argv} =
@@ -282,8 +284,17 @@ provide{argv} =
    ;; --template
    {t-specific, t-directory} = get-template{cfg, argv}
 
-   ;; Generate
+   ;; --resources, --resources-url, --inline
+   rescfg = cfg??.resources or {=}
+   if argv.resources:
+      rescfg.directory = argv.resources
+      rescfg.url or= argv.resources
+   if argv.resources-url:
+      rescfg.url = argv.resources-url
+   if argv.inline:
+      rescfg.inline = argv.inline
 
+   ;; Generate
    var sm = [argv.save-meta or cfg??.save-meta]
    if sm === true:
       sm = "meta.json"
@@ -300,14 +311,19 @@ provide{argv} =
       q.setenv{data}
       match [argv.format or cfg??.format or "html"]:
          .html ->
-            result = run-template{
+            {contents => result, => files} = run-template{
                q
                [inj ++ {contents}].join{""}
                t-specific
                t-directory
                argv.verbose
+               {resources = rescfg}
             }
             save-results{file, result}
+            items{files} each {name, contents} ->
+               filendir.write-file-sync{name, contents}
+               if argv.verbose:
+                  console.error with 'quaint: saved resource "{name}"'
             meta[file] = object with
                q.documents.meta.entries{} each {k, match v} ->
                   quaint.QAst? -> {k, v.raw{}}

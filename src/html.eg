@@ -1,0 +1,104 @@
+
+require:
+   /html
+   path
+
+provide:
+   AppendInjector
+   HTMLFormatter
+
+
+class AppendInjector:
+
+   constructor{@tag} =
+      @inject = @_inject.bind{@}
+
+   matches{node} =
+      [^[@tag] %]? node
+
+   make-node{data} =
+      match {data.type, data.inline}:
+         {.js, === true} ->
+            script[raw] %
+               type = "text/javascript"
+               data.contents
+         {.js, === false} ->
+            script %
+               type = "text/javascript"
+               src = data.path
+         {.css, === true} ->
+            style[raw] %
+               data.contents
+         {.css, === false} ->
+            link %
+               rel = .stylesheet
+               type = "text/css"
+               href = data.path
+
+   inject-node{root, node} =
+      var candidates = {root}
+      while candidates.length > 0:
+         c = candidates.shift{}
+         if @matches{c}:
+            c.children.push{node}
+            return true
+         match c:
+            ENode? ->
+               candidates ++= c.children
+            Array? ->
+               candidates ++= c
+            else ->
+               pass
+      false
+
+   _inject{root, data} =
+      @inject-node{root, @make-node{data}}
+
+
+defaults = {
+   inline-max = Infinity
+   link-min = 0
+   directory = "."
+   url = "."
+   inline = false
+}
+
+
+class HTMLFormatter:
+
+   constructor{} =
+      @injectors = {
+         head = AppendInjector{.head}.inject
+         body = AppendInjector{.body}.inject
+      }
+
+   register-injectors{injectors} =
+      @injectors &: injectors
+
+   format{enode, resources, options >> [defaults & options]} =
+      files = {=}
+      items{resources} each {name, clone! data} ->
+         path0 = data.path
+         data.inline =
+            match data.contents.length:
+               > options.inline-max -> false
+               < options.link-min -> true
+               when Boolean? data.inline ->
+                  data.inline
+               else ->
+                  options.inline
+         data.path = path.join{options.url, data.path}
+         match data.method:
+            String? s ->
+               @injectors[s]{enode, data}
+            Function? f ->
+               f{enode, data}
+            else ->
+               throw E.HTMLFormatter.method with
+                  'method for injection must be a String or a Function'
+         if not data.inline:
+            files[path.join{options.directory, path0}] =
+               data.contents
+      {html{enode}, files}
+
+

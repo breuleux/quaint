@@ -46,7 +46,11 @@ translate{text, format, options = {=}} =
    create{}.translate{text, format, options}
 
 toENode{text, options = {=}} =
-   create{}.translate{text, .enode, options}
+   create{}.translate{text, .enode, options}.contents
 
 toHTML{text, options = {=}} =
-   create{}.translate{text, .html, options}
+   create{}.translate{text, .html, options}.contents
+
+writeHTML{path, text, options = {=}} =
+   create{}.write{path, text, .html, options}
+

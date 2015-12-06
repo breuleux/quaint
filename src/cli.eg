@@ -40,6 +40,9 @@ get-arguments{} =
       @alias{.h, .help}
       @help{.h}
 
+      ;; --inline
+      @describe{.inline, "Inline resources in the HTML"}
+
       ;; --out, -o
       @alias{.o, .out}
       @nargs{.o, 1}
@@ -53,6 +56,13 @@ get-arguments{} =
          * Path to JavaScript file
          * Local npm module
          * Global npm module"""}
+
+      ;; --resources, -r
+      @alias{.r, .resources}
+      @describe{.r, "Directory where to put the resources"}
+
+      ;; --resources-url
+      @describe{"resources-url", "URL for the resources directory"}
 
       ;; --stdout, -s
       @alias{.s, .stdout}

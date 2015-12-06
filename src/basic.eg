@@ -250,11 +250,12 @@ basic-plugin{@} =
          engine.fork{}.gen{body}
 
       plugins{engine, shed-all! raw! body} =
-         r = engine.resolvers.plugin
-         if not r:
-            throw E.plugin{'Cannot resolve plugins.'}
+         ;; r = engine.resolvers.plugin
+         ;; if not r:
+         ;;    throw E.plugin{'Cannot resolve plugins.'}
          body.split{R"[ \n,]+"} each name when name !== "" ->
-            p = r{name}
+            ;; p = r{name}
+            p = engine.get-resource{.plugin, name, fallback-to-default = false}
             p{engine}
          ""
 
@@ -272,6 +273,19 @@ basic-plugin{@} =
                   throw E.plugin{'Invalid option for plugin "{name}"'}
          p{engine, options}
          ""
+
+      resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
+         body.statements{} each stmt ->
+            let path = stmt.raw{}
+            @register-resources with {
+               path => {
+                  type = path.split{"."}.reverse{}[0]
+                  method = m
+                  = path
+               }
+            }
+         ""
+
    }
 
    fmt = Format{}

@@ -24,10 +24,11 @@ class Format:
                   if not body.empty{}:
                      throw E.format with
                         "Do not provide both a filename and a body for format."
-                  r = engine.resolvers.format or engine.resolvers.default
-                  if not r:
-                     throw E.no-resolver{'Cannot resolve "{f}"'}
-                  match r{f}:
+                  ;; r = engine.resolvers.format or engine.resolvers.default
+                  ;; if not r:
+                  ;;    throw E.no-resolver{'Cannot resolve "{f}"'}
+                  ;; match r{f}:
+                  match engine.read-resource{.format, f}:
                      String? contents or {=> contents} ->
                         {ext, d, contents}
                      else ->

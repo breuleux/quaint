@@ -20,13 +20,14 @@ class Include:
 
    include{engine, match ext, body} =
       null? ->
-         r = engine.resolvers.include or engine.resolvers.default
+         ;; r = engine.resolvers.include or engine.resolvers.default
          var e = engine
          body.raw{}.split{R"[ \n,]+"} each match filename ->
             R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
-               if not r:
-                  throw E.no-resolver{'Cannot resolve "{filename}"'}
-               match r{filename}:
+               ;; if not r:
+               ;;    throw E.no-resolver{'Cannot resolve "{filename}"'}
+               ;; match r{filename}:
+               match engine.read-resource{.include, filename}:
                   String? contents or {=> contents} ->
                      @process{engine, ext, filename, contents}
                   else ->
