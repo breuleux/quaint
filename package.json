@@ -8,6 +8,7 @@
     "earlgrey-runtime": ">=0.0.11",
     "filendir": "^1.0.0",
     "format-json": "^1.0.3",
+    "fs-extra": "^0.26.2",
     "globby": "^3.0.1",
     "kaiser": ">=0.0.2",
     "mkdirp": "^0.5.1",

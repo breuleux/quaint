@@ -78,10 +78,11 @@ class Engine:
    constructor{Array! plugins} =
       @top = true
       @is-quaint-engine = true
+      @components = {=}
       @dispatch = Dispatcher{}
       @documents = {=}
       @formatters = {
-         html = HTMLFormatter{}
+         html = HTMLFormatter{@}
       }
       @regexps = {}
       @methods = {}
@@ -286,6 +287,9 @@ class Engine:
       @write{path, src, .html, options}
 
 
+   register-components{cmps} =
+      @components &: cmps
+
    register-document{*args} =
       console.error{'Deprecated: Engine::registerDocument, use Engine::registerDocuments'}
       @registerDocuments.apply{@, args}
@@ -324,12 +328,12 @@ class Engine:
 
    register-resources{resources} =
       items{resources} each {name, data} ->
-         if data.path and not data.contents:
+         if data.path and data.contents === true:
             data.contents = @read-resource-contents{.resource, data.path}
-         if @resources[name] as prev:
-            if prev.contents !== data.contents:
-               throw E.quaint.resource with
-                  'Duplicate resource "{name}" has inconsistent content.'
+         ;; if @resources[name] as prev:
+         ;;    if prev.contents !== data.contents:
+         ;;       throw E.quaint.resource with
+         ;;          'Duplicate resource "{name}" has inconsistent content.'
          @resources[name] = data
 
    register-rule{*args} =
@@ -383,6 +387,7 @@ class Engine:
       e = Engine{{}}
       e.top = false
       e.dispatch = @dispatch.clone{}
+      e.components = @components
       e.documents = @documents
       e.evaluator = @evaluator.fork{}
       e.formatters = clone{@formatters}

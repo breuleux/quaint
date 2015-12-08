@@ -8,6 +8,7 @@ require:
    mkdirp
    format-json
    filendir
+   fs-extra
 
 
 ;; Small helpers
@@ -320,10 +321,13 @@ provide{argv} =
                {resources = rescfg}
             }
             save-results{file, result}
-            items{files} each {name, contents} ->
-               filendir.write-file-sync{name, contents}
-               if argv.verbose:
-                  console.error with 'quaint: saved resource "{name}"'
+            items{files} each {name, match} ->
+               #write{contents} ->
+                  filendir.write-file-sync{name, contents}
+                  if argv.verbose:
+                     console.error with 'quaint: saved resource "{name}"'
+               #copy{source} ->
+                  fs-extra.copy-sync{source, name, clobber = true}
             meta[file] = object with
                q.documents.meta.entries{} each {k, match v} ->
                   quaint.QAst? -> {k, v.raw{}}

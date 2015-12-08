@@ -66,7 +66,7 @@ defaults = {
 
 class HTMLFormatter:
 
-   constructor{} =
+   constructor{@engine} =
       @injectors = {
          head = AppendInjector{.head}.inject
          body = AppendInjector{.body}.inject
@@ -75,19 +75,34 @@ class HTMLFormatter:
    register-injectors{injectors} =
       @injectors &: injectors
 
-   format{enode, resources, options >> [defaults & options]} =
+   expand-components{match node} =
+      ENode? {=> tags, => props, => children} ->
+         tags each tag ->
+            if @engine.components[tag] as rule:
+               tags.splice{tags.index-of{tag}, 1}
+               return rule{tags, props, @expand-components{children}}
+         ENode{tags, props, @expand-components{children}}
+      Array? a ->
+         a each x -> @expand-components{x}
+      else ->
+         node
+
+   format{enode >> @expand-components{enode}
+          resources
+          options >> [defaults & options]} =
       files = {=}
-      items{resources} each {name, clone! data} ->
-         path0 = data.path
+      items{resources} each {path0, clone! data} ->
+         ;; path0 = data.path
+         path-is-url = data.path-is-url
          data.inline =
-            match data.contents.length:
-               > options.inline-max -> false
-               < options.link-min -> true
-               when Boolean? data.inline ->
-                  data.inline
-               else ->
-                  options.inline
-         data.path = path.join{options.url, data.path}
+            match data.contents??.length:
+               undefined?                -> false
+               > options.inline-max      -> false
+               < options.link-min        -> true
+               when Boolean? data.inline -> data.inline
+               else                      -> options.inline
+         if not path-is-url:
+            data.path = path.join{options.url, path0}
          match data.method:
             String? s ->
                @injectors[s]{enode, data}
@@ -96,9 +111,11 @@ class HTMLFormatter:
             else ->
                throw E.HTMLFormatter.method with
                   'method for injection must be a String or a Function'
-         if not data.inline:
+         if not data.inline and not path-is-url:
             files[path.join{options.directory, path0}] =
-               data.contents
+               #write{data.contents}
+         items{data.dependencies or {=}} each {p, src} ->
+            files[path.join{options.directory, p}] = src
       {html{enode}, files}
 
 

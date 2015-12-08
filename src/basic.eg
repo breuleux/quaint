@@ -277,15 +277,17 @@ basic-plugin{@} =
       resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
          body.statements{} each stmt ->
             let path = stmt.raw{}
+            path-is-url = R"(^//)|(://)"? path
             @register-resources with {
                path => {
                   type = path.split{"."}.reverse{}[0]
                   method = m
                   = path
+                  = path-is-url
+                  contents = not path-is-url
                }
             }
          ""
-
    }
 
    fmt = Format{}
