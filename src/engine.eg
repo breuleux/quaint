@@ -396,7 +396,7 @@ class Engine:
       e.methods = clone{@methods}
       e.methods each m -> e[m] = this[m]
       e.resolvers = clone{@resolvers}
-      e.resources = clone{@resources}
+      e.resources = @resources
       e.template = @template
       e
 

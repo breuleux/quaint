@@ -327,7 +327,7 @@ provide{argv} =
                   if argv.verbose:
                      console.error with 'quaint: saved resource "{name}"'
                #copy{source} ->
-                  fs-extra.copy-sync{source, name, clobber = true}
+                  fs-extra.copy-sync{source, name, {clobber = true}}
             meta[file] = object with
                q.documents.meta.entries{} each {k, match v} ->
                   quaint.QAst? -> {k, v.raw{}}
