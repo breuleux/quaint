@@ -39,7 +39,7 @@ module-here{} =
    m
 
 normalize-qname{match t} =
-   R".q$"? or false? ->
+   R"^@|.q$"? or false? ->
       t
    else ->
       t + ".q"

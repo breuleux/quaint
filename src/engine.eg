@@ -322,8 +322,15 @@ class Engine:
 
    register-resolvers{resolvers} =
       items{resolvers} each {name, res} ->
-         @resolvers[name] or= {}
-         @resolvers[name].push{res}
+         @resolvers[name] or= {
+            fns = {}
+            keys = {=}
+         }
+         match res:
+            Function? -> @resolvers[name].fns.push{res}
+            else      -> @resolvers[name].keys &: res
+         ;; @resolvers[name] or= {}
+         ;; @resolvers[name].push{res}
       @
 
    register-resources{resources} =
@@ -358,18 +365,44 @@ class Engine:
 
    read-resource{type, filename, var options} =
       options = {fallback-to-default = true} & options
-      to-try = [@resolvers[type] or {}] ++
-         if{options.fallback-to-default, @resolvers.default, {}}
+      resolver = @resolvers[type]
       var error = null
-      to-try each resolver ->
-         try:
-            return resolver{filename}
-         catch e:
-            error = e
-      if error:
-         throw error
-      else:
-         throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
+
+      if not resolver:
+         if options.fallback-to-default:
+            return @read-resource{.default, filename}
+         else:
+            throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
+
+      match resolver.keys[filename] as result:
+         undefined? ->
+            resolver.fns each fn ->
+               try:
+                  return fn{filename}
+               catch e:
+                  error = e
+            if error:
+               throw error
+            elif options.fallback-to-default:
+               @read-resource{.default, filename}
+            else:
+               throw E.cannot-resolve{'Resource "{filename}" could not be resolved.'}
+
+         else ->
+            result
+
+      ;; to-try = [@resolvers[type] or {}] ++
+      ;;    if{options.fallback-to-default, @resolvers.default, {}}
+      ;; var error = null
+      ;; to-try each resolver ->
+      ;;    try:
+      ;;       return resolver{filename}
+      ;;    catch e:
+      ;;       error = e
+      ;; if error:
+      ;;    throw error
+      ;; else:
+      ;;    throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
 
    read-resource-contents{type, filename, options} =
       match @read-resource{type, filename, options}:

@@ -31,6 +31,17 @@ provide:
    file-resolver
 
 
+default-template = """
+doctype :: html
+html %
+  head %
+    meta %
+      http-equiv = Content-type
+      content = text/html
+      charset = UTF-8
+  body % {body}
+"""
+
 require-wide{f}{engine, data} =
    if data._wide:
       f.call{this, engine, data}
@@ -115,7 +126,9 @@ basic-plugin{@} =
    }
 
    @register-resolvers with {
+
       default = file-resolver{directory = ""}
+
       plugin{name} =
          m =
             try:
@@ -126,6 +139,12 @@ basic-plugin{@} =
                catch e2:
                   throw e1
          m??.quaint-plugin or m
+
+      template = {
+         "@none" => "{body}"
+         "@default" => "{body}"
+         "@minimal" => default-template
+      }
    }
 
    @evaluator = BasicEvaluator{}
@@ -280,7 +299,7 @@ basic-plugin{@} =
             path-is-url = R"(^//)|(://)"? path
             @register-resources with {
                path => {
-                  type = path.split{"."}.reverse{}[0]
+                  type = path.split{"."}.reverse{}[0].split{R"\b"}[0]
                   method = m
                   = path
                   = path-is-url
