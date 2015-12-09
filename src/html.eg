@@ -80,7 +80,13 @@ class HTMLFormatter:
          tags each tag ->
             if @engine.components[tag] as rule:
                tags.splice{tags.index-of{tag}, 1}
-               return rule{tags, props, @expand-components{children}}
+               try:
+                  return rule{tags, props, @expand-components{children}}
+               catch e:
+                  return
+                     .error %
+                        'Error when expanding component "{tag}"'
+                        div.error-stack % e.stack
          ENode{tags, props, @expand-components{children}}
       Array? a ->
          a each x -> @expand-components{x}
