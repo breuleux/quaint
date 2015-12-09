@@ -7,6 +7,7 @@ provide:
    inherit
    merge-children
    enode-to-data
+   trim
 
 
 inherit{node, tags, props, children} =
@@ -15,6 +16,16 @@ inherit{node, tags, props, children} =
    if node.block: rval.block = node.merge
    rval
 
+trim{match node} =
+   Array? ->
+      res = node each
+         R"^[ \n]+$"? x -> continue
+         x -> x
+      match res:
+         {x} -> x
+         else -> res
+   else ->
+      node
 
 collapse{match node, finalize = null} =
 
