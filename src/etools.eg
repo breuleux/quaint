@@ -73,12 +73,30 @@ merge-children{match node, recursive = true, finalize = null} =
       node
 
 
-enode-to-data{match node} =
+enode-to-data{match node, use-map = false} =
+
+   do:
+      make{} = if{use-map, new Map{}, {=}}
+      put{o, k, v} = if{use-map, o.set{k, v}, o[k] = v}
 
    [ul %]? or [ol %]? ->
       node.children each match child ->
          [li %]? -> child.children
          else -> continue
+
+   [dl %]? ->
+      result = make{}
+      var key = ""
+      node.children each match child ->
+         [dt %]? ->
+            key = match child.children:
+               {x} -> x
+               xs -> xs
+         [dd %]? ->
+            put{result, key, child.children}
+         else ->
+            continue
+      result
 
    [table %]? ->
       columns = {}
@@ -99,11 +117,11 @@ enode-to-data{match node} =
             continue
       if columns.length !== 0:
          rows.slice{1} each row ->
-            object with zip{columns, row} each {name, x} -> {name, x}
+            rval = make{}
+            zip{columns, row} each {name, x} -> put{rval, name, x}
+            rval
       else:
          rows
-
-   ;; TODO: <dl>
 
    ENode? {tags => {}, props => == {=}} when not node.block ->
       var candidate = null

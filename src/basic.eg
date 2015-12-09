@@ -469,6 +469,9 @@ basic-plugin{@} =
       require-wide! "> \\x"{engine, {=> x}} =
          mergeable{.blockquote, {" ", engine.gen{x}}}
 
+      require-wide! "\\dt := \\dd"{engine, {=> dt, => dd}} =
+         mergeable{.dl, {dt % engine.gen{dt}, dd % engine.gen{dd}}}
+
       require-wide! "| \\x"{engine, {=> x}} =
          args = collapse{"|", x}
          mergeable{.table} with
