@@ -176,7 +176,7 @@ resolve-plugins{config, argv} =
       String? name ->
          results.push with try-require{name, {name}}
       else ->
-         items{entry} each {name, arg} ->
+         items{entry} each {name, arg} when not arg in {false, null, undefined} ->
             resolve-string{name, arg}
 
    resolve{plugins} where resolve{match name} =
