@@ -14,6 +14,7 @@ require:
       Engine, processDocuments
    .basic ->
       basic-plugin, lit-plugin, file-resolver
+   .etools
 
 provide:
    parse, tokenize
@@ -28,6 +29,7 @@ provide:
    BasicDocument, SeqDocument, MapDocument
    h
    basic-plugin, lit-plugin, file-resolver
+   etools
 
 
 h{tag, match props, *children} =
