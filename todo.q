@@ -9,19 +9,27 @@
 * Additional processors for format
 * Way to specify column name for first row for format
 
-* Centralized list of format parsers?
 * Make it suitable for live templating by running the document loop
   continuously
-* resources ::
+
 * Make compatible with Promises, async/await
 
 
-== 0.0.13
+== 0.0.14
 
 === TODO
 
 * Better way to instantiate a naked Engine?
 * Isolate the plugins in basic.eg
+
+
+== 0.0.13
+
+=== DONE
+
+* `[resources ::]
+* Centralized list of format parsers?
+  * macros.data.parse(ext, text)
 
 
 == 0.0.11
