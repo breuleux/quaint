@@ -19,6 +19,9 @@ class Base:
          throw E.no-reader{'Do not know how to read "{file}" with format "{ext}"'}
       fn{engine, file, contents}
 
+   parse{ext, contents} =
+      @process{null, ext, "<inline>", contents}
+
    read{engine, match ext, body} =
       null? ->
          var e = engine
