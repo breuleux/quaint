@@ -16,7 +16,9 @@ require:
 provide:
    next
    may-fail
-   raw, rawRelative, dedent, code
+   raw, rawRelative, dedent, remove-leading-blank
+   as-indented-block
+   code
    parseSpec, makeExtractor, extractor
    extract, collapse, statements
    shed, shedAll, shedIndent
@@ -72,6 +74,15 @@ dedent{x} =
    newlines.join{"\n"} where
       newlines = lines each line -> line.slice{min}
 
+remove-leading-blank{x} =
+   match x.split{"\n"}:
+      {R"^ *$"? x, *rest} -> rest.join{"\n"}
+      else -> x
+
+as-indented-block{chain x} =
+   raw-relative{@}
+   dedent{@}
+   remove-leading-blank{@}
 
 code{engine, x} =
    Deferred with {path, documents} ->

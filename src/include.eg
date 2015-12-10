@@ -34,7 +34,7 @@ class Base:
             {x} -> x
             else -> results
       else ->
-         @process{engine, ext, "<inline>", tools.dedent{tools.raw-relative{body}}}
+         @process{engine, ext, "<inline>", tools.as-indented-block{body}}
 
 
 class Include < Base:
