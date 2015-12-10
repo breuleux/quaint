@@ -5,36 +5,49 @@ require:
 
 provide:
    Include
+   Data
 
 
-class Include:
+class Base:
 
-   constructor{} =
-      @extensions = clone{default-extensions}
+   constructor{@type, @extensions} =
+      pass
 
    process{engine, ext, file, contents} =
       fn = @extensions[ext]
       if not fn:
-         throw E.no-includer{'Do not know how to include "{file}" with format "{ext}"'}
+         throw E.no-reader{'Do not know how to read "{file}" with format "{ext}"'}
       fn{engine, file, contents}
 
-   include{engine, match ext, body} =
+   read{engine, match ext, body} =
       null? ->
-         ;; r = engine.resolvers.include or engine.resolvers.default
          var e = engine
-         body.raw{}.split{R"[ \n,]+"} each match filename ->
+         filenames = body.raw{}.split{R"[ \n,]+"}
+         results = filenames each match filename ->
             R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
-               ;; if not r:
-               ;;    throw E.no-resolver{'Cannot resolve "{filename}"'}
-               ;; match r{filename}:
-               match engine.read-resource{.include, filename}:
+               match engine.read-resource{@type, filename}:
                   String? contents or {=> contents} ->
-                     @process{engine, ext, filename, contents}
+                     print @process{engine, ext, filename, contents}
                   else ->
                      throw E.bad-resolver{'Bad resolution for "{filename}"'}
-
+         match results:
+            {x} -> x
+            else -> results
       else ->
          @process{engine, ext, "<inline>", tools.dedent{tools.raw-relative{body}}}
+
+
+class Include < Base:
+
+   constructor{} =
+      @type = .include
+      @extensions = clone{default-extensions}
+
+
+class Data < Base:
+   constructor{} =
+      @type = .data
+      @extensions = clone{default-data-extensions}
 
 
 default-extensions = {
@@ -45,4 +58,9 @@ default-extensions = {
    json{engine, file, contents} =
       engine.setenv{JSON.parse{contents}}
       ""
+}
+
+default-data-extensions = {
+   json{engine, file, contents} =
+      JSON.parse{contents}
 }

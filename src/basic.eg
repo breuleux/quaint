@@ -21,7 +21,9 @@ require:
       QAst, Text, Oper, Seq
       Into, Deferred
    .format -> Format
-   .include -> Include
+   .include ->
+      Include
+      Data
    fs, path
 
 provide:
@@ -322,9 +324,17 @@ basic-plugin{@} =
    @register-macros with {
       include{engine, *[{ext, body} or {body} and ext is null]} =
          may-fail with ->
-            incl.include{engine, ext??.raw{}, body}
+            incl.read{engine, ext??.raw{}, body}
    }
    @macros.include.extensions = incl.extensions
+
+   dat = Data{}
+   @register-macros with {
+      data{engine, *[{ext, body} or {body} and ext is null]} =
+         may-fail with ->
+            dat.read{engine, ext??.raw{}, body}
+   }
+   @macros.data.extensions = dat.extensions
 
    @register-methods with {
       method lit{} =
