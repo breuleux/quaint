@@ -34,7 +34,7 @@ class Format:
                      else ->
                         throw E.bad-resolver{'Bad resolution for "{f}"'}
                else ->
-                  {f, d, tools.dedent{tools.raw-relative{body}}}
+                  {f, d, tools.as-indented-block{body}}
             when not body ->
                throw E.format with
                   'You must provide a filename, if there is no body to format.'
