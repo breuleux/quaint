@@ -327,7 +327,7 @@ class Engine:
             keys = {=}
          }
          match res:
-            Function? -> @resolvers[name].fns.push{res}
+            Function? -> @resolvers[name].fns.unshift{res}
             else      -> @resolvers[name].keys &: res
          ;; @resolvers[name] or= {}
          ;; @resolvers[name].push{res}
