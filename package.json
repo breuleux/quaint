@@ -5,6 +5,7 @@
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
+    "deepmerge": "^0.2.10",
     "earlgrey-runtime": ">=0.0.11",
     "filendir": "^1.0.0",
     "format-json": "^1.0.3",

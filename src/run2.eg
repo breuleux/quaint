@@ -1,0 +1,166 @@
+
+require:
+   child_process
+   .index as quaint
+   module
+   quasar -> deprox
+   "engage" -> Renamer
+
+require-macros:
+   engage -> task
+
+provide:
+   main
+
+
+;;;;;;;;;;;;;;;
+;; Utilities ;;
+;;;;;;;;;;;;;;;
+
+cli-error{msg, fn} =
+   try:
+      fn{}
+   catch e:
+      throw E.cli-error{msg, e}
+
+json-parse{filename, contents} =
+   cli-error{'Error parsing JSON in {filename}'} with ->
+      JSON.parse{contents}
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin resolution ;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+class PluginResolver:
+
+   constructor{} =
+      @m = @module-here{}
+      @added-global-path = false
+
+   module-here{} =
+      m = new module{}
+      m.filename = process.cwd{}
+      c = process.cwd{}.split{"/"}
+      m.paths = xs.reverse{} where xs = [1..c.length] each i ->
+         c[...i].join{"/"} + "/node_modules"
+      ;; Push global npm path
+      m.paths.push with
+         "/usr/local/lib/node_modules"
+         "/usr/lib/node_modules"
+         ;; child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
+      m
+
+   r{p} =
+      x = module._load{p, @m, true}
+      x??.quaint-plugin or x
+
+   r2{name} =
+      if @added-global-path:
+         @r{name}
+      else:
+         try:
+            @r{name}
+         catch e:
+            ;; If all else fails (this is a bit slow, which is why we don't do it
+            ;; if we don't have to)
+            @m.paths.push with
+               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
+            @added-global-path = true
+            @r{name}
+
+   try-require{orig, match names, all = names} =
+      {} ->
+         rqs = [all each name -> '"{name}"'].join{", "}
+         throw E.cli-error with
+            'Could not find a plugin for "{orig}". I tried requiring the following modules: {rqs}.\nIf they are available on npm, you can install them locally or globally, then try again.'
+      {name, *rest} ->
+         try:
+            @r2{name}
+         catch e:
+            if e.message == 'Cannot find module \'{name}\'':
+               @try-require{orig, rest, all}
+            else:
+               throw E.cli-error with
+                  'An error happened when loading module \'{name}\''
+                  e
+
+resolver = PluginResolver{}
+
+
+task resolve-plugin{name, deprox! arg} =
+   if arg in {null, false, undefined}:
+      return null
+   @log{'Use package "{name}" with options: {JSON.stringify{arg}}'}
+   pack = match name:
+      R"^\."? ->
+         resolver.try-require{name, {name}}
+      else ->
+         resolver.try-require{name, {'quaint-{name}', name}}
+   if{arg === true, pack, pack{arg}}
+
+normalize-qname{match t} =
+   R"^@|.q$"? or false? ->
+      t
+   else ->
+      t + ".q"
+
+task common-data{} =
+   data = clone{@config.data}
+   @config.data-files each
+      String? file and field is null or items! {{field, file}} ->
+         data2 = json-parse{'file {file.path}', @get{file}.text}
+         if field:
+            data[field] = data2
+         else:
+            data &: data2
+   data
+
+task compile{file, template-root} =
+   ;; LOG
+   plugins = items{@config.plugins} each {name, arg} ->
+      if resolve-plugin{name, arg} as plugin:
+         plugin
+      else:
+         continue
+   q = quaint{*plugins}
+   q.template = @config.templates.default
+   q.setenv{common-data{}}
+   q.register-resolvers with {
+      default{filename} =
+         ;; LOG
+         f2 = file.base-directory{}.get{filename}
+         {file = f2.path, contents = f2.text}
+      resource{filename} =
+         f2 = file.base-directory{}.get{filename}
+         {file = f2.path, contents = f2.text}
+      template{normalize-qname! filename} =
+         ;; LOG
+         if not template-root:
+            throw E.no-template-root{"The template directory was not specified."}
+         f2 = template-root.get{filename}
+         {file = f2.path, contents = f2.text}
+   }
+   q.translate{file.text, @config.format, {resources = @config.resources}}
+
+
+;; DONE: config help eval format data plugin out
+;;       template
+;; TODO: save-meta stdout verbose save-config dump-data
+
+task main{root} =
+   template-root = @config.templates.root and @get{@config.templates.root}
+   var sources-exist = false
+   root.find{* @config.sources} each file ->
+      sources-exist = true
+      results = compile{file, template-root}
+      @rename-out{file, extension = ".html"}.write{results.contents}
+      items{results.files} each {name, match} ->
+         #write{contents} ->
+            ;; LOG
+            @get{name}.write{contents}
+         #copy{source} ->
+            ;; LOG
+            @get{source}.copy{to = name}
+   if not sources-exist:
+      @log{"Nothing to do."}
