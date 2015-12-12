@@ -262,9 +262,10 @@ basic-plugin{@} =
       template{match engine, tpl} =
          {top => false?} ->
             throw E.template.syntax{'Template must be specified at top level.'}
-         {template => true? t} ->
+         {template => true? t, fix-template => true?} ->
             throw E.template.duplicate{'Template {t} was already specified for this file.'}
          else ->
+            engine.fix-template = true
             engine.template = tpl.raw{}
 
       scope{engine, body} =
