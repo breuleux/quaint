@@ -25,12 +25,12 @@ class Base:
    read{engine, match ext, body} =
       null? ->
          var e = engine
-         filenames = body.raw{}.split{R"[ \n,]+"}
+         filenames = body.raw{}.split{R"[ \n,]+"} each x when x !== "" -> x
          results = filenames each match filename ->
             R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
                match engine.read-resource{@type, filename}:
                   String? contents or {=> contents} ->
-                     print @process{engine, ext, filename, contents}
+                     @process{engine, ext, filename, contents}
                   else ->
                      throw E.bad-resolver{'Bad resolution for "{filename}"'}
          match results:
