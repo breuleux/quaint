@@ -419,6 +419,11 @@ class Engine:
       ;;    throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
       ;; resolver{filename}
 
+   read-resource-text{type, filename, options} =
+      match @read-resource{type, filename, options}:
+         {=> contents} -> contents
+         contents -> contents
+
    fork{} =
       e = Engine{{}}
       e.top = false
