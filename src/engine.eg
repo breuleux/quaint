@@ -335,12 +335,15 @@ class Engine:
 
    register-resources{resources} =
       items{resources} each {name, data} ->
-         if data.path and data.contents === true:
-            data.contents = @read-resource-contents{.resource, data.path}
+
+         ;; if data.path and data.contents === true:
+         ;;    data.contents = @read-resource-contents{.resource, data.path}
+
          ;; if @resources[name] as prev:
          ;;    if prev.contents !== data.contents:
          ;;       throw E.quaint.resource with
          ;;          'Duplicate resource "{name}" has inconsistent content.'
+
          @resources[name] = data
 
    register-rule{*args} =
