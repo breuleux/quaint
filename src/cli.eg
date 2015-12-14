@@ -5,6 +5,8 @@ require:
    deepmerge
    .run2 -> main
    engage
+   path
+   child_process
 
 get-arguments{} =
 
@@ -66,6 +68,10 @@ get-arguments{} =
       ;; --resources-url
       @describe{"resources-url", "URL for the resources directory"}
 
+      ;; --serve
+      @default{.serve, false}
+      @describe{.serve, "Start server on specified port, in output directory"}
+
       ;; --stdout, -s
       @alias{.s, .stdout}
       @boolean{.s}
@@ -85,6 +91,11 @@ get-arguments{} =
       ;; --save-meta
       @default{"save-meta", false}
       @describe{"save-meta", "Save meta data in a file (./meta.json if the file is not specified)"}
+
+      ;; --watch, -w
+      @alias{.w, .watch}
+      @default{"watch", false}
+      @describe{"watch", "Watch for changes to rebuild"}
 
       ;; TODO
 
@@ -172,6 +183,15 @@ defaults{} = {
       inline = false
    }
    save-meta = false
+   watch = false
+   server = {
+      enable = false
+      delay = 300
+      port = 8080
+      start-page = "index.html"
+      open-browser = true
+   }
+   verbose = false
 }
 
 normalize-config{_cfg} =
@@ -238,7 +258,7 @@ merge-config{normalize-config! cfg, argv} =
    cfg.injections = injections
 
    ;; others
-   {.format, .save-meta, .out, .eval} each name ->
+   {.format, .save-meta, .out, .eval, .verbose} each name ->
       if argv[name] as x:
          cfg[name] = x
    if argv.resources as [let x]:
@@ -247,11 +267,24 @@ merge-config{normalize-config! cfg, argv} =
       cfg.resources.url = x
    if argv.inline as [let x]:
       cfg.resources.inline = x
+   if argv.serve as [let x]:
+      if x:
+         cfg.server.enable = true
+         cfg.server.port = if{x === true, 8080, Number{x}}
+
+   ;; Starting the server implies watch
+   if cfg.server.enable:
+      cfg.watch = true
 
    ;; misc
    cfg.resources.url or= cfg.resources.root
+   if cfg.save-meta === true:
+      cfg.save-meta = "meta.json"
 
    cfg
+
+
+reload-bin-path = path.join{__dirname, '../node_modules/reload/bin/reload'}
 
 provide{} =
    try:
@@ -262,6 +295,9 @@ provide{} =
          JSON.parse{fs.read-file-sync{"quaint.json", .utf8}}
          argv
 
+      ;; if cfg.server.enable:
+      ;;    serve{cfg.output, cfg.server}
+
       engage{main, opts}.run{} where opts = {
          config = cfg
          paths = {
@@ -269,8 +305,25 @@ provide{} =
             content = "."
             output = cfg.output
          }
+         show = {
+            read = false
+            write = false
+            task = cfg.verbose
+         }
          ignore-empty-changes = true
+         watch = cfg.watch
       }
+
+      if cfg.server.enable:
+         child_process.spawn{reload-bin-path} with
+            {
+               "-d", cfg.output
+               "-p", cfg.server.port
+               "-r", cfg.server.delay
+               "-s", cfg.server.start-page
+               "-b", cfg.server.open-browser
+            }
+            {stdio = .inherit}
 
       ;; run{get-arguments{}}
    catch [E.usage-error? e]:

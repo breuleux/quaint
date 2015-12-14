@@ -5,6 +5,7 @@
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
   "dependencies": {
+    "chalk": "^1.1.1",
     "deepmerge": "^0.2.10",
     "earlgrey-runtime": ">=0.0.11",
     "filendir": "^1.0.0",
@@ -14,6 +15,7 @@
     "kaiser": ">=0.0.2",
     "mkdirp": "^0.5.1",
     "opg": ">=0.0.3",
+    "reload": "^0.7.0",
     "yargs": "^3.25.0"
   },
   "devDependencies": {
