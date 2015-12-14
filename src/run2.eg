@@ -4,7 +4,9 @@ require:
    .index as quaint
    module
    quasar -> deprox
-   "engage" -> Renamer
+   format-json
+   path
+   chalk
 
 require-macros:
    engage -> task
@@ -28,6 +30,9 @@ json-parse{filename, contents} =
       JSON.parse{contents}
 
 
+var _server = null
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Plugin resolution ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,7 +53,6 @@ class PluginResolver:
       m.paths.push with
          "/usr/local/lib/node_modules"
          "/usr/lib/node_modules"
-         ;; child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
       m
 
    r{p} =
@@ -81,9 +85,10 @@ class PluginResolver:
             if e.message == 'Cannot find module \'{name}\'':
                @try-require{orig, rest, all}
             else:
-               throw E.cli-error with
-                  'An error happened when loading module \'{name}\''
-                  e
+               throw e
+               ;; throw E.cli-error with
+               ;;    'An error happened when loading module \'{name}\''
+               ;;    e
 
 resolver = PluginResolver{}
 
@@ -91,7 +96,10 @@ resolver = PluginResolver{}
 task resolve-plugin{name, deprox! arg} =
    if arg in {null, false, undefined}:
       return null
-   @log{'Use package "{name}" with options: {JSON.stringify{arg}}'}
+   if arg === true:
+      @log{'Plugin: {chalk.bold.magenta{name}} with no options'}
+   else:
+      @log{'Plugin: {chalk.bold.magenta{name}} with options: {JSON.stringify{arg}}'}
    pack = match name:
       R"^\."? ->
          resolver.try-require{name, {name}}
@@ -117,50 +125,73 @@ task common-data{} =
    data
 
 task compile{file, template-root} =
-   ;; LOG
+   @log with 'Compile: {chalk.bold.yellow{file.path}}'
    plugins = items{@config.plugins} each {name, arg} ->
       if resolve-plugin{name, arg} as plugin:
          plugin
       else:
          continue
-   q = quaint{*plugins}
-   q.template = @config.templates.default
-   q.setenv{common-data{}}
+   q = quaint{}
    q.register-resolvers with {
-      default{filename} =
-         ;; LOG
-         f2 = file.base-directory{}.get{filename}
+      task default{filename} =
+         @log with 'Resource: {chalk.bold.magenta{filename}}'
+         f2 =
+            if filename.starts-with{"/"}:
+               @get{filename}
+            else:
+               file.base-directory{}.get{filename}
          {file = f2.path, contents = f2.text}
-      resource{filename} =
-         f2 = file.base-directory{}.get{filename}
-         {file = f2.path, contents = f2.text}
+      plugin{name} =
+         resolve-plugin{name, true}
       template{normalize-qname! filename} =
-         ;; LOG
+         @log with 'Template: {chalk.bold.magenta{filename}}'
          if not template-root:
             throw E.no-template-root{"The template directory was not specified."}
          f2 = template-root.get{filename}
          {file = f2.path, contents = f2.text}
    }
-   q.translate{file.text, @config.format, {resources = @config.resources}}
+   q.template = @config.templates.default
+   q.setenv{common-data{}}
+   q.plug{*plugins}
+   res = q.translate{file.text, @config.format, {resources = @config.resources}}
+   res.meta = object with
+      q.documents.meta.entries{} each {k, match v} ->
+         quaint.QAst? -> {k, v.raw{}}
+         else -> {k, v}
+   res
 
 
-;; DONE: config help eval format data plugin out
-;;       template
-;; TODO: save-meta stdout verbose save-config dump-data
+;; DONE: help format data plugin out
+;;       template save-meta verbose
+;; TODO: config eval stdout save-config dump-data
+
+task write-it{name, contents} =
+   @log with 'Write: {chalk.green{name}}'
+   @get{name}.write{contents}
+
+task copy-it{name, source} =
+   @log with 'Copy: {source}'
+   @log with '   -> {chalk.green{name}}'
+   @get{source}.copy{to = name}
 
 task main{root} =
    template-root = @config.templates.root and @get{@config.templates.root}
    var sources-exist = false
+   meta = {=}
    root.find{* @config.sources} each file ->
       sources-exist = true
       results = compile{file, template-root}
       @rename-out{file, extension = ".html"}.write{results.contents}
       items{results.files} each {name, match} ->
          #write{contents} ->
-            ;; LOG
-            @get{name}.write{contents}
+            write-it{name, contents}
          #copy{source} ->
-            ;; LOG
-            @get{source}.copy{to = name}
+            copy-it{name, source}
+      meta[path.relative{root.path, file.path}] = results.meta
    if not sources-exist:
       @log{"Nothing to do."}
+   elif @config.save-meta:
+      @get{@config.save-meta}.write{format-json.plain{meta}}
+
+
+
