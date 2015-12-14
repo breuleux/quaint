@@ -37,6 +37,8 @@ default-template = """
 doctype :: html
 html %
   head %
+    title %
+      meta::title !! Untitled
     meta %
       http-equiv = Content-type
       content = text/html
@@ -127,27 +129,37 @@ basic-plugin{@} =
       errors = SeqDocument{}
    }
 
+   ;; @register-resolvers with {
+
+   ;;    default = file-resolver{directory = ""}
+
+   ;;    plugin{name} =
+   ;;       m =
+   ;;          try:
+   ;;             __require{'quaint-{name}'}
+   ;;          catch e1:
+   ;;             try:
+   ;;                __require{name}
+   ;;             catch e2:
+   ;;                throw e1
+   ;;       m??.quaint-plugin or m
+
+   ;;    template = {
+   ;;       "@none" => "{body}"
+   ;;       "@default" => "{body}"
+   ;;       "@minimal" => default-template
+   ;;    }
+   ;; }
+
+
    @register-resolvers with {
-
-      default = file-resolver{directory = ""}
-
-      plugin{name} =
-         m =
-            try:
-               __require{'quaint-{name}'}
-            catch e1:
-               try:
-                  __require{name}
-               catch e2:
-                  throw e1
-         m??.quaint-plugin or m
-
       template = {
          "@none" => "{body}"
          "@default" => "{body}"
          "@minimal" => default-template
       }
    }
+
 
    @evaluator = BasicEvaluator{}
 
@@ -277,15 +289,16 @@ basic-plugin{@} =
          ;;    throw E.plugin{'Cannot resolve plugins.'}
          body.split{R"[ \n,]+"} each name when name !== "" ->
             ;; p = r{name}
-            p = engine.get-resource{.plugin, name, fallback-to-default = false}
+            p = engine.read-resource{.plugin, name, fallback-to-default = false}
             p{engine}
          ""
 
       plugin{engine, raw! name, values} =
-         r = engine.resolvers.plugin
-         if not r:
-            throw E.plugin{'Cannot resolve plugins.'}
-         p = r{name}
+         ;; r = engine.resolvers.plugin
+         ;; if not r:
+         ;;    throw E.plugin{'Cannot resolve plugins.'}
+         p = engine.read-resource{.plugin, name, fallback-to-default = false}
+         ;; p = r{name}
          ex = extractor{"\\k = \\v", "\\k: \\v", "\\k => \\v"}
          options = object with
             values.statements{} each
