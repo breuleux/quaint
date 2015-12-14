@@ -134,15 +134,22 @@ enode-to-data{match node, use-map = false} =
       else:
          rows
 
+   do:
+      f{children} =
+         var candidate = null
+         merge-children{children, false} each match child ->
+            R"[ \n\t]+"? -> pass
+            when candidate ->
+               throw E"each"{"Cannot run each:: on this data."}
+            else ->
+               candidate = child
+         enode-to-data{candidate, use-map}
+
    ENode? {tags => {}, props => == {=}} when not node.block ->
-      var candidate = null
-      merge-children{node.children, false} each match child ->
-         R"[ \n\t]+"? -> pass
-         when candidate ->
-            throw E"each"{"Cannot run each:: on this data."}
-         else ->
-            candidate = child
-      enode-to-data{candidate}
+      f{node.children}
+
+   Array? ->
+      f{node}
 
    ENode? ->
       throw E.enode-conversion{"Cannot convert element to data"}
