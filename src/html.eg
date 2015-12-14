@@ -56,9 +56,9 @@ class AppendInjector:
 
 
 defaults = {
-   inline-max = Infinity
-   link-min = 0
-   directory = "."
+   ;; inline-max = Infinity
+   ;; link-min = 0
+   root = "."
    url = "."
    inline = false
 }
@@ -98,15 +98,19 @@ class HTMLFormatter:
           options >> [defaults & options]} =
       files = {=}
       items{resources} each {path0, clone! data} ->
-         ;; path0 = data.path
+         orig-path = data.path
          path-is-url = data.path-is-url
-         data.inline =
-            match data.contents??.length:
-               undefined?                -> false
-               > options.inline-max      -> false
-               < options.link-min        -> true
-               when Boolean? data.inline -> data.inline
-               else                      -> options.inline
+         ;; data.inline =
+         ;;    match data.contents??.length:
+         ;;       undefined?                -> false
+         ;;       > options.inline-max      -> false
+         ;;       < options.link-min        -> true
+         ;;       when Boolean? data.inline -> data.inline
+         ;;       else                      -> options.inline
+         data.inline = data.inline or options.inline
+         if data.inline and data.contents === true:
+            data.contents = @engine.read-resource-contents{.resource, data.path}
+
          if not path-is-url:
             data.path = path.join{options.url, path0}
          match data.method:
@@ -119,7 +123,10 @@ class HTMLFormatter:
                   'method for injection must be a String or a Function'
          if not data.inline and not path-is-url:
             files[path.join{options.root, path0}] =
-               #write{data.contents}
+               if data.contents === true:
+                  #copy{orig-path}
+               else:
+                  #write{data.contents}
          items{data.dependencies or {=}} each {p, src} ->
             files[path.join{options.root, p}] = src
       {html{enode}, files}
