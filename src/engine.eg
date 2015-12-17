@@ -335,6 +335,9 @@ class Engine:
 
    register-resources{resources} =
       items{resources} each {name, data} ->
+         if data.path and not data.path-is-url and not data.full-path:
+            {=> path} = @read-resource{.resource, data.path, {read = false}}
+            data.full-path = path
 
          ;; if data.path and data.contents === true:
          ;;    data.contents = @read-resource-contents{.resource, data.path}
@@ -367,7 +370,7 @@ class Engine:
       @
 
    read-resource{type, filename, var options} =
-      options = {fallback-to-default = true} & options
+      options = {fallback-to-default = true, read = true} & options
       resolver = @resolvers[type]
       var error = null
 
@@ -381,7 +384,7 @@ class Engine:
          undefined? ->
             resolver.fns each fn ->
                try:
-                  return fn{filename}
+                  return fn{filename, options}
                catch e:
                   error = e
             if error:
