@@ -1,0 +1,135 @@
+
+require:
+   deepmerge
+
+provide:
+   merge-config
+
+cli-error{msg, fn} =
+   try:
+      fn{}
+   catch e:
+      throw E.cli-error{msg, e}
+
+defaults{} = {
+   sources = {}
+   data-files = {}
+   data = {=}
+   plugins = {=}
+   injections = {}
+   output = "."
+   format = "html"
+   templates = {
+      default = "@minimal"
+      ;; override = null
+      root = null
+   }
+   resources = {
+      root = "."
+      inline = false
+      files = {=}
+   }
+   save-meta = false
+   watch = false
+   server = {
+      enable = false
+      delay = 300
+      port = 8080
+      start-page = "index.html"
+      open-browser = true
+   }
+   verbose = false
+   files = {}
+}
+
+normalize-config{_cfg} =
+   rval = deepmerge{defaults{}, _cfg}
+   ;; print rval
+   ;; print defaults{}
+   ;; print _cfg
+   rval.plugins =
+      match rval.plugins:
+         String? s -> {s => true}
+         obj -> obj
+   {.sources, .data-files, .injections} each name ->
+      rval[name] = Array! rval[name]
+   rval
+
+
+json-filename{match f} =
+   R"\."? -> f
+   else -> f + ".json"
+
+json-parse{filename, contents} =
+   cli-error{'Error parsing JSON in {filename}'} with ->
+      JSON.parse{contents}
+
+merge-config{normalize-config! cfg, argv} =
+   ;; sources
+   cfg.sources ++= argv._
+
+   ;; data
+   cfg as {=> data, => data-files}
+   [Array! [argv.data or {}]] each match entry ->
+      undefined? -> pass
+      R"^[\"']"? ->
+         data &: json-parse{'argument {entry}', "{" + entry + "}"}
+      R"^[{]"? ->
+         data &: json-parse{'argument {entry}', entry}
+      R"([a-zA-Z0-9_.-]+)::(.*)"! {_, key, filename} ->
+         data-files.push with {key => json-filename{filename}}
+      R"([a-zA-Z0-9_-]+):(.*)"! {_, key, value} ->
+         try:
+            data &: {key => JSON.parse{value}}
+         catch e:
+            data &: {key => value}
+      filename ->
+         data-files.push with json-filename{filename}
+
+   ;; plugins
+   var {=> plugins, => injections} = cfg
+
+   resolve-string{match name, arg = {=}} =
+      R"^([^()]+)\((.*)\)$"! {_, n, arg} ->
+         resolve-string{n, JSON.parse{arg}}
+      R"^([^{}]+)(\{.*\})$"! {_, n, arg} ->
+         resolve-string{n, JSON.parse{arg}}
+      R"^(\.+)([^/.]|$)"! {_, dots, _} ->
+         resolve-string{dots + "/" + name.slice{dots.length}, arg}
+      R"\.q$"? ->
+         injections.push with name
+      else ->
+         plugins = deepmerge{plugins} with {name => arg}
+
+   [Array! [argv.plugin or {}]] each s -> resolve-string{s}
+   cfg.plugins = plugins
+   cfg.injections = injections
+
+   ;; others
+   {.format, .save-meta, .out, .eval, .verbose, .watch} each name ->
+      if argv[name] as x:
+         cfg[name] = x
+   if argv.resources as [let x]:
+      cfg.resources.root = x
+   if argv.resources-url as [let x]:
+      cfg.resources.url = x
+   if argv.inline as [let x]:
+      cfg.resources.inline = x
+   if argv.serve as [let x]:
+      if x:
+         cfg.server.enable = true
+         cfg.server.port = if{x === true, 8080, Number{x}}
+
+   if cfg.sources.length === 0:
+      cfg.sources = {"**/*.q"}
+
+   ;; Starting the server implies watch
+   if cfg.server.enable:
+      cfg.watch = true
+
+   ;; misc
+   cfg.resources.url or= cfg.resources.root
+   if cfg.save-meta === true:
+      cfg.save-meta = "meta.json"
+
+   cfg

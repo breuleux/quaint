@@ -7,6 +7,13 @@ require:
    format-json
    path
    chalk
+   "./config" ->
+      merge-config
+   fs
+   .basic ->
+      analyze-path
+   "engage" ->
+      EngageMessage as M
 
 require-macros:
    engage -> task
@@ -97,9 +104,12 @@ task resolve-plugin{name, deprox! arg} =
    if arg in {null, false, undefined}:
       return null
    if arg === true:
-      @log{'Plugin: {chalk.bold.magenta{name}} with no options'}
+      @log{'  Plugin {chalk.bold.magenta{name}} with no options'}
    else:
-      @log{'Plugin: {chalk.bold.magenta{name}} with options: {JSON.stringify{arg}}'}
+      max-length = 255
+      opts0 = JSON.stringify{arg}
+      opts = if{opts0.length < 255, opts0, opts0.slice{0, 252} + "..."}
+      @log{'  Plugin {chalk.bold.magenta{name}} with options: {opts}'}
    pack = match name:
       R"^\."? ->
          resolver.try-require{name, {name}}
@@ -113,9 +123,16 @@ normalize-qname{match t} =
    else ->
       t + ".q"
 
+task config{} =
+   ;; @config
+   merge-config with
+      JSON.parse{@get{"quaint.json"}.text}
+      @argv
+
 task common-data{} =
-   data = clone{@config.data}
-   @config.data-files each
+   cfg = config{}
+   data = clone{cfg.data}
+   cfg.data-files each
       String? file and field is null or items! {{field, file}} ->
          data2 = json-parse{'file {file.path}', @get{file}.text}
          if field:
@@ -125,22 +142,31 @@ task common-data{} =
    data
 
 task compile{file, template-root} =
-   @log with 'Compile: {chalk.bold.yellow{file.path}}'
-   plugins = items{@config.plugins} each {name, arg} ->
+   cfg = config{}
+   @log with M{.begin, chalk.bold{'Compile -- {chalk.yellow{file.path}}'}} &: {eager = true}
+   plugins = items{cfg.plugins} each {name, arg} ->
       if resolve-plugin{name, arg} as plugin:
          plugin
       else:
          continue
    q = quaint{}
+
    q.register-resolvers with {
-      task default{filename} =
-         @log with 'Resource: {chalk.bold.magenta{filename}}'
+      default{filename, options} =
          f2 =
             if filename.starts-with{"/"}:
                @get{filename}
             else:
                file.base-directory{}.get{filename}
-         {file = f2.path, contents = f2.text}
+         if f2.exists{}:
+            @log with 'Resource {chalk.bold.magenta{f2.path}}'
+         else:
+            @log with 'Resource {chalk.bold.red{f2.path}} (does not exist)'
+            throw E.no-resource{'Resource does not exist: {f2.path}'}
+         if not options.read:
+            {file and path = f2.path}
+         else:
+            {file and path = f2.path, contents and text = f2.text}
       plugin{name} =
          resolve-plugin{name, true}
       template{normalize-qname! filename} =
@@ -148,50 +174,98 @@ task compile{file, template-root} =
          if not template-root:
             throw E.no-template-root{"The template directory was not specified."}
          f2 = template-root.get{filename}
-         {file = f2.path, contents = f2.text}
+         {file and path = f2.path, contents and text = f2.text}
    }
-   q.template = @config.templates.default
+
+   items{cfg.resources.files} each {name, file} ->
+      data = analyze-path{file}
+      if data.path and not data.path-is-url and not file.starts-with{"/"}:
+         data.full-path = @get{cfg.content-root}.get{data.path}.path
+      q.register-resources with {name => data}
+
+   q.template = cfg.templates.default
    q.setenv{common-data{}}
    q.plug{*plugins}
-   res = q.translate{file.text, @config.format, {resources = @config.resources}}
+   res = q.translate{file.text, cfg.format, {resources = cfg.resources}}
    res.meta = object with
       q.documents.meta.entries{} each {k, match v} ->
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
+   dest = @rename-out{file, extension = ".html"}
+   @log with '  Output {chalk.bold.green{dest.path}}'
+   @log with M{.end, ""}
    res
-
 
 ;; DONE: help format data plugin out
 ;;       template save-meta verbose
 ;; TODO: config eval stdout save-config dump-data
 
+
 task write-it{name, contents} =
-   @log with 'Write: {chalk.green{name}}'
+   @log with '   Write {chalk.green{name}}'
    @get{name}.write{contents}
 
 task copy-it{name, source} =
-   @log with 'Copy: {source}'
-   @log with '   -> {chalk.green{name}}'
+   @log with '    Copy {source}'
+   @log with '    ---> {chalk.green{name}}'
    @get{source}.copy{to = name}
 
 task main{root} =
-   template-root = @config.templates.root and @get{@config.templates.root}
+
+   cfg = config{}
+   template-root = cfg.templates.root and @get{cfg.templates.root}
    var sources-exist = false
    meta = {=}
-   root.find{* @config.sources} each file ->
+   resources = {=}
+
+   ;; PRE-RESOLVE PLUGINS
+   ;; I put this here so that the plugin info is printed out before
+   ;; compiling the Quaint files
+
+   @log with M{.begin, chalk.bold{"Resolve global plugins"}}
+   items{cfg.plugins} each {name, arg} ->
+      resolve-plugin{name, arg}
+   @log with M{.end, ""}
+
+   ;;;;;;;;;;;;;;;;;;;;;
+   ;; COMPILE SOURCES ;;
+   ;;;;;;;;;;;;;;;;;;;;;
+
+   root.find{* cfg.sources} each file ->
       sources-exist = true
       results = compile{file, template-root}
-      @rename-out{file, extension = ".html"}.write{results.contents}
-      items{results.files} each {name, match} ->
-         #write{contents} ->
-            write-it{name, contents}
-         #copy{source} ->
-            copy-it{name, source}
+      dest = @rename-out{file, extension = ".html"}
+      dest.write{results.contents}
+      resources &: results.files
       meta[path.relative{root.path, file.path}] = results.meta
+
+   ;;;;;;;;;;;;;;;;;;;;
+   ;; COPY RESOURCES ;;
+   ;;;;;;;;;;;;;;;;;;;;
+
+   @log with M{.begin, chalk.bold{"Resources"}}
+   items{resources} each {name, match} ->
+      do:
+         sources-exist = true
+      #write{contents} ->
+         write-it{name, contents}
+      #copy{source} ->
+         copy-it{name, source}
+
+   ;;;;;;;;;;;;;;;;;
+   ;; COPY ASSETS ;;
+   ;;;;;;;;;;;;;;;;;
+
+   root.find{* cfg.files} each file ->
+      sources-exist = true
+      dest = @rename-out{file}
+      copy-it{dest.path, file.path}
+   @log with M{.end, ""}
+
    if not sources-exist:
       @log{"Nothing to do."}
-   elif @config.save-meta:
-      @get{@config.save-meta}.write{format-json.plain{meta}}
+   elif cfg.save-meta:
+      @get{cfg.save-meta}.write{format-json.plain{meta}}
 
 
 
