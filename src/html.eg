@@ -56,8 +56,6 @@ class AppendInjector:
 
 
 defaults = {
-   ;; inline-max = Infinity
-   ;; link-min = 0
    root = "."
    url = "."
    inline = false
@@ -100,31 +98,26 @@ class HTMLFormatter:
       items{resources} each {path0, clone! data} ->
          orig-path = data.path
          path-is-url = data.path-is-url
-         ;; data.inline =
-         ;;    match data.contents??.length:
-         ;;       undefined?                -> false
-         ;;       > options.inline-max      -> false
-         ;;       < options.link-min        -> true
-         ;;       when Boolean? data.inline -> data.inline
-         ;;       else                      -> options.inline
-         data.inline = data.inline or options.inline
+         embeddable = data.type !== null
+         data.inline = embeddable and data.inline or options.inline
          if data.inline and data.contents === true:
             data.contents = @engine.read-resource-contents{.resource, data.path}
 
          if not path-is-url:
             data.path = path.join{options.url, path0}
-         match data.method:
-            String? s ->
-               @injectors[s]{enode, data}
-            Function? f ->
-               f{enode, data}
-            else ->
-               throw E.HTMLFormatter.method with
-                  'method for injection must be a String or a Function'
+         if embeddable:
+            match data.method:
+               String? s ->
+                  @injectors[s]{enode, data}
+               Function? f ->
+                  f{enode, data}
+               else ->
+                  throw E.HTMLFormatter.method with
+                     'method for injection must be a String or a Function'
          if not data.inline and not path-is-url:
             files[path.join{options.root, path0}] =
                if data.contents === true:
-                  #copy{orig-path}
+                  #copy{data.full-path or orig-path}
                else:
                   #write{data.contents}
          items{data.dependencies or {=}} each {p, src} ->
