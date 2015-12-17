@@ -31,6 +31,28 @@ provide:
    basic-plugin
    lit-plugin
    file-resolver
+   analyze-path
+
+
+analyze-path{spec} =
+   {m, type, let path} = match spec:
+      R"^(?:([^!:/]*)!)?(?:([^!:/]*)!)?(.*)$"! match ->
+         {_, String? type, undefined?, p} ->
+            {"head", type, p}
+         {_, mth, type, p} ->
+            {
+               mth or "head"
+               type or p.split{"."}.reverse{}[0].split{R"\b"}[0]
+               p
+            }
+   path-is-url = R"(^//)|(://)"? path
+   {
+      type =
+      method = m
+      = path
+      = path-is-url
+      contents = not path-is-url
+   }
 
 
 default-template = """
@@ -312,15 +334,8 @@ basic-plugin{@} =
       resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
          body.statements{} each stmt ->
             let path = stmt.raw{}
-            path-is-url = R"(^//)|(://)"? path
             @register-resources with {
-               path => {
-                  type = path.split{"."}.reverse{}[0].split{R"\b"}[0]
-                  method = m
-                  = path
-                  = path-is-url
-                  contents = not path-is-url
-               }
+               path => analyze-path{path}
             }
          ""
    }
