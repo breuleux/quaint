@@ -143,6 +143,28 @@ task common-data{} =
 
 task compile{file, template-root} =
    cfg = config{}
+   base = file.base-directory{}
+   dest = @rename-out{file, extension = ".html"}
+
+   ;; Compute paths to add to meta object
+   sr = path.join{"/", cfg.site-root}
+   rr = cfg.resources.root or ""
+   base-dest = path.dirname{dest.path}
+   rel = path.relative{cfg.output or base-dest, base-dest}
+   basename = path.basename{dest.path}
+   rrel = path.relative{rel, rr} or "."
+   meta = {
+      hostname = cfg.hostname
+      url = path.join{cfg.hostname, sr, rel, basename}
+      path = path.join{rel, basename}
+      orig-path = path.relative{cfg.content-root, file.path}
+      local-url = path.join{sr, rel, basename}
+      site-root = sr
+      site-rel = path.relative{rel, ""} or "."
+      resource-root = path.join{sr, rr}
+      resource-rel = rrel
+   }
+
    @log with M{.begin, chalk.bold{'Compile -- {chalk.yellow{file.path}}'}} &: {eager = true}
    plugins = items{cfg.plugins} each {name, arg} ->
       if resolve-plugin{name, arg} as plugin:
@@ -150,6 +172,8 @@ task compile{file, template-root} =
       else:
          continue
    q = quaint{}
+   items{meta} each {k, v} ->
+      q.documents.meta.set{k, v}
 
    q.register-resolvers with {
       default{filename, options} =
@@ -157,9 +181,10 @@ task compile{file, template-root} =
             if filename.starts-with{"/"}:
                @get{filename}
             else:
-               file.base-directory{}.get{filename}
+               base.get{filename}
          if f2.exists{}:
-            @log with 'Resource {chalk.bold.magenta{f2.path}}'
+            if options.read:
+               @log with 'Resource {chalk.bold.magenta{f2.path}}'
          else:
             @log with 'Resource {chalk.bold.red{f2.path}} (does not exist)'
             throw E.no-resource{'Resource does not exist: {f2.path}'}
@@ -186,12 +211,16 @@ task compile{file, template-root} =
    q.template = cfg.templates.default
    q.setenv{common-data{}}
    q.plug{*plugins}
-   res = q.translate{file.text, cfg.format, {resources = cfg.resources}}
+   res = q.translate{file.text, cfg.format} with
+      resources = {
+         root and url = path.join{cfg.output, cfg.resources.root}
+         url = rrel
+      }
    res.meta = object with
       q.documents.meta.entries{} each {k, match v} ->
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
-   dest = @rename-out{file, extension = ".html"}
+
    @log with '  Output {chalk.bold.green{dest.path}}'
    @log with M{.end, ""}
    res
