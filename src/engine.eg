@@ -376,7 +376,7 @@ class Engine:
 
       if not resolver:
          if options.fallback-to-default:
-            return @read-resource{.default, filename}
+            return @read-resource{.default, filename, options}
          else:
             throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
 
@@ -390,7 +390,7 @@ class Engine:
             if error:
                throw error
             elif options.fallback-to-default:
-               @read-resource{.default, filename}
+               @read-resource{.default, filename, options}
             else:
                throw E.cannot-resolve{'Resource "{filename}" could not be resolved.'}
 
