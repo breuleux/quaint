@@ -4,6 +4,7 @@ require:
    "./util" ->
       findInsert, insertSorted, deleteSorted
    .tools
+   .ast -> QAst
 
 provide:
    comparePaths
@@ -44,6 +45,11 @@ class MapDocument{BasicDocument}:
    .get{key} =
       @accessed = true
       @data.get{key}
+   .getRaw{key} =
+      @accessed = true
+      match @data.get{key} as node:
+         QAst? -> node.raw{}
+         else -> node
    .set{key, value} =
       @modified = true
       @data.set{key, value}
