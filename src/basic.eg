@@ -256,7 +256,10 @@ basic-plugin{@} =
                   cnode.children.push with li % link
                level > clvl ->
                   newnode = ul % li % link
-                  cnode.children.push{newnode}
+                  ch = cnode.children
+                  if ch.length === 0:
+                     ch.push with li % ""
+                  ch[ch.length - 1].children.push{newnode}
                   stack.push with {clvl, cnode}
                   {clvl, cnode} = {level, newnode}
                level < clvl ->
