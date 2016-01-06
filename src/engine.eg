@@ -30,8 +30,6 @@ provide:
    Spec
    processDocuments
 
-
-
 class Dispatcher:
 
    constructor{} =
@@ -375,7 +373,7 @@ class Engine:
       var error = null
 
       if not resolver:
-         if options.fallback-to-default:
+         if options.fallback-to-default and type !== "default":
             return @read-resource{.default, filename, options}
          else:
             throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
