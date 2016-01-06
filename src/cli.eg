@@ -9,6 +9,7 @@ require:
    child_process
    .config ->
       merge-config
+   filendir
 
 get-arguments{} =
 
@@ -172,6 +173,13 @@ provide{} =
          JSON.parse{fs.read-file-sync{"quaint.json", .utf8}}
          argv
 
+      server-out = cfg.nominal-output
+
+      ;; server-start-page = cfg.server.start-page
+
+      server-start-page = path.join{cfg.site-root or "", cfg.server.start-page}
+      ;; cfg.output = path.join{cfg.output, cfg.site-root or ""}
+
       engage{main, opts}.run{} where opts = {
          config = cfg
          argv = argv
@@ -191,12 +199,16 @@ provide{} =
       }
 
       if cfg.server.enable:
+         filendir.write-file-sync{p, text} where
+            p = path.join{cfg.nominal-output, ".quaint-server-entry-point.html"}
+            text = '''<meta http-equiv="refresh" content="0; URL='{server-start-page}'" />'''
          child_process.spawn{reload-bin-path} with
             {
-               "-d", cfg.output
+               "-d", server-out
                "-p", cfg.server.port
                "-r", cfg.server.delay
-               "-s", cfg.server.start-page
+               ;; "-s", server-start-page
+               "-s", ".quaint-server-entry-point.html"
                "-b", cfg.server.open-browser
             }
             {stdio = .inherit}

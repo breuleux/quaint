@@ -124,10 +124,10 @@ normalize-qname{match t} =
       t + ".q"
 
 task config{} =
-   ;; @config
    merge-config with
       JSON.parse{@get{"quaint.json"}.text}
       @argv
+
 
 task common-data{} =
    cfg = config{}
@@ -195,7 +195,7 @@ task compile{file, template-root} =
       plugin{name} =
          resolve-plugin{name, true}
       template{normalize-qname! filename} =
-         @log with 'Template: {chalk.bold.magenta{filename}}'
+         @log with 'Template {chalk.bold.magenta{filename}}'
          if not template-root:
             throw E.no-template-root{"The template directory was not specified."}
          f2 = template-root.get{filename}
