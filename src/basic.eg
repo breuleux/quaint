@@ -182,6 +182,20 @@ basic-plugin{@} =
       }
    }
 
+   @register-components with {
+      inherit{tags, props, children} =
+         new-children = children each
+            ENode? e ->
+               ENode{e.tags ++ tags, e.props & props, e.children}
+            R"^[ \n]*$"? s ->
+               s
+            other ->
+               ENode{tags, props, {other}}
+         match new-children:
+            {x} -> x
+            xs -> xs
+   }
+
 
    @evaluator = BasicEvaluator{}
 
