@@ -376,7 +376,7 @@ class Engine:
          if options.fallback-to-default and type !== "default":
             return @read-resource{.default, filename, options}
          else:
-            throw E.cannot-resolve-type{'Resources of type "{type}" cannot be resolved.'}
+            throw E.cannot-resolve-type{'Resource "{filename}" of type "{type}" cannot be resolved.'}
 
       match resolver.keys[filename] as result:
          undefined? ->
