@@ -151,29 +151,6 @@ basic-plugin{@} =
       errors = SeqDocument{}
    }
 
-   ;; @register-resolvers with {
-
-   ;;    default = file-resolver{directory = ""}
-
-   ;;    plugin{name} =
-   ;;       m =
-   ;;          try:
-   ;;             __require{'quaint-{name}'}
-   ;;          catch e1:
-   ;;             try:
-   ;;                __require{name}
-   ;;             catch e2:
-   ;;                throw e1
-   ;;       m??.quaint-plugin or m
-
-   ;;    template = {
-   ;;       "@none" => "{body}"
-   ;;       "@default" => "{body}"
-   ;;       "@minimal" => default-template
-   ;;    }
-   ;; }
-
-
    @register-resolvers with {
       template = {
          "@none" => "{body}"
