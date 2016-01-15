@@ -101,6 +101,7 @@ resolver = PluginResolver{}
 
 
 task resolve-plugin{name, deprox! arg} =
+   cfg = config{}
    if arg in {null, false, undefined}:
       return null
    if arg === true:
@@ -115,7 +116,17 @@ task resolve-plugin{name, deprox! arg} =
          resolver.try-require{name, {name}}
       else ->
          resolver.try-require{name, {'quaint-{name}', name}}
-   if{arg === true, pack, pack{arg}}
+   match arg:
+      === true ->
+         pack
+      options ->
+         pack with arg & {
+            read-file{x} =
+               @log{'Resource {chalk.bold.magenta{x}}'}
+               @get-from{x, cfg.content-root}.text
+         }
+
+   ;; if{arg === true, pack, pack{arg}}
 
 normalize-qname{match t} =
    R"^@|.q$"? or false? ->
