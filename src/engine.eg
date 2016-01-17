@@ -74,6 +74,7 @@ class Dispatcher:
 class Engine:
 
    constructor{Array! plugins} =
+      @next = tools.next
       @top = true
       @is-quaint-engine = true
       @components = {=}
@@ -119,9 +120,10 @@ class Engine:
                extra = {_node = node
                         _wide = node.width == .wide
                         _op = node[1]}
-               match handler.gen{@, extra & values}:
-                  == tools.next -> pass
-                  result -> return result
+               x = may-fail{-> handler.gen{@, extra & values}}
+               match x:
+                  == @next -> pass
+                  else -> return x
             % [parts each part -> @gen{part}]
          result
 
@@ -230,7 +232,18 @@ class Engine:
                String? ->
                   s = s.replace{r, repl}
                Function? f or f is [-> repl] ->
-                  s = s.replace{r, repl}
+                  inserts = {""}
+                  f2{*args} =
+                     match f{*args}:
+                        String? s -> s
+                        other ->
+                           inserts.push{other}
+                           "\x00"
+                  s = s.replace{r, f2}
+                  if inserts.length > 1:
+                     return collapse{zip{inserts, s.split{"\x00"}}}
+                  else:
+                     s
             s
          x -> x
 
