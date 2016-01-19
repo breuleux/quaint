@@ -1,5 +1,4 @@
 
-
 require:
    opg ->
       transferLocation as [<<:]
@@ -20,117 +19,99 @@ require:
    .ast ->
       QAst, Text, Oper, Seq
       Into, Deferred
-   .format -> Format
-   .include ->
-      Include
-      Data
+   ;; .format -> Format
+   ;; .include ->
+   ;;    Include
+   ;;    Data
    fs, path
+   .plugins
+   .plugins/eval -> BasicEvaluator
 
 provide:
    BasicEvaluator
    basic-plugin
    lit-plugin
-   file-resolver
-   analyze-path
+   ;; file-resolver
+   ;; analyze-path
 
 
-analyze-path{spec} =
-   {m, type, let path} = match spec:
-      R"^(?:([^!:/]*)!)?(?:([^!:/]*)!)?(.*)$"! match ->
-         {_, String? type, undefined?, p} ->
-            {"head", type, p}
-         {_, mth, type, p} ->
-            {
-               mth or "head"
-               type or p.split{"."}.reverse{}[0].split{R"\b"}[0]
-               p
-            }
-   path-is-url = R"(^//)|(://)"? path
-   {
-      type =
-      method = m
-      = path
-      = path-is-url
-      contents = not path-is-url
-   }
+;; default-template = """
+;; doctype :: html
+;; html %
+;;   head %
+;;     title %
+;;       meta::title !! Untitled
+;;     meta %
+;;       http-equiv = Content-type
+;;       content = text/html
+;;       charset = UTF-8
+;;   body % {body}
+;; """
+
+;; require-wide{f}{engine, data} =
+;;    if data._wide:
+;;       f.call{this, engine, data}
+;;    else:
+;;       tools.next
+
+;; header-rule{level}{engine, {=> x}} =
+;;    gx = engine.gen{x}
+;;    var lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
+;;    used = [engine.documents.sections._used or= {=}]
+;;    if used[lbl] as u:
+;;       used[lbl] += 1
+;;       lbl += '${u}'
+;;    else:
+;;       used[lbl] = 1
+;;    rval =
+;;       ^[S'h{level}'] %
+;;          id = lbl
+;;          gx
+;;          Into{.sections, {level, gx, lbl}}
+;;    rval &: {block = true}
+
+;; class BasicEvaluator:
+;;    constructor{@store = Object.create{null}} =
+;;       pass
+;;    eval{expr, env = {=}, loc = null} =
+;;       {key, *fields} = expr.split{"."}
+
+;;       ;; s = Object.create{@store} &: env
+;;       s = @store &: env
+;;       if not Object.hasProperty.call{s, key}:
+;;          try:
+;;             JSON.parse{expr}
+;;          catch _:
+;;             throw E.not_in_environment{key}
+;;       else:
+;;          var v = s[key]
+;;          fields each field -> v = v[field]
+;;          v
+;;    setenv{key, value} =
+;;       @store[key] = value
+;;    fork{} =
+;;       BasicEvaluator with
+;;          Object.create{@store}
 
 
-default-template = """
-doctype :: html
-html %
-  head %
-    title %
-      meta::title !! Untitled
-    meta %
-      http-equiv = Content-type
-      content = text/html
-      charset = UTF-8
-  body % {body}
-"""
-
-require-wide{f}{engine, data} =
-   if data._wide:
-      f.call{this, engine, data}
-   else:
-      tools.next
-
-header-rule{level}{engine, {=> x}} =
-   gx = engine.gen{x}
-   var lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
-   used = [engine.documents.sections._used or= {=}]
-   if used[lbl] as u:
-      used[lbl] += 1
-      lbl += '${u}'
-   else:
-      used[lbl] = 1
-   rval =
-      ^[S'h{level}'] %
-         id = lbl
-         gx
-         Into{.sections, {level, gx, lbl}}
-   rval &: {block = true}
-
-class BasicEvaluator:
-   constructor{@store = Object.create{null}} =
-      pass
-   eval{expr, env = {=}, loc = null} =
-      {key, *fields} = expr.split{"."}
-
-      ;; s = Object.create{@store} &: env
-      s = @store &: env
-      if not Object.hasProperty.call{s, key}:
-         try:
-            JSON.parse{expr}
-         catch _:
-            throw E.not_in_environment{key}
-      else:
-         var v = s[key]
-         fields each field -> v = v[field]
-         v
-   setenv{key, value} =
-      @store[key] = value
-   fork{} =
-      BasicEvaluator with
-         Object.create{@store}
-
-file-resolver{options = {=}}{name} =
-   with-extension = match name:
-      R"\.[a-zA-Z0-9]+$"? -> name
-      else -> '{name}.q'
-   filename = match with-extension:
-      R"^/"? -> with-extension
-      else -> path.join{options.directory or "", with-extension}
-   contents = [options.read-file or fs.read-file-sync]{filename, .utf8}
-   {file = filename
-    contents = contents}
+;; file-resolver{options = {=}}{name} =
+;;    with-extension = match name:
+;;       R"\.[a-zA-Z0-9]+$"? -> name
+;;       else -> '{name}.q'
+;;    filename = match with-extension:
+;;       R"^/"? -> with-extension
+;;       else -> path.join{options.directory or "", with-extension}
+;;    contents = [options.read-file or fs.read-file-sync]{filename, .utf8}
+;;    {file = filename
+;;     contents = contents}
 
 
-conditional{engine, cond, value, falsey = ""} =
-   engine.redefer{engine.gen{cond}} with {result} ->
-      if result and not Error? result and not result.error:
-         engine.gen{value}
-      else:
-         falsey and engine.gen{falsey}
+;; conditional{engine, cond, value, falsey = ""} =
+;;    engine.redefer{engine.gen{cond}} with {result} ->
+;;       if result and not Error? result and not result.error:
+;;          engine.gen{value}
+;;       else:
+;;          falsey and engine.gen{falsey}
 
 
 
@@ -144,220 +125,222 @@ lit-plugin{@} =
 
 basic-plugin{@} =
 
+   plugins.install{@}
+
    @register-documents with {
-      meta = MapDocument{}
-      sections = SeqDocument{}
+      ;; meta = MapDocument{}
+      ;; sections = SeqDocument{}
       flags = MapDocument{}
       errors = SeqDocument{}
    }
 
-   @register-resolvers with {
-      template = {
-         "@none" => "{body}"
-         "@default" => "{body}"
-         "@minimal" => default-template
-      }
-   }
+   ;; @register-resolvers with {
+   ;;    template = {
+   ;;       "@none" => "{body}"
+   ;;       "@default" => "{body}"
+   ;;       "@minimal" => default-template
+   ;;    }
+   ;; }
 
-   @register-components with {
-      inherit{tags, props, children} =
-         new-children = children each
-            ENode? e ->
-               ENode{e.tags ++ tags, e.props & props, e.children}
-            R"^[ \n]*$"? s ->
-               s
-            other ->
-               ENode{tags, props, {other}}
-         match new-children:
-            {x} -> x
-            xs -> xs
-   }
+   ;; @register-components with {
+   ;;    inherit{tags, props, children} =
+   ;;       new-children = children each
+   ;;          ENode? e ->
+   ;;             ENode{e.tags ++ tags, e.props & props, e.children}
+   ;;          R"^[ \n]*$"? s ->
+   ;;             s
+   ;;          other ->
+   ;;             ENode{tags, props, {other}}
+   ;;       match new-children:
+   ;;          {x} -> x
+   ;;          xs -> xs
+   ;; }
 
 
-   @evaluator = BasicEvaluator{}
+   ;; @evaluator = BasicEvaluator{}
 
    @register-macros with {
 
-      "when"{engine, shed! cond, body} =
-         conditional{engine, cond, body}
+      ;; "when"{engine, shed! cond, body} =
+      ;;    conditional{engine, cond, body}
 
-      "each"{engine, shed! list, *variables, body} =
-         engine.redefer{engine.gen{list}} with {results} ->
-            to-iterate = match enode-to-data{results} as x:
-               {^Symbol.iterator => true?} ->
-                  x
-               else ->
-                  items{x}
-            vs = variables each v -> v.shed{}.raw{}
-            enumerate{to-iterate} each {i, value} ->
-               e = engine.fork{}
-               e.setenv{"$i", i}
-               match vs:
-                  {} -> e.setenv{"$x", value}
-                  {v} -> e.setenv{v, value}
-                  else ->
-                     zip{vs, value} each {v, x} ->
-                        e.setenv{v, x}
-               e.gen{body}
+      ;; "each"{engine, shed! list, *variables, body} =
+      ;;    engine.redefer{engine.gen{list}} with {results} ->
+      ;;       to-iterate = match enode-to-data{results} as x:
+      ;;          {^Symbol.iterator => true?} ->
+      ;;             x
+      ;;          else ->
+      ;;             items{x}
+      ;;       vs = variables each v -> v.shed{}.raw{}
+      ;;       enumerate{to-iterate} each {i, value} ->
+      ;;          e = engine.fork{}
+      ;;          e.setenv{"$i", i}
+      ;;          match vs:
+      ;;             {} -> e.setenv{"$x", value}
+      ;;             {v} -> e.setenv{v, value}
+      ;;             else ->
+      ;;                zip{vs, value} each {v, x} ->
+      ;;                   e.setenv{v, x}
+      ;;          e.gen{body}
 
-      store{engine, shed! raw! name, body} =
-         if raw{body} == "dump!":
-            engine.macros.dump{engine, name}
-         else:
-            Into{name, body, create{} = SeqDocument{}}
+      ;; store{engine, shed! raw! name, body} =
+      ;;    if raw{body} == "dump!":
+      ;;       engine.macros.dump{engine, name}
+      ;;    else:
+      ;;       Into{name, body, create{} = SeqDocument{}}
 
-      dump{engine, shed! raw! name} =
-         Deferred with {path, docs} ->
-            match docs[name]:
-               undefined? ->
-                  ""
-               doc ->
-                  if name !== "flags":
-                     docs.flags.set{'{name}$dumped', true}
-                  doc.entries{} each x -> engine.gen{x}
+      ;; dump{engine, shed! raw! name} =
+      ;;    Deferred with {path, docs} ->
+      ;;       match docs[name]:
+      ;;          undefined? ->
+      ;;             ""
+      ;;          doc ->
+      ;;             if name !== "flags":
+      ;;                docs.flags.set{'{name}$dumped', true}
+      ;;             doc.entries{} each x -> engine.gen{x}
 
-      css{engine, shed! body} =
-         style[raw] % raw{body}
+      ;; css{engine, shed! body} =
+      ;;    style[raw] % raw{body}
 
-      html{engine, shed! body} =
-         raw % raw{body}
+      ;; html{engine, shed! body} =
+      ;;    raw % raw{body}
 
-      js{engine, shed! body} =
-         script[raw] % raw{body}
+      ;; js{engine, shed! body} =
+      ;;    script[raw] % raw{body}
 
-      doctype{engine, shed! body} =
-         raw % '<!DOCTYPE {body.raw{}}>'
+      ;; doctype{engine, shed! body} =
+      ;;    raw % '<!DOCTYPE {body.raw{}}>'
 
-      toc{engine, body} =
-         Deferred with {path, docs} ->
-            rval = [ul.toc %]
-            stack = {}
-            var cnode = rval
-            var clvl = -1
-            entries = match raw{body}:
-               "" or .all -> docs.sections.entries{path}
-               .below -> docs.sections.entriesAfter{path}
-            entries each {match, title, lbl} ->
-               do:
-                  link = a %
-                     href = S'#{lbl}'
-                     title
-               level == clvl or [level when clvl == -1] ->
-                  clvl = level
-                  cnode.children.push with li % link
-               level > clvl ->
-                  newnode = ul % li % link
-                  ch = cnode.children
-                  if ch.length === 0:
-                     ch.push with li % ""
-                  ch[ch.length - 1].children.push{newnode}
-                  stack.push with {clvl, cnode}
-                  {clvl, cnode} = {level, newnode}
-               level < clvl ->
-                  while level < clvl:
-                     {clvl, cnode} = stack.pop{}
-                  cnode.children.push{li % link}
-            rval
+      ;; toc{engine, body} =
+      ;;    Deferred with {path, docs} ->
+      ;;       rval = [ul.toc %]
+      ;;       stack = {}
+      ;;       var cnode = rval
+      ;;       var clvl = -1
+      ;;       entries = match raw{body}:
+      ;;          "" or .all -> docs.sections.entries{path}
+      ;;          .below -> docs.sections.entriesAfter{path}
+      ;;       entries each {match, title, lbl} ->
+      ;;          do:
+      ;;             link = a %
+      ;;                href = S'#{lbl}'
+      ;;                title
+      ;;          level == clvl or [level when clvl == -1] ->
+      ;;             clvl = level
+      ;;             cnode.children.push with li % link
+      ;;          level > clvl ->
+      ;;             newnode = ul % li % link
+      ;;             ch = cnode.children
+      ;;             if ch.length === 0:
+      ;;                ch.push with li % ""
+      ;;             ch[ch.length - 1].children.push{newnode}
+      ;;             stack.push with {clvl, cnode}
+      ;;             {clvl, cnode} = {level, newnode}
+      ;;          level < clvl ->
+      ;;             while level < clvl:
+      ;;                {clvl, cnode} = stack.pop{}
+      ;;             cnode.children.push{li % link}
+      ;;       rval
 
-      meta{engine, body} =
-         r = raw{body}
-         if r == "dump!":
-            Deferred with {path, docs} ->
-               table % docs.meta.entries{} each
-                  {k, v} -> tr %
-                     td % k
-                     td % engine.gen{v}
-         elif R"[=:]"? raw{body}:
-            ex = extractor{"\\key = \\value", "\\key => \\value", "\\key: \\jsonvalue"}
-            statements{body} each stmt ->
-               match ex{stmt}:
-                  {=> key, => value} ->
-                     Into{.meta, {raw{key}, value}}
-                  {=> key, => jsonvalue} ->
-                     Into{.meta, {raw{key}, toJSON{jsonvalue}}}
-                  else ->
-                     throw E.meta.syntax{'Invalid meta statement: "{stmt.raw{}}"'}
-         else:
-            Deferred with {path, docs} ->
-               match docs.meta.get{r}:
-                  undefined? ->
-                     throw E.meta.missing{'No meta information: {r}'}
-                  ENode? x or String? x ->
-                     x
-                  node ->
-                     engine.gen{node}
+      ;; meta{engine, body} =
+      ;;    r = raw{body}
+      ;;    if r == "dump!":
+      ;;       Deferred with {path, docs} ->
+      ;;          table % docs.meta.entries{} each
+      ;;             {k, v} -> tr %
+      ;;                td % k
+      ;;                td % engine.gen{v}
+      ;;    elif R"[=:]"? raw{body}:
+      ;;       ex = extractor{"\\key = \\value", "\\key => \\value", "\\key: \\jsonvalue"}
+      ;;       statements{body} each stmt ->
+      ;;          match ex{stmt}:
+      ;;             {=> key, => value} ->
+      ;;                Into{.meta, {raw{key}, value}}
+      ;;             {=> key, => jsonvalue} ->
+      ;;                Into{.meta, {raw{key}, toJSON{jsonvalue}}}
+      ;;             else ->
+      ;;                throw E.meta.syntax{'Invalid meta statement: "{stmt.raw{}}"'}
+      ;;    else:
+      ;;       Deferred with {path, docs} ->
+      ;;          match docs.meta.get{r}:
+      ;;             undefined? ->
+      ;;                throw E.meta.missing{'No meta information: {r}'}
+      ;;             ENode? x or String? x ->
+      ;;                x
+      ;;             node ->
+      ;;                engine.gen{node}
 
-      template{match engine, tpl} =
-         {top => false?} ->
-            throw E.template.syntax{'Template must be specified at top level.'}
-         {template => true? t, fix-template => true?} ->
-            throw E.template.duplicate{'Template {t} was already specified for this file.'}
-         else ->
-            engine.fix-template = true
-            engine.template = tpl.raw{}
+      ;; template{match engine, tpl} =
+      ;;    {top => false?} ->
+      ;;       throw E.template.syntax{'Template must be specified at top level.'}
+      ;;    {template => true? t, fix-template => true?} ->
+      ;;       throw E.template.duplicate{'Template {t} was already specified for this file.'}
+      ;;    else ->
+      ;;       engine.fix-template = true
+      ;;       engine.template = tpl.raw{}
 
-      scope{engine, body} =
-         engine.fork{}.gen{body}
+      ;; scope{engine, body} =
+      ;;    engine.fork{}.gen{body}
 
-      plugins{engine, shed-all! raw! body} =
-         ;; r = engine.resolvers.plugin
-         ;; if not r:
-         ;;    throw E.plugin{'Cannot resolve plugins.'}
-         body.split{R"[ \n,]+"} each name when name !== "" ->
-            ;; p = r{name}
-            p = engine.read-resource{.plugin, name, fallback-to-default = false}
-            p{engine}
-         ""
+      ;; plugins{engine, shed-all! raw! body} =
+      ;;    ;; r = engine.resolvers.plugin
+      ;;    ;; if not r:
+      ;;    ;;    throw E.plugin{'Cannot resolve plugins.'}
+      ;;    body.split{R"[ \n,]+"} each name when name !== "" ->
+      ;;       ;; p = r{name}
+      ;;       p = engine.read-resource{.plugin, name, fallback-to-default = false}
+      ;;       p{engine}
+      ;;    ""
 
-      plugin{engine, raw! name, values} =
-         ;; r = engine.resolvers.plugin
-         ;; if not r:
-         ;;    throw E.plugin{'Cannot resolve plugins.'}
-         p = engine.read-resource{.plugin, name, fallback-to-default = false}
-         ;; p = r{name}
-         ex = extractor{"\\k = \\v", "\\k: \\v", "\\k => \\v"}
-         options = object with
-            values.statements{} each
-               ex! {=> raw! k, => v} ->
-                  {k, toJSON{v}}
-               else ->
-                  throw E.plugin{'Invalid option for plugin "{name}"'}
-         p{engine, options}
-         ""
+      ;; plugin{engine, raw! name, values} =
+      ;;    ;; r = engine.resolvers.plugin
+      ;;    ;; if not r:
+      ;;    ;;    throw E.plugin{'Cannot resolve plugins.'}
+      ;;    p = engine.read-resource{.plugin, name, fallback-to-default = false}
+      ;;    ;; p = r{name}
+      ;;    ex = extractor{"\\k = \\v", "\\k: \\v", "\\k => \\v"}
+      ;;    options = object with
+      ;;       values.statements{} each
+      ;;          ex! {=> raw! k, => v} ->
+      ;;             {k, toJSON{v}}
+      ;;          else ->
+      ;;             throw E.plugin{'Invalid option for plugin "{name}"'}
+      ;;    p{engine, options}
+      ;;    ""
 
-      resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
-         body.statements{} each stmt ->
-            let path = stmt.raw{}
-            @register-resources with {
-               path => analyze-path{path}
-            }
-         ""
+      ;; resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
+      ;;    body.statements{} each stmt ->
+      ;;       let path = stmt.raw{}
+      ;;       @register-resources with {
+      ;;          path => analyze-path{path}
+      ;;       }
+      ;;    ""
    }
 
-   fmt = Format{}
-   @register-macros with {
-      format{engine, *[{shed! raw! descr, body} or {body} and descr is "json"]} =
-         may-fail with ->
-            fmt.format{engine, descr, body}
-   }
-   @macros.format.parsers = fmt.parsers
-   @macros.format.formatters = fmt.formatters
+   ;; fmt = Format{}
+   ;; @register-macros with {
+   ;;    format{engine, *[{shed! raw! descr, body} or {body} and descr is "json"]} =
+   ;;       may-fail with ->
+   ;;          fmt.format{engine, descr, body}
+   ;; }
+   ;; @macros.format.parsers = fmt.parsers
+   ;; @macros.format.formatters = fmt.formatters
 
-   incl = Include{}
-   @register-macros with {
-      include{engine, *[{ext, body} or {body} and ext is null]} =
-         may-fail with ->
-            incl.read{engine, ext??.raw{}, body}
-   }
-   @macros.include.extensions = incl.extensions
+   ;; incl = Include{}
+   ;; @register-macros with {
+   ;;    include{engine, *[{ext, body} or {body} and ext is null]} =
+   ;;       may-fail with ->
+   ;;          incl.read{engine, ext??.raw{}, body}
+   ;; }
+   ;; @macros.include.extensions = incl.extensions
 
-   dat = Data{}
-   @register-macros with {
-      data{engine, *[{ext, body} or {body} and ext is null]} =
-         may-fail with ->
-            dat.read{engine, ext??.raw{}, body}
-   }
-   @macros.data.extensions = dat.extensions
+   ;; dat = Data{}
+   ;; @register-macros with {
+   ;;    data{engine, *[{ext, body} or {body} and ext is null]} =
+   ;;       may-fail with ->
+   ;;          dat.read{engine, ext??.raw{}, body}
+   ;; }
+   ;; @macros.data.extensions = dat.extensions
 
    @register-methods with {
       method lit{} =
@@ -368,39 +351,39 @@ basic-plugin{@} =
          @lit{}.gen{x}
    }
 
-   percent-syntax{engine, descr, contents} =
-      leng = engine.lit{}
+   ;; percent-syntax{engine, descr, contents} =
+   ;;    leng = engine.lit{}
 
-      ex = extractor{"\\key = \\value"}
-      props = {=}
-      stmts = statements{contents} each
-         ex! {key => raw! key, => value} ->
-            props[key] = leng.gen{value}
-            continue
-         stmt ->
-            stmt
-      children =
-         if props != {=}:
-            [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
-         else:
-            s = shedIndent{contents}
-            if s == Text{""}:
-               {}
-            else:
-               {engine.gen{s}}
+   ;;    ex = extractor{"\\key = \\value"}
+   ;;    props = {=}
+   ;;    stmts = statements{contents} each
+   ;;       ex! {key => raw! key, => value} ->
+   ;;          props[key] = leng.gen{value}
+   ;;          continue
+   ;;       stmt ->
+   ;;          stmt
+   ;;    children =
+   ;;       if props != {=}:
+   ;;          [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
+   ;;       else:
+   ;;          s = shedIndent{contents}
+   ;;          if s == Text{""}:
+   ;;             {}
+   ;;          else:
+   ;;             {engine.gen{s}}
 
-      parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
-      var id = null
-      tags = {}
-      parts each
-         "" ->
-            pass
-         R"^#(.*)"! {_, _id} ->
-            id = _id
-         tag ->
-            tags.push with tag
-      if id: props.id = id
-      ENode{tags, props, children}
+   ;;    parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+   ;;    var id = null
+   ;;    tags = {}
+   ;;    parts each
+   ;;       "" ->
+   ;;          pass
+   ;;       R"^#(.*)"! {_, _id} ->
+   ;;          id = _id
+   ;;       tag ->
+   ;;          tags.push with tag
+   ;;    if id: props.id = id
+   ;;    ENode{tags, props, children}
 
 
    @register-rules with {
@@ -443,105 +426,105 @@ basic-plugin{@} =
                      f2 = engine.eval{rf, {=}, fn.location}
                      f2.apply{null, {engine, *args, body}} or ""
 
-      "_ \\x"{engine, {=> x}} =
-         em % engine.gen{x}
+      ;; "_ \\x"{engine, {=> x}} =
+      ;;    em % engine.gen{x}
 
-      "__ \\x"{engine, {=> x}} =
-         strong % engine.gen{x}
+      ;; "__ \\x"{engine, {=> x}} =
+      ;;    strong % engine.gen{x}
 
-      "` \\x"{engine, {x => shed! x}} =
-         code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
+      ;; "` \\x"{engine, {x => shed! x}} =
+      ;;    code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
 
-      "& \\x"{engine, {x => shed! x}} =
-         pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
+      ;; "& \\x"{engine, {x => shed! x}} =
+      ;;    pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
 
-      "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
-         url2 = engine.litgen{url}
-         a %
-            href = url2
-            if{label == Text{""}, url2, engine.gen{label}}
+      ;; "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+      ;;    url2 = engine.litgen{url}
+      ;;    a %
+      ;;       href = url2
+      ;;       if{label == Text{""}, url2, engine.gen{label}}
 
-      "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
-         lbl = engine.litgen{label}
-         img %
-            src = engine.litgen{url}
-            alt = lbl
-            title = lbl
+      ;; "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+      ;;    lbl = engine.litgen{label}
+      ;;    img %
+      ;;       src = engine.litgen{url}
+      ;;       alt = lbl
+      ;;       title = lbl
 
-      "\\url @@ image"{engine, {url => shed! url}} =
-         img % src = engine.litgen{url}
+      ;; "\\url @@ image"{engine, {url => shed! url}} =
+      ;;    img % src = engine.litgen{url}
 
-      "\\descr % \\contents"{engine, spec} =
-         spec as {=> shed! descr, => contents}
-         percent-syntax{engine, descr, contents}
+      ;; "\\descr % \\contents"{engine, spec} =
+      ;;    spec as {=> shed! descr, => contents}
+      ;;    percent-syntax{engine, descr, contents}
 
-      require-wide! "\\descr % \\maybe\\contents"{engine, spec} =
-         spec as {=> shed! descr, => contents}
-         percent-syntax{engine, descr, contents}
+      ;; require-wide! "\\descr % \\maybe\\contents"{engine, spec} =
+      ;;    spec as {=> shed! descr, => contents}
+      ;;    percent-syntax{engine, descr, contents}
 
-      require-wide! "= \\x" = header-rule{1}
-      require-wide! "== \\x" = header-rule{2}
-      require-wide! "=== \\x" = header-rule{3}
-      require-wide! "==== \\x" = header-rule{4}
-      require-wide! "===== \\x" = header-rule{5}
-      require-wide! "====== \\x" = header-rule{6}
+      ;; require-wide! "= \\x" = header-rule{1}
+      ;; require-wide! "== \\x" = header-rule{2}
+      ;; require-wide! "=== \\x" = header-rule{3}
+      ;; require-wide! "==== \\x" = header-rule{4}
+      ;; require-wide! "===== \\x" = header-rule{5}
+      ;; require-wide! "====== \\x" = header-rule{6}
 
-      require-wide! "# \\x"{engine, {=> x}} =
-         mergeable{.ol, li % engine.gen{x}}
+      ;; require-wide! "# \\x"{engine, {=> x}} =
+      ;;    mergeable{.ol, li % engine.gen{x}}
 
-      require-wide! "* \\x"{engine, {=> x}} =
-         mergeable{.ul, li % engine.gen{x}}
+      ;; require-wide! "* \\x"{engine, {=> x}} =
+      ;;    mergeable{.ul, li % engine.gen{x}}
 
-      require-wide! "+ \\x"{engine, {=> x}} =
-         args = collapse{"+", x}
-         mergeable{.table} with
-            tr %
-               args each arg ->
-                  th % engine.gen{arg}
+      ;; require-wide! "+ \\x"{engine, {=> x}} =
+      ;;    args = collapse{"+", x}
+      ;;    mergeable{.table} with
+      ;;       tr %
+      ;;          args each arg ->
+      ;;             th % engine.gen{arg}
 
-      require-wide! "> \\x"{engine, {=> x}} =
-         mergeable{.blockquote, {" ", engine.gen{x}}}
+      ;; require-wide! "| \\x"{engine, {=> x}} =
+      ;;    args = collapse{"|", x}
+      ;;    mergeable{.table} with
+      ;;       tr %
+      ;;          args each arg ->
+      ;;             td % engine.gen{arg}
 
-      require-wide! "\\dt := \\dd"{engine, {=> dt, => dd}} =
-         mergeable{.dl, {dt % engine.gen{dt}, dd % engine.gen{dd}}}
+      ;; require-wide! "\\dt := \\dd"{engine, {=> dt, => dd}} =
+      ;;    mergeable{.dl, {dt % engine.gen{dt}, dd % engine.gen{dd}}}
 
-      require-wide! "| \\x"{engine, {=> x}} =
-         args = collapse{"|", x}
-         mergeable{.table} with
-            tr %
-               args each arg ->
-                  td % engine.gen{arg}
+      ;; require-wide! "> \\x"{engine, {=> x}} =
+      ;;    mergeable{.blockquote, {" ", engine.gen{x}}}
 
-      "\\rule => \\body"{engine, {rule => shed! raw! rule
-                                  body => shed! shedIndent! body}} =
-         match rule:
-            R"^/(.*)/$"! {_, regexp} ->
-               engine.register-postprocessor{regexp} with {*matches} ->
-                  values = object with enumerate{matches} each
-                     {i, m} -> {S'm{i}', m}
-                  e = engine.fork{}
-                  e.regexps = {}
-                  e.setenv{values}.translate{body, .enode}
-               null
-            parseSpec! [spec and {top, match tree, specificity}] ->
-               #put ->
-                  throw E.too_general{rule}
-               #eq{Text? {name}} ->
-                  engine.setenv{name, body}
-               else ->
-                  engine.register-rules{spec} with {engine, values} ->
-                     engine.fork{}.setenv{values}.gen{body}
+      ;; "\\rule => \\body"{engine, {rule => shed! raw! rule
+      ;;                             body => shed! shedIndent! body}} =
+      ;;    match rule:
+      ;;       R"^/(.*)/$"! {_, regexp} ->
+      ;;          engine.register-postprocessor{regexp} with {*matches} ->
+      ;;             values = object with enumerate{matches} each
+      ;;                {i, m} -> {S'm{i}', m}
+      ;;             e = engine.fork{}
+      ;;             e.regexps = {}
+      ;;             e.setenv{values}.translate{body, .enode}
+      ;;          null
+      ;;       parseSpec! [spec and {top, match tree, specificity}] ->
+      ;;          #put ->
+      ;;             throw E.too_general{rule}
+      ;;          #eq{Text? {name}} ->
+      ;;             engine.setenv{name, body}
+      ;;          else ->
+      ;;             engine.register-rules{spec} with {engine, values} ->
+      ;;                engine.fork{}.setenv{values}.gen{body}
 
-         ""
+      ;;    ""
 
-      "\\cond ?? \\value"{engine, {=> shed! cond, => value}} =
-         conditional{engine, cond, value}
+      ;; "\\cond ?? \\value"{engine, {=> shed! cond, => value}} =
+      ;;    conditional{engine, cond, value}
 
-      "\\cond ?? \\value !! \\falsey"{engine, {=> shed! cond, => value, => falsey}} =
-         conditional{engine, cond, value, falsey}
+      ;; "\\cond ?? \\value !! \\falsey"{engine, {=> shed! cond, => value, => falsey}} =
+      ;;    conditional{engine, cond, value, falsey}
 
-      "\\cond !! \\falsey"{engine, {=> shed! cond, => falsey}} =
-         conditional{engine, cond, cond, falsey}
+      ;; "\\cond !! \\falsey"{engine, {=> shed! cond, => falsey}} =
+      ;;    conditional{engine, cond, cond, falsey}
 
       ;; newline rule is a bit more complicated
       newlineRule = {spec, fn} where

@@ -1,0 +1,68 @@
+
+require:
+   ..tools ->
+      shed, raw, shed-indent, parse-spec
+   ..ast ->
+      Text
+
+provide:
+   install
+   BasicEvaluator
+
+
+class BasicEvaluator:
+   constructor{@store = Object.create{null}} =
+      pass
+   eval{expr, env = {=}, loc = null} =
+      {key, *fields} = expr.split{"."}
+
+      ;; s = Object.create{@store} &: env
+      s = @store &: env
+      if not Object.hasProperty.call{s, key}:
+         try:
+            JSON.parse{expr}
+         catch _:
+            throw E.not_in_environment{key}
+      else:
+         var v = s[key]
+         fields each field -> v = v[field]
+         v
+   setenv{key, value} =
+      @store[key] = value
+   fork{} =
+      BasicEvaluator with
+         Object.create{@store}
+
+
+install{@} =
+
+   @evaluator = BasicEvaluator{}
+
+   @register-macros with {
+      scope{engine, body} =
+         engine.fork{}.gen{body}
+   }
+
+   @register-rules with {
+      "\\rule => \\body"{engine, {rule => shed! raw! rule
+                                  body => shed! shedIndent! body}} =
+         match rule:
+            R"^/(.*)/$"! {_, regexp} ->
+               engine.register-postprocessor{regexp} with {*matches} ->
+                  values = object with enumerate{matches} each
+                     {i, m} -> {S'm{i}', m}
+                  e = engine.fork{}
+                  e.regexps = {}
+                  e.setenv{values}.translate{body, .enode}
+               null
+            parseSpec! [spec and {top, match tree, specificity}] ->
+               #put ->
+                  throw E.too_general{rule}
+               #eq{Text? {name}} ->
+                  engine.setenv{name, body}
+               else ->
+                  engine.register-rules{spec} with {engine, values} ->
+                     engine.fork{}.setenv{values}.gen{body}
+         ""
+   }
+

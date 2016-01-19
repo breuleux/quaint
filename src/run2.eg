@@ -10,7 +10,7 @@ require:
    "./config" ->
       merge-config
    fs
-   .basic ->
+   .plugins/common ->
       analyze-path
    "engage" ->
       EngageMessage as M

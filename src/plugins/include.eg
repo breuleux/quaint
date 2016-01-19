@@ -1,9 +1,11 @@
 
 require:
    opg -> Source
-   .tools
+   ..tools ->
+      may-fail
 
 provide:
+   install
    Include
    Data
 
@@ -67,3 +69,24 @@ default-data-extensions = {
    json{engine, file, contents} =
       JSON.parse{contents}
 }
+
+
+install{@} =
+
+   incl = Include{}
+   @register-macros with {
+      include{engine, *[{ext, body} or {body} and ext is null]} =
+         may-fail with ->
+            incl.read{engine, ext??.raw{}, body}
+   }
+   @macros.include.extensions = incl.extensions
+
+   dat = Data{}
+   @register-macros with {
+      data{engine, *[{ext, body} or {body} and ext is null]} =
+         may-fail with ->
+            dat.read{engine, ext??.raw{}, body}
+   }
+   @macros.data.extensions = dat.extensions
+
+

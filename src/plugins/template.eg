@@ -1,0 +1,42 @@
+
+provide:
+   install
+   default-template
+
+default-template = """
+doctype :: html
+html %
+  head %
+    title %
+      meta::title !! Untitled
+    meta %
+      http-equiv = Content-type
+      content = text/html
+      charset = UTF-8
+  body % {body}
+"""
+
+
+install{@} =
+
+   @register-resolvers with {
+      template = {
+         "@none" => "{body}"
+         "@default" => "{body}"
+         "@minimal" => default-template
+      }
+   }
+
+   @register-macros with {
+      template{match engine, tpl} =
+         {top => false?} ->
+            throw E.template.syntax{'Template must be specified at top level.'}
+         {template => true? t, fix-template => true?} ->
+            throw E.template.duplicate{'Template {t} was already specified for this file.'}
+         else ->
+            engine.fix-template = true
+            engine.template = tpl.raw{}
+   }
+
+
+

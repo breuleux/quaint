@@ -1,0 +1,23 @@
+
+require:
+   ..tools ->
+      shed, raw
+
+provide:
+   install
+
+install{@} =
+   @register-macros with {
+      doctype{engine, shed! body} =
+         raw % '<!DOCTYPE {body.raw{}}>'
+
+      html{engine, shed! body} =
+         raw % raw{body}
+
+      css{engine, shed! body} =
+         style[raw] % raw{body}
+
+      js{engine, shed! body} =
+         script[raw] % raw{body}
+   }
+

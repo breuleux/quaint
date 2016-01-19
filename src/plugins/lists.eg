@@ -1,0 +1,40 @@
+
+require:
+   .common ->
+      require-wide
+   ..tools ->
+      mergeable, collapse
+
+provide:
+   install
+
+install{@} =
+   @register-rules with {
+
+      require-wide! "# \\x"{engine, {=> x}} =
+         mergeable{.ol, li % engine.gen{x}}
+
+      require-wide! "* \\x"{engine, {=> x}} =
+         mergeable{.ul, li % engine.gen{x}}
+
+      require-wide! "+ \\x"{engine, {=> x}} =
+         args = collapse{"+", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  th % engine.gen{arg}
+
+      require-wide! "| \\x"{engine, {=> x}} =
+         args = collapse{"|", x}
+         mergeable{.table} with
+            tr %
+               args each arg ->
+                  td % engine.gen{arg}
+
+      require-wide! "\\dt := \\dd"{engine, {=> dt, => dd}} =
+         mergeable{.dl, {dt % engine.gen{dt}, dd % engine.gen{dd}}}
+
+      require-wide! "> \\x"{engine, {=> x}} =
+         mergeable{.blockquote, {" ", engine.gen{x}}}
+   }
+

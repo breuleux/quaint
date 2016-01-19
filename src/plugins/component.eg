@@ -1,0 +1,75 @@
+
+require:
+   ..tools ->
+      raw, shed, shed-indent, extractor, statements
+   ..ast ->
+      Text
+   .common ->
+      require-wide
+
+
+provide:
+   install
+
+
+percent-syntax{engine, descr, contents} =
+   leng = engine.lit{}
+
+   ex = extractor{"\\key = \\value"}
+   props = {=}
+   stmts = statements{contents} each
+      ex! {key => raw! key, => value} ->
+         props[key] = leng.gen{value}
+         continue
+      stmt ->
+         stmt
+   children =
+      if props != {=}:
+         [% stmts each stmt -> engine.gen{stmt}].join{"\n"}.children
+      else:
+         s = shedIndent{contents}
+         if s == Text{""}:
+            {}
+         else:
+            {engine.gen{s}}
+
+   parts = raw{descr}.split{R"[ +]|(?=\.|#)"}
+   var id = null
+   tags = {}
+   parts each
+      "" ->
+         pass
+      R"^#(.*)"! {_, _id} ->
+         id = _id
+      tag ->
+         tags.push with tag
+   if id: props.id = id
+   ENode{tags, props, children}
+
+
+install{@} =
+
+   @register-components with {
+      inherit{tags, props, children} =
+         new-children = children each
+            ENode? e ->
+               ENode{e.tags ++ tags, e.props & props, e.children}
+            R"^[ \n]*$"? s ->
+               s
+            other ->
+               ENode{tags, props, {other}}
+         match new-children:
+            {x} -> x
+            xs -> xs
+   }
+
+   @register-rules with {
+      "\\descr % \\contents"{engine, spec} =
+         spec as {=> shed! descr, => contents}
+         percent-syntax{engine, descr, contents}
+
+      require-wide! "\\descr % \\maybe\\contents"{engine, spec} =
+         spec as {=> shed! descr, => contents}
+         percent-syntax{engine, descr, contents}
+   }
+

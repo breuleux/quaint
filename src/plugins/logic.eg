@@ -1,0 +1,56 @@
+
+require:
+   ..tools ->
+      shed
+   ..etools ->
+      enode-to-data
+
+provide:
+   install
+
+conditional{engine, cond, value, falsey = ""} =
+   engine.redefer{engine.gen{cond}} with {result} ->
+      if result and not Error? result and not result.error:
+         engine.gen{value}
+      else:
+         falsey and engine.gen{falsey}
+
+install{@} =
+
+   @register-rules with {
+
+      "\\cond ?? \\value"{engine, {=> shed! cond, => value}} =
+         conditional{engine, cond, value}
+
+      "\\cond ?? \\value !! \\falsey"{engine, {=> shed! cond, => value, => falsey}} =
+         conditional{engine, cond, value, falsey}
+
+      "\\cond !! \\falsey"{engine, {=> shed! cond, => falsey}} =
+         conditional{engine, cond, cond, falsey}
+
+   }
+
+   @register-macros with {
+      "when"{engine, shed! cond, body} =
+         conditional{engine, cond, body}
+
+      "each"{engine, shed! list, *variables, body} =
+         engine.redefer{engine.gen{list}} with {results} ->
+            to-iterate = match enode-to-data{results} as x:
+               {^Symbol.iterator => true?} ->
+                  x
+               else ->
+                  items{x}
+            vs = variables each v -> v.shed{}.raw{}
+            enumerate{to-iterate} each {i, value} ->
+               e = engine.fork{}
+               e.setenv{"$i", i}
+               match vs:
+                  {} -> e.setenv{"$x", value}
+                  {v} -> e.setenv{v, value}
+                  else ->
+                     zip{vs, value} each {v, x} ->
+                        e.setenv{v, x}
+               e.gen{body}
+   }
+

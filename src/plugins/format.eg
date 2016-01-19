@@ -1,8 +1,10 @@
 
 require:
-   .tools
+   ..tools ->
+      raw, shed, may-fail
 
 provide:
+   install
    Format
 
 
@@ -146,3 +148,12 @@ default-formatters = {
 }
 
 
+install{@} =
+   fmt = Format{}
+   @register-macros with {
+      format{engine, *[{shed! raw! descr, body} or {body} and descr is "json"]} =
+         may-fail with ->
+            fmt.format{engine, descr, body}
+   }
+   @macros.format.parsers = fmt.parsers
+   @macros.format.formatters = fmt.formatters

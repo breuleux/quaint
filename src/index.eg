@@ -13,7 +13,7 @@ require:
    .engine ->
       Engine, processDocuments
    .basic ->
-      basic-plugin, lit-plugin, file-resolver
+      basic-plugin, lit-plugin ;;, file-resolver
    .etools
 
 provide:
@@ -28,7 +28,7 @@ provide:
    Into, Deferred
    BasicDocument, SeqDocument, MapDocument
    h
-   basic-plugin, lit-plugin, file-resolver
+   basic-plugin, lit-plugin ;;, file-resolver
    etools
 
 

@@ -1,0 +1,30 @@
+
+require:
+   ..tools ->
+      shed
+   ..ast ->
+      Text
+
+provide:
+   install
+
+install{@} =
+
+   @register-rules with {
+      "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
+         url2 = engine.litgen{url}
+         a %
+            href = url2
+            if{label == Text{""}, url2, engine.gen{label}}
+
+      "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
+         lbl = engine.litgen{label}
+         img %
+            src = engine.litgen{url}
+            alt = lbl
+            title = lbl
+
+      "\\url @@ image"{engine, {url => shed! url}} =
+         img % src = engine.litgen{url}
+   }
+

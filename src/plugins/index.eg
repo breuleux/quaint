@@ -1,0 +1,35 @@
+
+require:
+   .component
+   .emphasis
+   .eval
+   .format
+   .html
+   .include
+   .links
+   .lists
+   .logic
+   .misc
+   .pre
+   .sections
+   .storage
+   .template
+
+provide:
+   install
+
+install{@} =
+   component.install{@}
+   emphasis.install{@}
+   eval.install{@}
+   format.install{@}
+   html.install{@}
+   include.install{@}
+   links.install{@}
+   lists.install{@}
+   logic.install{@}
+   misc.install{@}
+   pre.install{@}
+   sections.install{@}
+   storage.install{@}
+   template.install{@}

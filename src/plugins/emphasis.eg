@@ -1,0 +1,13 @@
+
+provide:
+   install
+
+install{@} =
+   @register-rules with {
+      "_ \\x"{engine, {=> x}} =
+         em % engine.gen{x}
+
+      "__ \\x"{engine, {=> x}} =
+         strong % engine.gen{x}
+   }
+

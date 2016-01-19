@@ -1,0 +1,76 @@
+
+require:
+   .common -> require-wide
+   ..tools -> raw
+   ..ast ->
+      Into, Deferred
+   ..doc ->
+      SeqDocument
+
+provide:
+   install
+
+header-rule{level}{engine, {=> x}} =
+   gx = engine.gen{x}
+   var lbl = raw{x}.replace{R.g"\W", ""}.toLowerCase{}
+   used = [engine.documents.sections._used or= {=}]
+   if used[lbl] as u:
+      used[lbl] += 1
+      lbl += '${u}'
+   else:
+      used[lbl] = 1
+   rval =
+      ^[S'h{level}'] %
+         id = lbl
+         gx
+         Into{.sections, {level, gx, lbl}}
+   rval &: {block = true}
+
+install{@} =
+
+   @register-documents with {
+      sections = SeqDocument{}
+   }
+
+   @register-macros with {
+      toc{engine, body} =
+         Deferred with {path, docs} ->
+            rval = [ul.toc %]
+            stack = {}
+            var cnode = rval
+            var clvl = -1
+            entries = match raw{body}:
+               "" or .all -> docs.sections.entries{path}
+               .below -> docs.sections.entriesAfter{path}
+            entries each {match, title, lbl} ->
+               do:
+                  link = a %
+                     href = S'#{lbl}'
+                     title
+               level == clvl or [level when clvl == -1] ->
+                  clvl = level
+                  cnode.children.push with li % link
+               level > clvl ->
+                  newnode = ul % li % link
+                  ch = cnode.children
+                  if ch.length === 0:
+                     ch.push with li % ""
+                  ch[ch.length - 1].children.push{newnode}
+                  stack.push with {clvl, cnode}
+                  {clvl, cnode} = {level, newnode}
+               level < clvl ->
+                  while level < clvl:
+                     {clvl, cnode} = stack.pop{}
+                  cnode.children.push{li % link}
+            rval
+   }
+
+   @register-rules with {
+      require-wide! "= \\x" = header-rule{1}
+      require-wide! "== \\x" = header-rule{2}
+      require-wide! "=== \\x" = header-rule{3}
+      require-wide! "==== \\x" = header-rule{4}
+      require-wide! "===== \\x" = header-rule{5}
+      require-wide! "====== \\x" = header-rule{6}
+   }
+

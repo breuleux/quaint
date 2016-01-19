@@ -1,0 +1,34 @@
+
+require:
+   ..tools
+
+provide:
+   require-wide
+   analyze-path
+
+
+require-wide{f}{engine, data} =
+   if data._wide:
+      f.call{this, engine, data}
+   else:
+      tools.next
+
+analyze-path{spec} =
+   {m, type, let path} = match spec:
+      R"^(?:([^!:/]*)!)?(?:([^!:/]*)!)?(.*)$"! match ->
+         {_, String? type, undefined?, p} ->
+            {"head", type, p}
+         {_, mth, type, p} ->
+            {
+               mth or "head"
+               type or p.split{"."}.reverse{}[0].split{R"\b"}[0]
+               p
+            }
+   path-is-url = R"(^//)|(://)"? path
+   {
+      type =
+      method = m
+      = path
+      = path-is-url
+      contents = not path-is-url
+   }

@@ -1,0 +1,17 @@
+
+require:
+   ..tools ->
+      raw, shed, raw-relative, dedent
+
+provide:
+   install
+
+install{@} =
+   @register-rules with {
+      "` \\x"{engine, {x => shed! x}} =
+         code % raw{x}.replace{R.g"\\+[{}()\[\]]", x -> x.slice{1}}
+
+      "& \\x"{engine, {x => shed! x}} =
+         pre % dedent{rawRelative{x}.replace{R"^ *\n", ""}}
+   }
+

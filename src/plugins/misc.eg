@@ -1,0 +1,42 @@
+
+require:
+   ..tools ->
+      raw, shed, shed-all, extractor, toJSON
+   .common ->
+      analyze-path
+
+
+provide:
+   install
+
+
+install{@} =
+   @register-macros with {
+
+      plugins{engine, shed-all! raw! body} =
+         body.split{R"[ \n,]+"} each name when name !== "" ->
+            p = engine.read-resource{.plugin, name, fallback-to-default = false}
+            p{engine}
+         ""
+
+      plugin{engine, raw! name, values} =
+         p = engine.read-resource{.plugin, name, fallback-to-default = false}
+         ex = extractor{"\\k = \\v", "\\k: \\v", "\\k => \\v"}
+         options = object with
+            values.statements{} each
+               ex! {=> raw! k, => v} ->
+                  {k, toJSON{v}}
+               else ->
+                  throw E.plugin{'Invalid option for plugin "{name}"'}
+         p{engine, options}
+         ""
+
+      resources{engine, *[{shed! raw! m, body} or {body} and m is "head"]} =
+         body.statements{} each stmt ->
+            let path = stmt.raw{}
+            @register-resources with {
+               path => analyze-path{path}
+            }
+         ""
+   }
+
