@@ -122,42 +122,42 @@ get-arguments{} =
       ;; @default{"dump-data", true}
       ;; @describe{"dump-data", "Dump data provided with -d in a file (./data.json if the file is not specified)"}
 
-      @example with
-         "quaint myfile.q"
-         "Translate to myfile.html"
-      @example with
-         "quaint file1.q file2.q file3.q -v"
-         "Translate multiple files"
-      @example with
-         "quaint -e 'Quaint is __cool'"
-         "Translate a literal"
+      ;; @example with
+      ;;    "quaint myfile.q"
+      ;;    "Translate to myfile.html"
+      ;; @example with
+      ;;    "quaint file1.q file2.q file3.q -v"
+      ;;    "Translate multiple files"
+      ;; @example with
+      ;;    "quaint -e 'Quaint is __cool'"
+      ;;    "Translate a literal"
 
-      @example with
-         "quaint -e 'Play {game}' -d 'game:chess'"
-         "Fill data in"
-      @example with
-         "quaint article.q -d info.json"
-         "Fill data in from a file"
+      ;; @example with
+      ;;    "quaint -e 'Play {game}' -d 'game:chess'"
+      ;;    "Fill data in"
+      ;; @example with
+      ;;    "quaint article.q -d info.json"
+      ;;    "Fill data in from a file"
 
-      @example with
-         "quaint -e '2+2={2+2}' -p javascript"
-         "Using the quaint-javascript plugin"
-      @example with
-         "quaint file1.q file2.q -p prelude.q"
-         "Prepend prelude to each file"
+      ;; @example with
+      ;;    "quaint -e '2+2={2+2}' -p javascript"
+      ;;    "Using the quaint-javascript plugin"
+      ;; @example with
+      ;;    "quaint file1.q file2.q -p prelude.q"
+      ;;    "Prepend prelude to each file"
 
-      @example with
-         "quaint file.q -t tpl"
-         "Use template ./tpl.q"
-      @example with
-         "quaint -e 'B' -t 'A {body} C'"
-         "Inline template, prints out A B C"
-      @example with
-         "quaint -e '[template::tpl]BODY'"
-         "Use template ./tpl.q"
-      @example with
-         "quaint -e '[template::tpl]BODY' -t templates/"
-         "Use template ./templates/tpl.q"
+      ;; @example with
+      ;;    "quaint file.q -t tpl"
+      ;;    "Use template ./tpl.q"
+      ;; @example with
+      ;;    "quaint -e 'B' -t 'A {body} C'"
+      ;;    "Inline template, prints out A B C"
+      ;; @example with
+      ;;    "quaint -e '[template::tpl]BODY'"
+      ;;    "Use template ./tpl.q"
+      ;; @example with
+      ;;    "quaint -e '[template::tpl]BODY' -t templates/"
+      ;;    "Use template ./templates/tpl.q"
 
       @check with {argv} ->
          ;; if not argv.e and not argv._.length:
@@ -246,10 +246,10 @@ async provide{} =
             }
             clean = true
             ignore-empty-changes = true
-            watch = cfg.watch
+            watch = cfg.watch and not cfg._print
          }
 
-      if cfg.server.enable:
+      if cfg.server.enable and not cfg._print:
          filendir.write-file-sync{p, text} where
             p = path.join{cfg.nominal-output, ".quaint-server-entry-point.html"}
             text = '''<meta http-equiv="refresh" content="0; URL='{server-start-page}'" />'''
