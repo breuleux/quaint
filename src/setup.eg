@@ -1,0 +1,321 @@
+
+require:
+   inquirer
+   child_process
+   chalk
+   path
+   .run2 -> PluginResolver
+   fs
+
+provide:
+   prompt
+   setup
+   setup-plugin
+
+
+now = new Date{}
+
+zpad{String! var s, length} =
+   while s.length < length:
+      s = '0' + s
+   s
+
+
+scaffold-index = '''
+meta ::
+  title = Index
+  author = Your name
+  date = {now.get-full-year{}}-{zpad{now.get-month{} + 1, 2}}-{zpad{now.get-date{}, 2}}
+
+Write some text here.
+
+Syntax reference @@ http://breuleux.github.io/quaint/syntax.html
+'''
+
+scaffold-template = '''
+template :: @minimal
+= meta :: title
+\{body\}
+'''
+
+scaffold-style = '''
+/*
+This stylesheet will be included automatically by all pages.
+To import more stylesheets, go in quaint.json and add them to the resources.files list.
+
+CSS files are not copied automatically, so @import will not work.
+
+A stylesheet can be imported on a per-page basis with this statement:
+resources :: style.css
+*/
+'''
+
+scaffold-script = '''
+/*
+This stylesheet will be executed automatically by all pages.
+To import more scripts, go in quaint.json and add them to the resources.files list.
+
+A script can be imported on a per-page basis with this statement:
+resources :: script.js
+*/
+'''
+
+
+
+prompt{question} =
+   new Promise with
+      {resolve, reject} ->
+         try:
+            inquirer.prompt{{question}, resolve}
+         catch e:
+            reject{e}
+
+resolver = PluginResolver{false}
+
+async install-plugin{name} =
+   real-name = if{name.starts-with{"quaint-"}, name, 'quaint-{name}'}
+   try:
+      resolver.r{real-name}
+   catch e when e.code === "MODULE_NOT_FOUND":
+      print 'Package {chalk.bold{real-name}} is not installed locally. Installing...'
+      result = child_process.spawn-sync{"npm", {"install", real-name, "--save"}}
+      match result.status:
+         0 ->
+            print result.stdout.to-string{}
+            resolver.r{real-name}
+         1 ->
+            print result.stderr.to-string{}
+            print 'Could not install {chalk.bold{real-name}}.'
+            null
+
+
+async setup-plugin{name, config, instructions} =
+   plugin = await install-plugin{name}
+   if plugin:
+      simple-name = name.replace{R"^quaint-", ""}
+      if plugin.quaint-setup:
+         config.plugins[simple-name] = {=}
+         await plugin.quaint-setup{config, instructions}
+         print 'Plugin {chalk.bold{name}} successfully configured!'
+      else:
+         print 'Using plugin {chalk.bold{name}}'
+         config.plugins[simple-name] =
+            plugin.quaint-default-config or true
+
+
+default-config = {
+   content-root = null
+   sources = null
+   files = null
+   templates = {
+      root = null
+      default = null
+   }
+   output = null
+   resources = {
+      root = null
+      files = {=}
+   }
+   hostname = null
+   site-root = null
+   server = {
+      start-page = "index.html"
+      port = 9137
+   }
+   plugins = {=}
+}
+
+async setup{var config = null
+            var instructions = null} =
+
+   config or= clone{default-config}
+   instructions or= {}
+
+   ;;;;;;;;;;;;;;;;;
+   ;; Directories ;;
+   ;;;;;;;;;;;;;;;;;
+
+   if not config.content-root:
+      {=> content-root} = await prompt with {
+            name = .content-root
+            message = "Source directory:"
+            type = .input
+            default = .content
+      }
+      config &: {
+         = content-root
+         sources = {"**/*.q"}
+      }
+      instructions.push with #mkdir{content-root}
+
+   if not config.output:
+      {=> output} = await prompt with {
+         name = .output
+         message = "Output directory:"
+         type = .input
+         default = .output
+      }
+      config.output = output
+      instructions.push with #mkdir{output}
+
+   if not config.templates.root:
+      {=> template-root} = await prompt with {
+         name = .template-root
+         message = "Template directory:"
+         type = .input
+         default = .template
+      }
+      config.templates.root = template-root
+      instructions.push with #mkdir{template-root}
+
+   if not config.files:
+      {=> assets-root} = await prompt with {
+         name = .assets-root
+         message = "Assets directory (source subdirectory):"
+         type = .input
+         default = .assets
+      }
+      config.files = {assets-root}
+      instructions.push with #mkdir{path.join{config.content-root, assets-root}}
+
+   if not config.resources.root:
+      {=> resources-root} = await prompt with {
+         name = .resources-root
+         message = "Resources directory (output subdirectory):"
+         type = .input
+         default = .resources
+      }
+      config.resources.root = resources-root
+
+   ;;;;;;;;;;;;;;
+   ;; hostname ;;
+   ;;;;;;;;;;;;;;
+
+   if not config.hostname:
+      {=> hostname} = await prompt with {
+         name = .hostname
+         message = "Where will the pages be hosted?"
+         type = .input
+         default = "http://localhost"
+      }
+      config &:
+         match hostname:
+            R"^([a-z]+://)?([^/]+)/?(.*)$"! {_, protocol, host, match root} ->
+               do: let hostname = [protocol or "http://"] + host
+               false? -> {= hostname, site-root = "/"}
+               R"/$"? -> {= hostname, site-root = root}
+               else -> {= hostname, site-root = root + "/"}
+
+   ;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Configure plugins ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;
+
+   {=> install} = await prompt with {
+      name = .install
+      message = "Install plugins?"
+      type = .confirm
+      default = true
+   }
+
+   if install:
+      if not fs.exists-sync{"package.json"}:
+         fs.write-file-sync{"package.json", "{}"}
+
+      url = "http://breuleux.github.io/quaint/plugins/index.html"
+      print '\nYou can consult the plugin list at this address:'
+      print chalk.bold.cyan{url}
+
+      while true:
+         print ""
+         {=> name} = await prompt with {
+            name = .name
+            message = "Install plugin (<Enter> to finish):"
+            type = .input
+         }
+         if name.trim{} === "":
+            print "\nDone installing plugins."
+            break
+         await setup-plugin{name, config, instructions}
+   
+   ;;;;;;;;;;;;;
+   ;; Create? ;;
+   ;;;;;;;;;;;;;
+
+   recipes = {
+      'index.q' => {
+         dir = config.content-root
+         message = "a page to start with"
+         value = scaffold-index
+      }
+      'default.q' => {
+         dir = config.templates.root
+         message = "a template"
+         value = scaffold-template
+      }
+      'style.css' => {
+         dir = config.content-root
+         message = "a global stylesheet"
+         value = scaffold-style
+         resources = {"style.css"}
+      }
+      'script.js' => {
+         dir = config.content-root
+         message = "a global script"
+         value = scaffold-script
+         resources = {"script.js"}
+      }
+   }
+
+   config.templates.default or= "@minimal"
+
+   print "\nNow let's create some files!\n"
+
+   items{recipes} each {key, value} ->
+      p = path.join{value.dir, key}
+      {=> result} = await prompt with {
+         name = .result
+         message = 'Do you want me to create {value.message}: {p}?'
+         type = .confirm
+         default = true
+      }
+      if result:
+         var text = value.value
+         if key === "default.q":
+            {=> result2} = await prompt with {
+               name = .result2
+               message = "Do you want to use it as a default template?"
+               type = .confirm
+               default = true
+            }
+            text = text.replace{"@minimal", config.templates.default}
+            if result2:
+               config.templates.default = key.replace{R".q$", ""}
+         instructions.push with #write{p, text}
+         [value.resources or {}] each f ->
+            config.resources.files[f] = f
+
+   print "\nWe are almost done.\n"
+
+   {=> watch} = await prompt with {
+      name = .watch
+      message = 'Should the quaint command watch by default?'
+      type = .confirm
+      default = true
+   }
+   config.watch = watch
+
+   if watch:
+      {=> serve} = await prompt with {
+         name = .serve
+         message = 'Should the quaint command start a server by default?'
+         type = .confirm
+         default = true
+      }
+      config.server.enabled = serve
+      if serve:
+         print 'The server port is {chalk.bold{config.server.port}}.'
+
+   {= config, = instructions}
+
+;; async:
+;;    setup{}

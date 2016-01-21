@@ -10,6 +10,7 @@ require:
    .config ->
       merge-config
    filendir
+   mkdirp
    "./setup" ->
       prompt, setup, setup-plugin
    format-json
@@ -175,15 +176,17 @@ get-arguments{} =
 
 reload-bin-path = path.join{__dirname, '../node_modules/reload/bin/reload'}
 
-async commit-setup{config, instructions} =
-   print format-json.plain{config}
-   print instructions
+async commit-setup{config, instructions, filename} =
+   filendir.write-file-sync{filename, format-json.plain{config}}
+   instructions each
+      #mkdir{dir} ->
+         mkdirp.sync{dir}
+      #write{file, contents} ->
+         filendir.write-file-sync{file, contents}
 
-async execute-setup{plugin = null} =
-   {=> let config, => instructions} = await setup{}
-   if String? plugin:
-      setup-plugin{plugin, instructions}
-   commit-setup{config, instructions}
+async execute-setup{initial-config, filename} =
+   {=> let config, => instructions} = await setup{initial-config}
+   commit-setup{config, instructions, filename}
 
 async provide{} =
    try:
@@ -204,10 +207,14 @@ async provide{} =
 
       if argv.setup:
          match argv.setup:
+            String? when not config-exists ->
+               print "Please create or specify a configuration file."
             String? plugin-name ->
-               await execute-setup{plugin-name}
+               instructions = {}
+               await setup-plugin{plugin-name, cfg, instructions}
+               commit-setup{cfg, instructions, config-file}
             else ->
-               await setup{}
+               await execute-setup{cfg, config-file}
          return
       elif cfg.sources.length === 0 and not cfg._eval and not config-exists:
          {=> create} = await prompt with {
@@ -217,7 +224,7 @@ async provide{} =
             default = true
          }
          if create:
-            await execute-setup{}
+            await execute-setup{null, config-file}
          return
 
       server-out = cfg.nominal-output

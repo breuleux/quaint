@@ -18,10 +18,11 @@ defaults{} = {
    data = {=}
    plugins = {=}
    inject = {}
+   content-root = "."
    output = "."
    format = "html"
    templates = {
-      default = "@minimal"
+      default = null
       root = null
    }
    resources = {
@@ -31,6 +32,8 @@ defaults{} = {
    }
    save-meta = false
    watch = false
+   hostname = "http://localhost"
+   site-root = "/"
    server = {
       enable = false
       delay = 300
@@ -105,8 +108,14 @@ merge-config{normalize-config! cfg, argv} =
    cfg.plugins = plugins
    cfg.inject = injections
 
+   ;; templates
+   if argv.template:
+      cfg.templates.default = argv.template
+   if argv.template-directory:
+      cfg.templates.root = argv.template-directory
+
    ;; others
-   {.format, .save-meta, .out, .eval, .verbose, .watch} each name ->
+   {.format, .save-meta, .out, .verbose, .watch} each name ->
       if argv[name] as x:
          cfg[name] = x
    if argv.resources as [let x]:
@@ -119,9 +128,17 @@ merge-config{normalize-config! cfg, argv} =
       if x:
          cfg.server.enable = true
          cfg.server.port = if{x === true, 8080, Number{x}}
+   if argv.eval:
+      cfg._eval = argv.eval
+      cfg._print = true
+      cfg.templates.default or= "@none"
+   else:
+      cfg.templates.default or= "@minimal"
+   if argv.stdout:
+      cfg._print = true
 
-   if cfg.sources.length === 0:
-      cfg.sources = {"**/*.q"}
+   ;; if cfg.sources.length === 0:
+   ;;    cfg.sources = {"**/*.q"}
 
    ;; Starting the server implies watch
    if cfg.server.enable:

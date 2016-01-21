@@ -20,6 +20,8 @@ require-macros:
 
 provide:
    main
+   PluginResolver
+   resolver
 
 
 ;;;;;;;;;;;;;;;
@@ -46,7 +48,7 @@ var _server = null
 
 class PluginResolver:
 
-   constructor{} =
+   constructor{@use-global = true} =
       @m = @module-here{}
       @added-global-path = false
 
@@ -57,9 +59,10 @@ class PluginResolver:
       m.paths = xs.reverse{} where xs = [1..c.length] each i ->
          c[...i].join{"/"} + "/node_modules"
       ;; Push global npm path
-      m.paths.push with
-         "/usr/local/lib/node_modules"
-         "/usr/lib/node_modules"
+      if @use-global:
+         m.paths.push with
+            "/usr/local/lib/node_modules"
+            "/usr/lib/node_modules"
       m
 
    r{p} =
@@ -67,7 +70,7 @@ class PluginResolver:
       x??.quaint-plugin or x
 
    r2{name} =
-      if @added-global-path:
+      if @added-global-path or not @use-global:
          @r{name}
       else:
          try:
