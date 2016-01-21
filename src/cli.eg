@@ -1,9 +1,8 @@
 
 require:
    yargs
-   .run
    deepmerge
-   .run2 -> main
+   .run -> main
    engage
    path
    child_process

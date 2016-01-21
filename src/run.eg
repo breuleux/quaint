@@ -1,23 +1,32 @@
 
 require:
    child_process
-   fs, path
    .index as quaint
    module
-   globby
-   mkdirp
+   quasar -> deprox
    format-json
-   filendir
-   fs-extra
+   path
+   chalk
+   "./config" ->
+      merge-config
+   fs
+   .plugins/common ->
+      analyze-path
+   "engage" ->
+      EngageMessage as M
+
+require-macros:
+   engage -> task
+
+provide:
+   main
+   PluginResolver
+   resolver
 
 
-;; Small helpers
-
-is-directory{path} =
-   try:
-      fs.stat-sync{path}.is-directory{}
-   catch e:
-      false
+;;;;;;;;;;;;;;;
+;; Utilities ;;
+;;;;;;;;;;;;;;;
 
 cli-error{msg, fn} =
    try:
@@ -25,18 +34,102 @@ cli-error{msg, fn} =
    catch e:
       throw E.cli-error{msg, e}
 
-module-here{} =
-   m = new module{}
-   m.filename = process.cwd{}
-   c = process.cwd{}.split{"/"}
-   m.paths = xs.reverse{} where xs = [1..c.length] each i ->
-      c[...i].join{"/"} + "/node_modules"
-   ;; Push global npm path
-   m.paths.push with
-      "/usr/local/lib/node_modules"
-      "/usr/lib/node_modules"
-      ;; child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
-   m
+json-parse{filename, contents} =
+   cli-error{'Error parsing JSON in {filename}'} with ->
+      JSON.parse{contents}
+
+
+var _server = null
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin resolution ;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+class PluginResolver:
+
+   constructor{@use-global = true} =
+      @m = @module-here{}
+      @added-global-path = false
+
+   module-here{} =
+      m = new module{}
+      m.filename = process.cwd{}
+      c = process.cwd{}.split{"/"}
+      m.paths = xs.reverse{} where xs = [1..c.length] each i ->
+         c[...i].join{"/"} + "/node_modules"
+      ;; Push global npm path
+      if @use-global:
+         m.paths.push with
+            "/usr/local/lib/node_modules"
+            "/usr/lib/node_modules"
+      m
+
+   r{p} =
+      x = module._load{p, @m, true}
+      x??.quaint-plugin or x
+
+   r2{name} =
+      if @added-global-path or not @use-global:
+         @r{name}
+      else:
+         try:
+            @r{name}
+         catch e:
+            ;; If all else fails (this is a bit slow, which is why we don't do it
+            ;; if we don't have to)
+            @m.paths.push with
+               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
+            @added-global-path = true
+            @r{name}
+
+   try-require{orig, match names, all = names} =
+      {} ->
+         rqs = [all each name -> '"{name}"'].join{", "}
+         throw E.cli-error with
+            'Could not find a plugin for "{orig}". I tried requiring the following modules: {rqs}.\nIf they are available on npm, you can install them locally or globally, then try again.'
+      {name, *rest} ->
+         try:
+            @r2{name}
+         catch e:
+            if e.message == 'Cannot find module \'{name}\'':
+               @try-require{orig, rest, all}
+            else:
+               throw e
+               ;; throw E.cli-error with
+               ;;    'An error happened when loading module \'{name}\''
+               ;;    e
+
+resolver = PluginResolver{}
+
+
+task resolve-plugin{name, deprox! arg} =
+   cfg = config{}
+   if arg in {null, false, undefined}:
+      return null
+   if arg === true:
+      @log{'  Plugin {chalk.bold.magenta{name}} with no options'}
+   else:
+      max-length = 255
+      opts0 = JSON.stringify{arg}
+      opts = if{opts0.length < 255, opts0, opts0.slice{0, 252} + "..."}
+      @log{'  Plugin {chalk.bold.magenta{name}} with options: {opts}'}
+   pack = match name:
+      R"^\."? ->
+         resolver.try-require{name, {name}}
+      else ->
+         resolver.try-require{name, {'quaint-{name}', name}}
+   match arg:
+      === true ->
+         pack
+      options ->
+         pack with arg & {
+            read-file{x} =
+               @log{'Resource {chalk.bold.magenta{x}}'}
+               @get-from{x, cfg.content-root}.text
+         }
+
+   ;; if{arg === true, pack, pack{arg}}
 
 normalize-qname{match t} =
    R"^@|.q$"? or false? ->
@@ -44,298 +137,202 @@ normalize-qname{match t} =
    else ->
       t + ".q"
 
-
-;; Large helpers
-
-
-collate-sources{config, argv} =
-   var source-dir = null
-   var files = [Array! [config??.sources or {}]] ++ argv._
-   sources = {}
-   while files.length > 0:
-      match files.shift{} as filename:
-         match when is-directory{filename} ->
-            when sources.length > 0 or files.length > 0 or source-dir ->
-               throw E.cli-error{'Only one source directory can be specified.'}
-            else ->
-               source-dir = filename
-               files ++= consume{globby.sync{'{filename}/**/*.q'}}
-         else ->
-            globby.sync{filename} each f ->
-               sources.push with
-                  {file = f,
-                   contents = fs.read-file-sync{f, .utf8}}
-   if argv.eval:
-      sources.push with {file = "<cli>", contents = argv.e}
-   {source-dir, sources}
+task config{} =
+   if @config._config-exists:
+      merge-config with
+         JSON.parse{@get{"quaint.json"}.text}
+         @argv
+   else:
+      @config
 
 
-collate-data{config, argv} =
-
-   data-arguments = [config??.data-files or {}] ++ [argv.data or {}]
-
-   json-filename{match f} =
-      R"\."? -> f
-      else -> f + ".json"
-
-   json-parse{filename, contents} =
-      cli-error{'Error parsing JSON in {filename}'} with ->
-         JSON.parse{contents}
-
-   data = config??.data or {=}
-
-   [Array! data-arguments] each match entry ->
-      undefined? -> pass
-      R"^[\"']"? ->
-         data &: json-parse{'argument {entry}', "{" + entry + "}"}
-      R"^[{]"? ->
-         data &: json-parse{'argument {entry}', entry}
-      R"([a-zA-Z0-9_-]+)::(.*)"! {_, key, filename} ->
-         f = json-filename{filename}
-         contents = json-parse{'file {f}', fs.read-file-sync{f, .utf8}}
-         data &: {key => contents}
-      R"([a-zA-Z0-9_-]+):(.*)"! {_, key, value} ->
-         try:
-            data &: {key => JSON.parse{value}}
-         catch e:
-            data &: {key => value}
-      filename ->
-         f = json-filename{filename}
-         data &: json-parse{'file {f}', fs.read-file-sync{f, .utf8}}
-
+task common-data{} =
+   cfg = config{}
+   data = clone{cfg.data}
+   cfg.data-files each
+      String? file and field is null or items! {{field, file}} ->
+         data2 = json-parse{'file {file.path}', @get{file}.text}
+         if field:
+            data[field] = data2
+         else:
+            data &: data2
    data
 
-
-resolve-plugins{config, argv} =
-   plugins = argv.plugin
-
-   m = module-here{}
-
-   r{p} =
-      x = module._load{p, m, true}
-      x??.quaint-plugin or x
-
-   inj = {}
-   results = {}
-   var spawned = false
-
-   r2{name} =
-      if spawned:
-         r{name}
+task compile{file, template-root} =
+   cfg = config{}
+   base = file.base-directory??{} or "."
+   dest =
+      if file.is-eval:
+         {path = file.path}
       else:
-         try:
-            r{name}
-         catch e:
-            ;; If all else fails (this is a bit slow, which is why we don't do it
-            ;; if we don't have to)
-            m.paths.push with
-               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
-            spawned = true
-            r{name}
+         @rename-out{file, extension = ".html"}
 
-   try-require{orig, match names, all = names} =
-      {} ->
-         rqs = [all each name -> '"{name}"'].join{", "}
-         throw E.cli-error with
-            'Could not find a plugin for "{orig}". I tried requiring the following modules: {rqs}.\nIf they are available on npm, you can install them locally or globally, then try again.'
-
-      {name, *rest} ->
-         try:
-            r2{name}
-         catch e:
-            if e.message == 'Cannot find module \'{name}\'':
-               try-require{orig, rest, all}
-            else:
-               throw E.cli-error with
-                  'An error happened when loading module \'{name}\''
-                  e
-
-   resolve-string{match name, arg = null} =
-      R"^([^()]+)\((.*)\)$"! {_, n, arg} ->
-         resolve-string{n, JSON.parse{arg}}
-      R"^([^{}]+)(\{.*\})$"! {_, n, arg} ->
-         resolve-string{n, JSON.parse{arg}}
-
-      R"^(\.+)([^/.]|$)"! {_, dots, _} ->
-         resolve-string{dots + "/" + name.slice{dots.length}, arg}
-
-      R"\.q$"? ->
-         inj.push with fs.read-file-sync{name, .utf8}
-      R"^[./]"? ->
-         pack = try-require{name, {name}}
-         results.push with
-            if{arg === null, pack, pack{arg}}
-      else ->
-         pack = try-require{name, {'quaint-{name}', name}}
-         results.push with
-            if{arg === null, pack, pack{arg}}
-
-   resolve{config??.plugins or {}} where resolve{match entry} =
-      Array? a ->
-         a each x -> resolve{x}
-      String? name ->
-         results.push with try-require{name, {name}}
-      else ->
-         items{entry} each {name, arg} when not arg in {false, null, undefined} ->
-            resolve-string{name, arg}
-
-   resolve{plugins} where resolve{match name} =
-      undefined? -> pass
-      Array? ->
-         name each n -> resolve{n}
-      String? ->
-         resolve-string{name}
-
-   {inj = inj
-    plugins = results}
-
-
-run-template{q, source, t-specific, t-directory, verbose, options} =
-   read-template{normalize-qname! match name} =
-      "%%%" ->
-         if verbose:
-            console.error with 'quaint: using template "{t-specific}"'
-         if R"\{"? t-specific:
-            t-specific
-         else:
-            {file = t-specific
-             contents = fs.read-file-sync{t-specific, .utf8}}
-      else ->
-         p = path.join{t-directory or ".", name}
-         if verbose:
-            console.error with 'quaint: using template "{p}"'
-         {file = p
-          contents = fs.read-file-sync{p, .utf8}}
-
-   q.register-resolvers with {
-      template = read-template
+   ;; Compute paths to add to meta object
+   sr = path.join{"/", cfg.site-root}
+   rr = cfg.resources.root or ""
+   base-dest = path.dirname{dest.path}
+   rel = path.relative{cfg.output or base-dest, base-dest}
+   basename = path.basename{dest.path}
+   rrel = path.relative{rel, rr} or "."
+   meta = {
+      hostname = cfg.hostname
+      url = cfg.hostname + "/" + path.join{sr, rel, basename}
+      path = path.join{rel, basename}
+      orig-path = path.relative{cfg.content-root, file.path}
+      local-url = path.join{sr, rel, basename}
+      site-root = sr
+      site-rel = path.relative{rel, ""} or "."
+      resource-root = path.join{sr, rr}
+      resource-rel = rrel
    }
 
-   q.template = t-specific
-   ;; q.toHTML{source}
-   q.translate{source, .html, options}
+   @log with M{.begin, chalk.bold{'Compile -- {chalk.yellow{file.path}}'}} &: {eager = true}
+   plugins = items{cfg.plugins} each {name, arg} ->
+      if resolve-plugin{name, arg} as plugin:
+         plugin
+      else:
+         continue
+   q = quaint{}
+   items{meta} each {k, v} ->
+      q.documents.meta.set{k, v}
 
-
-get-template{config, argv} =
-   match [argv.template or config??.template]:
-      t when is-directory{t} ->
-         {null, t}
-      true? t ->
-         {normalize-qname{t}, null}
-      else ->
-         {null, "."}
-
-
-;; Main method
-
-provide{argv} =
-
-   ;; DONE: config help eval format data plugin out
-   ;;       save-meta stdout template verbose
-   ;; TODO: save-config dump-data
-
-   ;; helper function
-   save-results{p >> p.replace{R".q$|$", ".html"}, contents} =
-      out = argv.out or cfg??.output
-      if argv.stdout or argv.eval and not out:
-         print contents
-      elif is-dir:
-         p2 =
-            if source-dir:
-               path.join{out or "./", path.relative{source-dir, p}}
+   q.register-resolvers with {
+      default{filename, options} =
+         f2 =
+            if filename.starts-with{"/"}:
+               @get{filename}
             else:
-               path.join{out or "./", path.basename{p}}
-         mkdirp.sync{path.dirname{p2}}
-         fs.write-file-sync{p2, contents}
-         if argv.verbose:
-            console.error with 'quaint: wrote to "{p2}"'
+               base.get{filename}
+         if f2.exists{}:
+            if options.read:
+               @log with 'Resource {chalk.bold.magenta{f2.path}}'
+         else:
+            @log with 'Resource {chalk.bold.red{f2.path}} (does not exist)'
+            throw E.no-resource{'Resource does not exist: {f2.path}'}
+         if not options.read:
+            {file and path = f2.path}
+         else:
+            {file and path = f2.path, contents and text = f2.text}
+      plugin{name} =
+         resolve-plugin{name, true}
+      template{normalize-qname! filename} =
+         @log with 'Template {chalk.bold.magenta{filename}}'
+         if not template-root:
+            throw E.no-template-root{"The template directory was not specified."}
+         f2 = template-root.get{filename}
+         {file and path = f2.path, contents and text = f2.text}
+   }
+
+   items{cfg.resources.files} each {name, file} ->
+      data = analyze-path{file}
+      if data.path and not data.path-is-url and not file.starts-with{"/"}:
+         data.full-path = @get{cfg.content-root}.get{data.path}.path
+      q.register-resources with {name => data}
+
+   q.template = cfg.templates.default
+   q.setenv{common-data{}}
+   q.plug{*plugins}
+   res = q.translate{file.text, cfg.format} with
+      resources = {
+         root and url = path.join{cfg.output, cfg.resources.root}
+         url = rrel
+      }
+   res.meta = object with
+      q.documents.meta.entries{} each {k, match v} ->
+         quaint.QAst? -> {k, v.raw{}}
+         else -> {k, v}
+
+   @log with '  Output {chalk.bold.green{dest.path}}'
+   @log with M{.end, ""}
+   res
+
+;; DONE: help format data plugin out
+;;       template save-meta verbose
+;; TODO: config eval stdout save-config dump-data
+
+
+task write-it{name, contents} =
+   @log with '   Write {chalk.green{name}}'
+   @get{name}.write{contents}
+
+task copy-it{name, source} =
+   @log with '    Copy {source}'
+   @log with '    ---> {chalk.green{name}}'
+   @get{source}.copy{to = name}
+
+task main{root} =
+
+   cfg = config{}
+   template-root = cfg.templates.root and @get{cfg.templates.root}
+   var sources-exist = false
+   meta = {=}
+   resources = {=}
+
+   ;; PRE-RESOLVE PLUGINS
+   ;; I put this here so that the plugin info is printed out before
+   ;; compiling the Quaint files
+
+   @log with M{.begin, chalk.bold{"Resolve global plugins"}}
+   items{cfg.plugins} each {name, arg} ->
+      resolve-plugin{name, arg}
+   @log with M{.end, ""}
+
+   ;;;;;;;;;;;;;;;;;;;;;
+   ;; COMPILE SOURCES ;;
+   ;;;;;;;;;;;;;;;;;;;;;
+
+   sources =
+      if cfg._eval:
+         {{
+             is-eval = true
+             path = "@eval"
+             text and contents = cfg._eval
+         }}
       else:
-         fs.write-file-sync{out, contents}
-         if argv.verbose:
-            console.error with 'quaint: wrote to "{out}"'
+         consume{root.find{* cfg.sources}}
 
-   ;; Configuration
-   cfg-file = argv.config or "quaint.json"
+   if cfg._print and sources.length > 1:
+      throw E.quaint.multiple-files with
+         "-s option cannot be used with multiple files."
 
-   cfg-contents =
-      try:
-         fs.read-file-sync{cfg-file, .utf8}
-      catch e:
-         null
-
-   cfg =
-      cli-error{'Could not parse configuration file "{cfg-file}"'} with ->
-         JSON.parse{cfg-contents}
-
-   ;; Collect all the source files
-   {source-dir, sources} = collate-sources{cfg, argv}
-
-   ;; Error checking
-   is-dir = [not R"\.[a-zA-Z0-9]+$"? argv.out] or is-directory{argv.out or "./"}
-   if not argv.stdout and not is-dir and sources.length > 1:
-      throw E.usage-error with
-         "The -o option must point to a directory in order to process multiple files."
-
-   ;; --data
-   data = collate-data{cfg, argv}
-
-   ;; --plugin
-   {=> inj, => plugins} = resolve-plugins{cfg, argv}
-
-   ;; --template
-   {t-specific, t-directory} = get-template{cfg, argv}
-
-   ;; --resources, --resources-url, --inline
-   rescfg = cfg??.resources or {=}
-   if argv.resources:
-      rescfg.directory = argv.resources
-      rescfg.url or= argv.resources
-   if argv.resources-url:
-      rescfg.url = argv.resources-url
-   if argv.inline:
-      rescfg.inline = argv.inline
-
-   ;; Generate
-   var sm = [argv.save-meta or cfg??.save-meta]
-   if sm === true:
-      sm = "meta.json"
-   meta =
-      if sm and fs.exists-sync{sm}:
-         JSON.parse{fs.read-file-sync{sm, .utf8}}
+   sources each file ->
+      sources-exist = true
+      results = compile{file, template-root}
+      if cfg._print:
+         print results.contents
       else:
-         {=}
+         dest = @rename-out{file, extension = ".html"}
+         dest.write{results.contents}
+      resources &: results.files
+      meta[path.relative{root.path, file.path}] = results.meta
 
-   sources each {=> file, => contents} ->
-      if argv.verbose:
-         console.error with 'quaint: processing "{file}"'
-      q = quaint{*plugins}
-      q.setenv{data}
-      match [argv.format or cfg??.format or "html"]:
-         .html ->
-            {contents => result, => files} = run-template{
-               q
-               [inj ++ {contents}].join{""}
-               t-specific
-               t-directory
-               argv.verbose
-               {resources = rescfg}
-            }
-            save-results{file, result}
-            items{files} each {name, match} ->
-               #write{contents} ->
-                  filendir.write-file-sync{name, contents}
-                  if argv.verbose:
-                     console.error with 'quaint: saved resource "{name}"'
-               #copy{source} ->
-                  fs-extra.copy-sync{source, name, {clobber = true}}
-            meta[file] = object with
-               q.documents.meta.entries{} each {k, match v} ->
-                  quaint.QAst? -> {k, v.raw{}}
-                  else -> {k, v}
-         else ->
-            throw E.usage-error{"Format must be html"}
+   ;;;;;;;;;;;;;;;;;;;;
+   ;; COPY RESOURCES ;;
+   ;;;;;;;;;;;;;;;;;;;;
 
-   if sm:
-      mkdirp.sync{path.dirname{sm}}
-      fs.write-file-sync{sm, format-json.plain{meta}}
+   @log with M{.begin, chalk.bold{"Resources"}}
+   items{resources} each {name, match} ->
+      do:
+         sources-exist = true
+      #write{contents} ->
+         write-it{name, contents}
+      #copy{source} ->
+         copy-it{name, source}
+
+   ;;;;;;;;;;;;;;;;;
+   ;; COPY ASSETS ;;
+   ;;;;;;;;;;;;;;;;;
+
+   root.find{* cfg.files} each file ->
+      sources-exist = true
+      dest = @rename-out{file}
+      copy-it{dest.path, file.path}
+   @log with M{.end, ""}
+
+   if not sources-exist:
+      @log{"Nothing to do."}
+   elif cfg.save-meta:
+      @get{cfg.save-meta}.write{format-json.plain{meta}}
+
+
 
