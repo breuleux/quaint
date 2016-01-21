@@ -320,6 +320,3 @@ async setup{var config = null
          print 'The server port is {chalk.bold{config.server.port}}.'
 
    {= config, = instructions}
-
-;; async:
-;;    setup{}

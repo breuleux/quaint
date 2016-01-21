@@ -47,9 +47,6 @@ defaults{} = {
 
 normalize-config{_cfg} =
    rval = deepmerge{defaults{}, _cfg}
-   ;; print rval
-   ;; print defaults{}
-   ;; print _cfg
    rval.plugins =
       match rval.plugins:
          String? s -> {s => true}

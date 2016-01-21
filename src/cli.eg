@@ -158,17 +158,18 @@ get-arguments{} =
       ;;    "quaint -e '[template::tpl]BODY' -t templates/"
       ;;    "Use template ./templates/tpl.q"
 
-      @check with {argv} ->
-         ;; if not argv.e and not argv._.length:
-         ;;    throw E.usage with
-         ;;       "You must provide one or more filenames, or a string with the -e option."
-         if argv.e and argv._.length:
-            throw E.usage with
-               "You cannot translate a file if the -e option is used."
-         if argv.s and argv.o:
-            throw E.usage with
-               "You cannot combine the options -s and -o."
-         true
+
+      ;; @check with {argv} ->
+      ;;    ;; if not argv.e and not argv._.length:
+      ;;    ;;    throw E.usage with
+      ;;    ;;       "You must provide one or more filenames, or a string with the -e option."
+      ;;    if argv.e and argv._.length:
+      ;;       throw E.usage with
+      ;;          "You cannot translate a file if the -e option is used."
+      ;;    if argv.s and argv.o:
+      ;;       throw E.usage with
+      ;;          "You cannot combine the options -s and -o."
+      ;;    true
 
       @argv
 
