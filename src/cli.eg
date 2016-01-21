@@ -10,6 +10,9 @@ require:
    .config ->
       merge-config
    filendir
+   "./setup" ->
+      prompt, setup, setup-plugin
+   format-json
 
 get-arguments{} =
 
@@ -19,7 +22,7 @@ get-arguments{} =
       ;; --config, -c
       @alias{.c, .config}
       @nargs{.c, 1}
-      @default{.c, "./quaint.json"}
+      @default{.c, "quaint.json"}
       @describe{.c, "Path to a configuration file with option values (must be JSON)"}
 
       ;; --data, -d
@@ -84,12 +87,20 @@ get-arguments{} =
       ;; --template, -t
       @alias{.t, .template}
       @nargs{.t, 1}
-      @describe{.t, "Quaint file to use as template, or template directory"}
+      @describe{.t, "Name of the default template to use"}
+
+      ;; --template-directory
+      @nargs{"template-directory", 1}
+      @describe{"template-directory", "Template directory"}
 
       ;; --verbose, -v
       @alias{.v, .verbose}
       @boolean{.v}
       @describe{.v, "Print information about the operations performed"}
+
+      ;; --setup
+      @default{"setup", false}
+      @describe{"setup", "Set up and configure a plugin."}
 
       ;; --save-meta
       @default{"save-meta", false}
@@ -164,39 +175,72 @@ get-arguments{} =
 
 reload-bin-path = path.join{__dirname, '../node_modules/reload/bin/reload'}
 
-provide{} =
+async commit-setup{config, instructions} =
+   print format-json.plain{config}
+   print instructions
+
+async execute-setup{plugin = null} =
+   {=> let config, => instructions} = await setup{}
+   if String? plugin:
+      setup-plugin{plugin, instructions}
+   commit-setup{config, instructions}
+
+async provide{} =
    try:
       argv = get-arguments{}
 
+      config-file = argv.config
+
       require: fs
+      config-exists = fs.exists-sync{config-file}
+
       cfg = merge-config with
-         JSON.parse{fs.read-file-sync{"quaint.json", .utf8}}
+         if config-exists:
+            then: JSON.parse{fs.read-file-sync{"quaint.json", .utf8}}
+            else: {=}
          argv
+      cfg._config-file = config-file
+      cfg._config-exists = config-exists
+
+      if argv.setup:
+         match argv.setup:
+            String? plugin-name ->
+               await execute-setup{plugin-name}
+            else ->
+               await setup{}
+         return
+      elif cfg.sources.length === 0 and not cfg._eval and not config-exists:
+         {=> create} = await prompt with {
+            name = .create
+            message = 'The configuration file "{config-file}" does not exist, do you wish to create it?'
+            type = .confirm
+            default = true
+         }
+         if create:
+            await execute-setup{}
+         return
 
       server-out = cfg.nominal-output
-
-      ;; server-start-page = cfg.server.start-page
-
       server-start-page = path.join{cfg.site-root or "", cfg.server.start-page}
-      ;; cfg.output = path.join{cfg.output, cfg.site-root or ""}
 
-      engage{main, opts}.run{} where opts = {
-         config = cfg
-         argv = argv
-         paths = {
-            root = "."
-            content = cfg.content-root or "."
-            output = cfg.output
+      engage{main, opts & if{cfg._print, {log{} = pass}, {=}}}.run{} where
+         opts = {
+            config = cfg
+            argv = argv
+            paths = {
+               root = "."
+               content = cfg.content-root or "."
+               output = cfg.output
+            }
+            show = {
+               read = false
+               write = false
+               task = cfg.verbose
+            }
+            clean = true
+            ignore-empty-changes = true
+            watch = cfg.watch
          }
-         show = {
-            read = false
-            write = false
-            task = cfg.verbose
-         }
-         clean = true
-         ignore-empty-changes = true
-         watch = cfg.watch
-      }
 
       if cfg.server.enable:
          filendir.write-file-sync{p, text} where

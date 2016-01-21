@@ -135,9 +135,12 @@ normalize-qname{match t} =
       t + ".q"
 
 task config{} =
-   merge-config with
-      JSON.parse{@get{"quaint.json"}.text}
-      @argv
+   if @config._config-exists:
+      merge-config with
+         JSON.parse{@get{"quaint.json"}.text}
+         @argv
+   else:
+      @config
 
 
 task common-data{} =
@@ -154,8 +157,12 @@ task common-data{} =
 
 task compile{file, template-root} =
    cfg = config{}
-   base = file.base-directory{}
-   dest = @rename-out{file, extension = ".html"}
+   base = file.base-directory??{} or "."
+   dest =
+      if file.is-eval:
+         {path = file.path}
+      else:
+         @rename-out{file, extension = ".html"}
 
    ;; Compute paths to add to meta object
    sr = path.join{"/", cfg.site-root}
@@ -271,11 +278,28 @@ task main{root} =
    ;; COMPILE SOURCES ;;
    ;;;;;;;;;;;;;;;;;;;;;
 
-   root.find{* cfg.sources} each file ->
+   sources =
+      if cfg._eval:
+         {{
+             is-eval = true
+             path = "@eval"
+             text and contents = cfg._eval
+         }}
+      else:
+         consume{root.find{* cfg.sources}}
+
+   if cfg._print and sources.length > 1:
+      throw E.quaint.multiple-files with
+         "-s option cannot be used with multiple files."
+
+   sources each file ->
       sources-exist = true
       results = compile{file, template-root}
-      dest = @rename-out{file, extension = ".html"}
-      dest.write{results.contents}
+      if cfg._print:
+         print results.contents
+      else:
+         dest = @rename-out{file, extension = ".html"}
+         dest.write{results.contents}
       resources &: results.files
       meta[path.relative{root.path, file.path}] = results.meta
 
