@@ -73,11 +73,13 @@ prompt{question} =
 resolver = PluginResolver{false}
 
 async install-plugin{name} =
-   real-name = if{name.starts-with{"quaint-"}, name, 'quaint-{name}'}
+   real-name = if{R"^(quaint-|.|/)"? name, name, 'quaint-{name}'}
    try:
       resolver.r{real-name}
    catch e when e.code === "MODULE_NOT_FOUND":
       print 'Package {chalk.bold{real-name}} is not installed locally. Installing...'
+      if not fs.exists-sync{"package.json"}:
+         fs.write-file-sync{"package.json", "{}"}
       result = child_process.spawn-sync{"npm", {"install", real-name, "--save"}}
       match result.status:
          0 ->
@@ -119,9 +121,11 @@ default-config = {
    hostname = null
    site-root = null
    server = {
+      enable = null
       start-page = "index.html"
       port = 9137
    }
+   watch = null
    plugins = {=}
 }
 
@@ -218,9 +222,6 @@ async setup{var config = null
    }
 
    if install:
-      if not fs.exists-sync{"package.json"}:
-         fs.write-file-sync{"package.json", "{}"}
-
       url = "http://breuleux.github.io/quaint/plugins/index.html"
       print '\nYou can consult the plugin list at this address:'
       print chalk.bold.cyan{url}
@@ -268,10 +269,12 @@ async setup{var config = null
 
    config.templates.default or= "@minimal"
 
-   print "\nNow let's create some files!\n"
+   ;; print "\nNow let's create some files!\n"
 
    items{recipes} each {key, value} ->
       p = path.join{value.dir, key}
+      if fs.exists-sync{p}:
+         continue
       {=> result} = await prompt with {
          name = .result
          message = 'Do you want me to create {value.message}: {p}?'
@@ -294,24 +297,25 @@ async setup{var config = null
          [value.resources or {}] each f ->
             config.resources.files[f] = f
 
-   print "\nWe are almost done.\n"
+   ;; print "\nWe are almost done.\n"
 
-   {=> watch} = await prompt with {
-      name = .watch
-      message = 'Should the quaint command watch by default?'
-      type = .confirm
-      default = true
-   }
-   config.watch = watch
+   if config.watch === null:
+      {=> watch} = await prompt with {
+         name = .watch
+         message = 'Should the quaint command watch by default?'
+         type = .confirm
+         default = true
+      }
+      config.watch = watch
 
-   if watch:
+   if config.watch and config.server.enable === null:
       {=> serve} = await prompt with {
          name = .serve
          message = 'Should the quaint command start a server by default?'
          type = .confirm
          default = true
       }
-      config.server.enabled = serve
+      config.server.enable = serve
       if serve:
          print 'The server port is {chalk.bold{config.server.port}}.'
 
