@@ -8,23 +8,62 @@ require:
 provide:
    install
 
+
+make-link{engine, match type, label, url, prefix = ""} =
+   .link ->
+      url2 = prefix + engine.litgen{url}
+      a %
+         href = url2
+         if{label == Text{""}, url2, engine.gen{label}}
+   .image ->
+      lbl = engine.litgen{label}
+      img %
+         src = prefix + engine.litgen{url}
+         alt = lbl
+         title = lbl
+   .audio ->
+      audio %
+         controls = true
+         source % src = prefix + engine.litgen{url}
+         "No support for audio."
+   .video ->
+      video %
+         controls = true
+         source % src = prefix + engine.litgen{url}
+         "No support for audio."
+      
+
+
 install{@} =
 
    @register-rules with {
       "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
-         url2 = engine.litgen{url}
-         a %
-            href = url2
-            if{label == Text{""}, url2, engine.gen{label}}
+         make-link{engine, .link, label, url}
 
       "\\maybe\\label @@ image : \\url"{engine, {=> label, url => shed! url}} =
-         lbl = engine.litgen{label}
-         img %
-            src = engine.litgen{url}
-            alt = lbl
-            title = lbl
+         make-link{engine, .image, label, url}
 
-      "\\url @@ image"{engine, {url => shed! url}} =
-         img % src = engine.litgen{url}
+      "@@ audio : \\url"{engine, {url => shed! url}} =
+         make-link{engine, .audio, "", url}
+
+      "@@ video : \\url"{engine, {url => shed! url}} =
+         make-link{engine, .video, "", url}
+
+
+      "\\maybe\\label @@@ \\url"{engine, {=> label, url => shed! url}} =
+         sr = engine.documents.meta.get-raw{.site-root}
+         make-link{engine, .link, label, url, sr}
+
+      "\\maybe\\label @@@ image : \\url"{engine, {=> label, url => shed! url}} =
+         sr = engine.documents.meta.get-raw{.site-root}
+         make-link{engine, .image, label, url, sr}
+
+      "@@@ audio : \\url"{engine, {url => shed! url}} =
+         sr = engine.documents.meta.get-raw{.site-root}
+         make-link{engine, .audio, "", url, sr}
+
+      "@@@ video : \\url"{engine, {url => shed! url}} =
+         sr = engine.documents.meta.get-raw{.site-root}
+         make-link{engine, .video, "", url, sr}
    }
 
