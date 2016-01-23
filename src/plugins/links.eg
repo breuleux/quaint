@@ -11,25 +11,25 @@ provide:
 
 make-link{engine, match type, label, url, prefix = ""} =
    .link ->
-      url2 = prefix + engine.litgen{url}
+      url2 = span % {prefix, engine.litgen{url}}
       a %
          href = url2
          if{label == Text{""}, url2, engine.gen{label}}
    .image ->
       lbl = engine.litgen{label}
       img %
-         src = prefix + engine.litgen{url}
+         src = span % {prefix, engine.litgen{url}}
          alt = lbl
          title = lbl
    .audio ->
       audio %
          controls = true
-         source % src = prefix + engine.litgen{url}
+         source % src = span % {prefix, engine.litgen{url}}
          "No support for audio."
    .video ->
       video %
          controls = true
-         source % src = prefix + engine.litgen{url}
+         source % src = span % {prefix, engine.litgen{url}}
          "No support for audio."
       
 
