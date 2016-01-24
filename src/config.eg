@@ -30,7 +30,11 @@ defaults{} = {
       inline = false
       files = {=}
    }
-   save-meta = false
+   meta = {
+      file = null
+      sort-by = "title"
+   }
+   ;; save-meta = false
    watch = false
    hostname = "http://localhost"
    site-root = "/"
@@ -112,7 +116,7 @@ merge-config{normalize-config! cfg, argv} =
       cfg.templates.root = argv.template-directory
 
    ;; others
-   {.format, .save-meta, .out, .verbose, .watch} each name ->
+   {.format, .out, .verbose, .watch} each name ->
       if argv[name] as x:
          cfg[name] = x
    if argv.resources as [let x]:
@@ -143,8 +147,8 @@ merge-config{normalize-config! cfg, argv} =
 
    ;; misc
    cfg.resources.url or= cfg.resources.root
-   if cfg.save-meta === true:
-      cfg.save-meta = "meta.json"
+   ;; if cfg.save-meta === true:
+   ;;    cfg.save-meta = "meta.json"
 
    finalize-config{cfg}
 

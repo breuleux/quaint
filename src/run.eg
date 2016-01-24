@@ -14,6 +14,7 @@ require:
       analyze-path
    "engage" ->
       EngageMessage as M
+   lodash
 
 require-macros:
    engage -> task
@@ -333,6 +334,16 @@ task main{root} =
       @log{"Nothing to do."}
    elif cfg.save-meta:
       @get{cfg.save-meta}.write{format-json.plain{meta}}
-
-
-
+      @log with 'Saved the meta information in {chalk.bold{cfg.save-meta}}'
+   elif cfg.meta??.file:
+      new-meta =
+         match cfg.meta.sort-by:
+            R"^-(.*)"! {_, field} ->
+               x = lodash.sort-by{items{meta}} with {{k, v}} -> v[field]
+               object with x.reverse{}
+            String? field ->
+               object with lodash.sort-by{items{meta}} with {{k, v}} -> v[field]
+            else ->
+               meta
+      @get{cfg.meta.file}.write{format-json.plain{new-meta}}
+      @log with 'Saved the meta information in {chalk.bold{cfg.meta.file}}'

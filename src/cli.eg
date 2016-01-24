@@ -102,10 +102,6 @@ get-arguments{} =
       @default{"setup", false}
       @describe{"setup", "Set up and configure a plugin."}
 
-      ;; --save-meta
-      @default{"save-meta", false}
-      @describe{"save-meta", "Save meta data in a file (./meta.json if the file is not specified)"}
-
       ;; --watch, -w
       @alias{.w, .watch}
       @default{"watch", false}
