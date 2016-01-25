@@ -15,7 +15,7 @@
 * Make compatible with Promises, async/await
 
 
-== 0.0.15
+== 0.0.16
 
 === TODO
 

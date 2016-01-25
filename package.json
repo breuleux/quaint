@@ -1,6 +1,6 @@
 {
   "name": "quaint",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "format": "cjs",
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
@@ -8,21 +8,22 @@
     "chalk": "^1.1.1",
     "deepmerge": "^0.2.10",
     "earlgrey-runtime": ">=0.0.11",
+    "engage": ">=0.0.11",
     "filendir": "^1.0.0",
     "format-json": "^1.0.3",
     "fs-extra": "^0.26.2",
     "globby": "^3.0.1",
-    "inquirer-promise": "0.0.3",
-    "kaiser": ">=0.0.2",
+    "inquirer-promise": ">=0.0.3",
+    "kaiser": ">=0.0.4",
     "mkdirp": "^0.5.1",
     "opg": ">=0.0.3",
     "reload": "^0.7.0",
     "yargs": "^3.25.0"
   },
   "devDependencies": {
-    "earlgrey": ">=0.0.12",
+    "earlgrey": ">=0.0.13",
     "mocha": "^2.2.1",
-    "earl-mocha": ">=0.0.2"
+    "earl-mocha": ">=0.0.3"
   },
   "bin": {
     "quaint": "bin/quaint"
