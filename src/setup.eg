@@ -73,7 +73,7 @@ prompt{question} =
 resolver = PluginResolver{false}
 
 async install-plugin{name} =
-   real-name = if{R"^(quaint-|.|/)"? name, name, 'quaint-{name}'}
+   real-name = if{R"^(quaint-|\.|/)"? name, name, 'quaint-{name}'}
    try:
       resolver.r{real-name}
    catch e when e.code === "MODULE_NOT_FOUND":
@@ -96,12 +96,12 @@ async setup-plugin{name, config, instructions} =
    if plugin:
       simple-name = name.replace{R"^quaint-", ""}
       if plugin.quaint-setup:
-         config.plugins[simple-name] = {=}
+         config.plugins[simple-name] or= {=}
          await plugin.quaint-setup{config, instructions}
          print 'Plugin {chalk.bold{name}} successfully configured!'
       else:
          print 'Using plugin {chalk.bold{name}}'
-         config.plugins[simple-name] =
+         config.plugins[simple-name] or=
             plugin.quaint-default-config or true
 
 
@@ -167,7 +167,7 @@ async setup{var config = null
          name = .template-root
          message = "Template directory:"
          type = .input
-         default = .template
+         default = .templates
       }
       config.templates.root = template-root
       instructions.push with #mkdir{template-root}
