@@ -15,12 +15,29 @@
 * Make compatible with Promises, async/await
 
 
-== 0.0.14
+== 0.0.15
 
 === TODO
 
 * Better way to instantiate a naked Engine?
+* `case macro
+* Change how `meta stores its data
+* postprocessing on `meta?
+* Split the CLI into `quaint and `quaintman or `quaint-mechanics
+* Put JSON support in `quaint-json~?
+
+
+== 0.0.14
+
+=== DONE
+
+* `[inherit % ...]
+* Fix OSX `engage bug (I think)
+* `[format fmt :: data]
 * Isolate the plugins in basic.eg
+* `[@@@] operator for local links
+* `audio and `video for links
+* `meta can be sorted when saved
 
 
 == 0.0.13
