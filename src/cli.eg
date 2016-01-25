@@ -251,14 +251,15 @@ async provide{} =
             text = '''<meta http-equiv="refresh" content="0; URL='{server-start-page}'" />'''
          child_process.spawn{reload-bin-path} with
             {
-               "-d", server-out
                "-p", cfg.server.port
                "-r", cfg.server.delay
-               ;; "-s", server-start-page
                "-s", ".quaint-server-entry-point.html"
                "-b", cfg.server.open-browser
             }
-            {stdio = .inherit}
+            {
+               cwd = server-out
+               stdio = .inherit
+            }
 
       ;; run{get-arguments{}}
 
