@@ -1,6 +1,6 @@
 
 require:
-   inquirer
+   inquirer-promise as inq
    child_process
    chalk
    path
@@ -8,7 +8,6 @@ require:
    fs
 
 provide:
-   prompt
    setup
    setup-plugin
 
@@ -61,14 +60,6 @@ resources :: script.js
 '''
 
 
-
-prompt{question} =
-   new Promise with
-      {resolve, reject} ->
-         try:
-            inquirer.prompt{{question}, resolve}
-         catch e:
-            reject{e}
 
 resolver = PluginResolver{false}
 
@@ -144,12 +135,7 @@ async setup{var config = null
    ;;;;;;;;;;;;;;;;;
 
    if not config.content-root:
-      {=> content-root} = await prompt with {
-            name = .content-root
-            message = "Source directory:"
-            type = .input
-            default = .content
-      }
+      content-root = await inq.input{"Source directory:", {default = .content}}
       config &: {
          = content-root
          sources = {"**/*.q"}
@@ -157,42 +143,26 @@ async setup{var config = null
       instructions.push with #mkdir{content-root}
 
    if not config.output:
-      {=> output} = await prompt with {
-         name = .output
-         message = "Output directory:"
-         type = .input
-         default = .output
-      }
+      output = await inq.input{"Output directory:", {default = .output}}
       config.output = output
       instructions.push with #mkdir{output}
 
    if not config.templates.root:
-      {=> template-root} = await prompt with {
-         name = .template-root
-         message = "Template directory:"
-         type = .input
-         default = .templates
-      }
+      template-root = await inq.input{"Template directory:", {default = .templates}}
       config.templates.root = template-root
       instructions.push with #mkdir{template-root}
 
    if not config.files:
-      {=> assets-root} = await prompt with {
-         name = .assets-root
-         message = "Assets directory (source subdirectory):"
-         type = .input
-         default = .assets
-      }
+      assets-root = await inq.input with
+         "Assets directory (source subdirectory):"
+         {default = .assets}
       config.files = {assets-root}
       instructions.push with #mkdir{path.join{config.content-root, assets-root}}
 
    if not config.resources.root:
-      {=> resources-root} = await prompt with {
-         name = .resources-root
-         message = "Resources directory (output subdirectory):"
-         type = .input
-         default = .resources
-      }
+      resources-root = await inq.input with
+         "Resources directory (output subdirectory):"
+         {default = .resources}
       config.resources.root = resources-root
 
    ;;;;;;;;;;;;;;
@@ -200,12 +170,9 @@ async setup{var config = null
    ;;;;;;;;;;;;;;
 
    if not config.hostname:
-      {=> hostname} = await prompt with {
-         name = .hostname
-         message = "Where will the pages be hosted?"
-         type = .input
-         default = "http://localhost"
-      }
+      hostname = await inq.input with
+         "Where will the pages be hosted?"
+         {default = "http://localhost"}
       config &:
          match hostname:
             R"^([a-z]+://)?([^/]+)/?(.*)$"! {_, protocol, host, match root} ->
@@ -218,12 +185,7 @@ async setup{var config = null
    ;; Configure plugins ;;
    ;;;;;;;;;;;;;;;;;;;;;;;
 
-   {=> install} = await prompt with {
-      name = .install
-      message = "Install plugins?"
-      type = .confirm
-      default = true
-   }
+   install = await inq.confirm{"Install plugins?", {default = true}}
 
    if install:
       url = "http://breuleux.github.io/quaint/plugins/index.html"
@@ -232,11 +194,7 @@ async setup{var config = null
 
       while true:
          print ""
-         {=> name} = await prompt with {
-            name = .name
-            message = "Install plugin (<Enter> to finish):"
-            type = .input
-         }
+         name = await inq.input{"Install plugin (<Enter> to finish):"}
          if name.trim{} === "":
             print "\nDone installing plugins."
             break
@@ -273,27 +231,19 @@ async setup{var config = null
 
    config.templates.default or= "@minimal"
 
-   ;; print "\nNow let's create some files!\n"
-
    items{recipes} each {key, value} ->
       p = path.join{value.dir, key}
       if fs.exists-sync{p}:
          continue
-      {=> result} = await prompt with {
-         name = .result
-         message = 'Do you want me to create {value.message}: {p}?'
-         type = .confirm
-         default = true
-      }
+      result = await inq.confirm with
+         'Do you want me to create {value.message}: {p}?'
+         {default = true}
       if result:
          var text = value.value
          if key === "default.q":
-            {=> result2} = await prompt with {
-               name = .result2
-               message = "Do you want to use it as a default template?"
-               type = .confirm
-               default = true
-            }
+            result2 = await inq.confirm with
+               "Do you want to use it as a default template?"
+               {default = true}
             text = text.replace{"@minimal", config.templates.default}
             if result2:
                config.templates.default = key.replace{R".q$", ""}
@@ -301,24 +251,15 @@ async setup{var config = null
          [value.resources or {}] each f ->
             config.resources.files[f] = f
 
-   ;; print "\nWe are almost done.\n"
-
    if config.watch === null:
-      {=> watch} = await prompt with {
-         name = .watch
-         message = 'Should the quaint command watch by default?'
-         type = .confirm
-         default = true
-      }
-      config.watch = watch
+      config.watch = await inq.confirm with
+         'Should the quaint command watch by default?'
+         {default = true}
 
    if config.watch and config.server.enable === null:
-      {=> serve} = await prompt with {
-         name = .serve
-         message = 'Should the quaint command start a server by default?'
-         type = .confirm
-         default = true
-      }
+      serve = await inq.confirm with
+         'Should the quaint command start a server by default?'
+         {default = true}
       config.server.enable = serve
       if serve:
          print 'The server port is {chalk.bold{config.server.port}}.'

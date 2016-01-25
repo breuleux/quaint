@@ -12,7 +12,7 @@
     "format-json": "^1.0.3",
     "fs-extra": "^0.26.2",
     "globby": "^3.0.1",
-    "inquirer": "^0.11.2",
+    "inquirer-promise": "0.0.3",
     "kaiser": ">=0.0.2",
     "mkdirp": "^0.5.1",
     "opg": ">=0.0.3",

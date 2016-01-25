@@ -11,8 +11,9 @@ require:
    filendir
    mkdirp
    "./setup" ->
-      prompt, setup, setup-plugin
+      setup, setup-plugin
    format-json
+   inquirer-promise as inq
 
 get-arguments{} =
 
@@ -213,12 +214,10 @@ async provide{} =
                await execute-setup{cfg, config-file}
          return
       elif cfg.sources.length === 0 and not cfg._eval and not config-exists:
-         {=> create} = await prompt with {
-            name = .create
-            message = 'The configuration file "{config-file}" does not exist, do you wish to create it?'
-            type = .confirm
-            default = true
-         }
+         create = await inq.confirm with
+            'The configuration file "{config-file}" does not exist, '
+            \ + 'do you wish to create it?'
+            {default = true}
          if create:
             await execute-setup{null, config-file}
          return
@@ -260,8 +259,6 @@ async provide{} =
                cwd = server-out
                stdio = .inherit
             }
-
-      ;; run{get-arguments{}}
 
    catch [E.usage-error? e]:
       yargs.show-help{}
