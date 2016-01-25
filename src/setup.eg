@@ -75,7 +75,7 @@ resolver = PluginResolver{false}
 async install-plugin{name} =
    real-name = if{R"^(quaint-|\.|/)"? name, name, 'quaint-{name}'}
    try:
-      resolver.r{real-name}
+      {real-name, resolver.r{real-name}}
    catch e when e.code === "MODULE_NOT_FOUND":
       print 'Package {chalk.bold{real-name}} is not installed locally. Installing...'
       if not fs.exists-sync{"package.json"}:
@@ -84,25 +84,29 @@ async install-plugin{name} =
       match result.status:
          0 ->
             print result.stdout.to-string{}
-            resolver.r{real-name}
+            {real-name, resolver.r{real-name}}
          1 ->
             print result.stderr.to-string{}
             print 'Could not install {chalk.bold{real-name}}.'
-            null
+            {real-name, null}
 
 
 async setup-plugin{name, config, instructions} =
-   plugin = await install-plugin{name}
+   {real-name, plugin} = await install-plugin{name}
    if plugin:
       simple-name = name.replace{R"^quaint-", ""}
       if plugin.quaint-setup:
          config.plugins[simple-name] or= {=}
          await plugin.quaint-setup{config, instructions}
          print 'Plugin {chalk.bold{name}} successfully configured!'
+      elif resolver.rn{'{real-name}/quaint-setup'} as qsetup:
+         config.plugins[simple-name] or= {=}
+         await qsetup{config, instructions}
+         print 'Plugin {chalk.bold{name}} successfully configured!'
       else:
          print 'Using plugin {chalk.bold{name}}'
          config.plugins[simple-name] or=
-            plugin.quaint-default-config or true
+            plugin.quaint-default-config or {=}
 
 
 default-config = {

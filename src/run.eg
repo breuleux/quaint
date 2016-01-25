@@ -70,6 +70,12 @@ class PluginResolver:
       x = module._load{p, @m, true}
       x??.quaint-plugin or x
 
+   rn{p} =
+      try:
+         module._load{p, @m, true}
+      catch e:
+         null
+
    r2{name} =
       if @added-global-path or not @use-global:
          @r{name}
