@@ -49,7 +49,7 @@ install{@} =
                   "true" -> true
                   "false" -> false
                   R"^\"\"$"? s -> JSON.parse{s}
-                  R"^\d+(\.\d*)?(e\d+)?$"? s -> Number{s}
+                  R"^-?\d+(\.\d*)?([eE\d-]+)?$"? s -> Number{s}
                   s -> s
 
             match to-data{body, {= leaf}}:
