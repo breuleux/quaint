@@ -25,6 +25,7 @@ provide:
    mergeable
    normalize
    toJSON
+   to-data
 
 
 next = Symbol{.next}
@@ -178,3 +179,64 @@ toJSON{match v} =
          t
    else ->
       v
+
+
+data-ex = extractor with
+   "\\key = \\value"
+   "\\key := \\value"
+   "\\key : \\value"
+   "* \\item"
+   "# \\item"
+
+to-data{node, options = {=}} =
+
+   options as {
+      => use-map = false
+      => leaf = x ->  x
+      => let extractor = data-ex
+   }
+
+   var result = null
+
+   add-item{item} =
+      if result === null:
+         result = {}
+      if not Array? result:
+         throw E.quaint.data.inconsistent with
+            "Inconsistent definition: some, but not all statements are list entries."
+      result.push{to-data{item, options}}
+
+   add-kv{key, value} =
+      if use-map:
+         if result === null:
+            result = new Map{}
+         if not Map? result:
+            throw E.quaint.data.inconsistent with
+               "Inconsistent definition: some, but not all statements are key/value pairs"
+         result.set{to-data{key, options}, to-data{value, options}}
+      else:
+         if result === null:
+            result = {=}
+         if not Object.get-prototype-of{result} === Object.prototype:
+            throw E.quaint.data.inconsistent with
+               "Inconsistent definition: some, but not all statements are key/value pairs"
+         result[key.raw{}] = to-data{value, options}
+
+   var leaf-exists = false
+   statements{node} each stmt ->
+      match extractor{stmt}:
+         {=> key, => value} ->
+            add-kv{key, value}
+         {=> item} ->
+            add-item{item}
+         else ->
+            leaf-exists = true
+
+   if result === null:
+      leaf{node}
+   elif leaf-exists:
+      throw E.quaint.data.inconsistent with
+         "Inconsistent definition: some, but not all statements are leaf nodes"
+   else:
+      result
+
