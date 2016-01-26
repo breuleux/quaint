@@ -25,6 +25,8 @@ class AppendInjector:
          {.js, === false} ->
             script %
                type = "text/javascript"
+               async = data.async or false
+               defer = data.defer or false
                src = data.path
          {.css, === true} ->
             style[raw] %
