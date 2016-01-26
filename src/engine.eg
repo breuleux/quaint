@@ -90,6 +90,7 @@ class Engine:
       @resources = {=}
       @plug{*plugins}
       @tools = tools
+      @etools = etools
       @template = null
       @deferred = Deferred
       @into = Into
