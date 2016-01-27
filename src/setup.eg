@@ -39,7 +39,7 @@ template :: @minimal
 
 scaffold-style = '''
 /*
-This stylesheet will be included automatically by all pages.
+This stylesheet will be included automatically on all pages.
 To import more stylesheets, go in quaint.json and add them to the resources.files list.
 
 CSS files are not copied automatically, so @import will not work.
@@ -51,7 +51,7 @@ resources :: style.css
 
 scaffold-script = '''
 /*
-This stylesheet will be executed automatically by all pages.
+This script will be executed automatically on all pages.
 To import more scripts, go in quaint.json and add them to the resources.files list.
 
 A script can be imported on a per-page basis with this statement:
@@ -64,7 +64,7 @@ resources :: script.js
 resolver = PluginResolver{false}
 
 async install-plugin{name} =
-   real-name = if{R"^(quaint-|\.|/)"? name, name, 'quaint-{name}'}
+   real-name = if{R"^(quaint-|\.|/|@)"? name, name, 'quaint-{name}'}
    try:
       {real-name, resolver.r{real-name}}
    catch e when e.code === "MODULE_NOT_FOUND":
