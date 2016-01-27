@@ -27,7 +27,8 @@ class Base:
    read{engine, match ext, body} =
       null? ->
          var e = engine
-         filenames = body.raw{}.split{R"[ \n,]+"} each x when x !== "" -> x
+         rb = body.raw??{} or body
+         filenames = rb.split{R"[ \n,]+"} each x when x !== "" -> x
          results = filenames each match filename ->
             R"\.([a-zA-Z0-9]+)$"! {_, ext} or ext is "q" ->
                match engine.read-resource{@type, filename}:
@@ -43,7 +44,6 @@ class Base:
 
 
 class Include < Base:
-
    constructor{} =
       @type = .include
       @extensions = clone{default-extensions}
@@ -80,6 +80,9 @@ install{@} =
             incl.read{engine, ext??.raw{}, body}
    }
    @macros.include.extensions = incl.extensions
+   @macros.include.read{*args} = incl.read{*args}
+   @macros.include.process{*args} = incl.process{*args}
+   @macros.include.parse{*args} = incl.parse{*args}
 
    dat = Data{}
    @register-macros with {
@@ -88,5 +91,8 @@ install{@} =
             dat.read{engine, ext??.raw{}, body}
    }
    @macros.data.extensions = dat.extensions
+   @macros.data.read{*args} = dat.read{*args}
+   @macros.data.process{*args} = dat.process{*args}
+   @macros.data.parse{*args} = dat.parse{*args}
 
 
