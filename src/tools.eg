@@ -187,6 +187,7 @@ data-ex = extractor with
    "\\key : \\value"
    "* \\item"
    "# \\item"
+   "[\\inner]"
 
 to-data{node, options = {=}} =
 
@@ -194,6 +195,7 @@ to-data{node, options = {=}} =
       => use-map = false
       => leaf = x ->  x
       => let extractor = data-ex
+      => var ignore-brackets = true
    }
 
    var result = null
@@ -223,14 +225,18 @@ to-data{node, options = {=}} =
          result[key.raw{}] = to-data{value, options}
 
    var leaf-exists = false
-   statements{node} each stmt ->
-      match extractor{stmt}:
-         {=> key, => value} ->
-            add-kv{key, value}
-         {=> item} ->
-            add-item{item}
-         else ->
-            leaf-exists = true
+   statements{shed{node}} each stmt ->
+      f{stmt} where f{stmt} =
+         match extractor{stmt}:
+            {=> key, => value} ->
+               add-kv{key, value}
+            {=> item} ->
+               add-item{item}
+            {=> inner} when ignore-brackets ->
+               ignore-brackets = false
+               f{inner}
+            else ->
+               leaf-exists = true
 
    if result === null:
       leaf{node}
