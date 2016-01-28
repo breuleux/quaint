@@ -124,6 +124,7 @@ class Engine:
                x = may-fail{-> handler.gen{@, extra & values}}
                match x:
                   == @next -> pass
+                  undefined? -> return ""
                   else -> return x
             % [parts each part -> @gen{part}]
          result
