@@ -31,7 +31,6 @@ provide:
    basic-plugin, core-plugin, lit-plugin
    etools
 
-
 h{tag, match props, *children} =
    {tags => _, props => _, children => _} or String? or Number? or Boolean? ->
       h{tag, {=}, props, *children}
@@ -56,3 +55,4 @@ toHTML{text, options = {=}} =
 writeHTML{path, text, options = {=}} =
    create{}.write{path, text, .html, options}
 
+Engine.prototype.quaint = module.exports
