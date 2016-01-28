@@ -26,6 +26,8 @@ provide:
    normalize
    toJSON
    to-data
+   leaf-raw
+   leaf-data
 
 
 next = Symbol{.next}
@@ -185,9 +187,21 @@ data-ex = extractor with
    "\\key = \\value"
    "\\key := \\value"
    "\\key : \\value"
+   "\\key => \\rawvalue"
    "* \\item"
    "# \\item"
    "[\\inner]"
+
+leaf-raw{x} = x.raw{}
+
+leaf-data{x} =
+   match x.raw{}:
+      "true" -> true
+      "false" -> false
+      "null" -> null
+      R"^\".*\"$"? s -> JSON.parse{s}
+      R"^-?\d+(\.\d*)?([eE\d-]+)?$"? s -> Number{s}
+      s -> s
 
 to-data{node, options = {=}} =
 
@@ -215,26 +229,28 @@ to-data{node, options = {=}} =
          if not Map? result:
             throw E.quaint.data.inconsistent with
                "Inconsistent definition: some, but not all statements are key/value pairs"
-         result.set{to-data{key, options}, to-data{value, options}}
+         result.set{to-data{key, options}, value}
       else:
          if result === null:
             result = {=}
          if not Object.get-prototype-of{result} === Object.prototype:
             throw E.quaint.data.inconsistent with
                "Inconsistent definition: some, but not all statements are key/value pairs"
-         result[key.raw{}] = to-data{value, options}
+         result[key.raw{}] = value
 
    var leaf-exists = false
    statements{shed{node}} each stmt ->
       f{stmt} where f{stmt} =
          match extractor{stmt}:
             {=> key, => value} ->
-               add-kv{key, value}
+               add-kv{key, to-data{value, options}}
             {=> item} ->
                add-item{item}
             {=> inner} when ignore-brackets ->
                ignore-brackets = false
                f{inner}
+            {=> key, => rawvalue} ->
+               add-kv{key, leaf{rawvalue}}
             else ->
                leaf-exists = true
 
