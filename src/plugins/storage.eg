@@ -1,7 +1,8 @@
 
 require:
    ..tools ->
-      raw, shed, extractor, statements, toJSON, to-data
+      raw, shed, extractor, statements, toJSON
+      to-data, leaf-data
    ..ast ->
       Into, Deferred
    ..doc ->
@@ -43,32 +44,12 @@ install{@} =
                      td % k
                      td % engine.gen{v}
          elif R"[=:]"? raw{body}:
-
-            leaf{x} =
-               match x.raw{}:
-                  "true" -> true
-                  "false" -> false
-                  R"^\"\"$"? s -> JSON.parse{s}
-                  R"^-?\d+(\.\d*)?([eE\d-]+)?$"? s -> Number{s}
-                  s -> s
-
-            match to-data{body, {= leaf}}:
+            match to-data{body, {leaf = leaf-data}}:
                Array? ->
                   throw E.meta.invalid{"Meta-information must be key/value pairs."}
                obj ->
                   items{obj} each {key, value} ->
                      Into{.meta, {raw{key}, value}}
-
-            ;; ex = extractor{"\\key = \\value", "\\key => \\value", "\\key: \\jsonvalue"}
-            ;; statements{body} each stmt ->
-            ;;    match ex{stmt}:
-            ;;       {=> key, => value} ->
-            ;;          Into{.meta, {raw{key}, value}}
-            ;;       {=> key, => jsonvalue} ->
-            ;;          Into{.meta, {raw{key}, toJSON{jsonvalue}}}
-            ;;       else ->
-            ;;          throw E.meta.syntax{'Invalid meta statement: "{stmt.raw{}}"'}
-
          else:
             Deferred with {path, docs} ->
                match docs.meta.get{r.replace{R"!$", ""}}:
