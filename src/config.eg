@@ -116,7 +116,7 @@ merge-config{normalize-config! cfg, argv} =
       cfg.templates.root = argv.template-directory
 
    ;; others
-   {.format, .out, .verbose, .watch} each name ->
+   {.format, .verbose, .watch, .output} each name ->
       if argv[name] as x:
          cfg[name] = x
    if argv.resources as [let x]:

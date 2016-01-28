@@ -54,8 +54,8 @@ get-arguments{} =
       ;; --inline
       @describe{.inline, "Inline resources in the HTML"}
 
-      ;; --out, -o
-      @alias{.o, .out}
+      ;; --output, -o
+      @alias{.o, .output}
       @nargs{.o, 1}
       @describe{.o, "File or directory to save the output to"}
 
