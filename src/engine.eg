@@ -391,7 +391,7 @@ class Engine:
          if options.fallback-to-default and type !== "default":
             return @read-resource{.default, filename, options}
          else:
-            throw E.cannot-resolve-type{'Resource "{filename}" of type "{type}" cannot be resolved.'}
+            throw E.cannot-resolve-group{'Resources of group "{type}" cannot be resolved (error when trying to resolve "{filename}")'}
 
       match resolver.keys[filename] as result:
          undefined? ->
@@ -405,7 +405,7 @@ class Engine:
             elif options.fallback-to-default:
                @read-resource{.default, filename, options}
             else:
-               throw E.cannot-resolve{'Resource "{filename}" could not be resolved.'}
+               throw E.cannot-resolve{'Resource "{filename}" of group "{type}" could not be resolved.'}
 
          else ->
             result
