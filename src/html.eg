@@ -27,7 +27,7 @@ class AppendInjector:
                type = "text/javascript"
                async = data.async or false
                defer = data.defer or false
-               src = data.path
+               src = data.dest-url
          {.css, === true} ->
             style[raw] %
                data.contents
@@ -35,7 +35,7 @@ class AppendInjector:
             link %
                rel = .stylesheet
                type = "text/css"
-               href = data.path
+               href = data.dest-url
          else ->
             throw E.bad-resource-type{'Cannot include resources of type "{data.type}"'}
 
@@ -116,6 +116,9 @@ class HTMLFormatter:
          embeddable = data.type !== null
          data.inline = embeddable and data.inline or options.inline
 
+         if not path-is-url:
+            data.dest-url = path.join{options.url, path0}
+
          while.outer true:
             type = data.type
             items{@transformers[type]} each {_, transformer} ->
@@ -132,8 +135,6 @@ class HTMLFormatter:
                data.contents = t.transform{data.contents, data.full-path} with
                   file -> @read-resource{.resource, file}
 
-         if not path-is-url:
-            data.path = path.join{options.url, path0}
          if embeddable:
             match data.method:
                String? s ->
@@ -143,6 +144,7 @@ class HTMLFormatter:
                else ->
                   throw E.HTMLFormatter.method with
                      'method for injection must be a String or a Function'
+
          if not data.inline and not path-is-url:
             if data.contents !== null:
                files[data.dest] =
