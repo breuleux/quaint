@@ -116,12 +116,14 @@ class HTMLFormatter:
          embeddable = data.type !== null
          data.inline = embeddable and data.inline or options.inline
 
-         if not path-is-url:
+         if path-is-url:
+            data.dest-url = data.path
+         else:
             data.dest-url = path.join{options.url, path0}
 
          while.outer true:
             type = data.type
-            items{@transformers[type]} each {_, transformer} ->
+            items{@transformers[type or ""]} each {_, transformer} ->
                data = transformer{data}
                if data.transform:
                   data.transforms.push{data.transform}
