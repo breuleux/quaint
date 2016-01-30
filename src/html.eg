@@ -129,7 +129,8 @@ class HTMLFormatter:
          if data.inline and data.contents === true:
             data.contents = @engine.read-resource-contents{.resource, data.path}
             [data.transforms or {}] each t ->
-               data.contents = t.transform{data.contents}
+               data.contents = t.transform{data.contents, data.full-path} with
+                  file -> @read-resource{.resource, file}
 
          if not path-is-url:
             data.path = path.join{options.url, path0}

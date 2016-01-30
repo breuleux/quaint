@@ -268,9 +268,10 @@ task copy-it{name, source, transforms} =
    if not transforms or transforms.length === 0:
       @get{source}.copy{to = name}
    else:
+      src = @get{source}
       contents =
-         transforms.reduce{f, @get{source}.text} where
-            f{x, t} = t.transform{x}
+         transforms.reduce{f, src.text} where
+            f{x, t} = t.transform{x, src.path, file -> @get{file}}
       @get{name}.write{contents}
 
 task main{root} =
