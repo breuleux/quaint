@@ -59,6 +59,8 @@ class MapDocument{BasicDocument}:
    entries{} =
       @accessed = true
       @data.entries{}
+   to-object{} =
+      object with consume{@entries{}}
    get-value{key} =
       tools.toJSON{@get{key}}
    toJSON{} =
