@@ -262,10 +262,16 @@ task write-it{name, contents} =
    @log with '   Write {chalk.green{name}}'
    @get{name}.write{contents}
 
-task copy-it{name, source} =
+task copy-it{name, source, transforms} =
    @log with '    Copy {source}'
    @log with '    ---> {chalk.green{name}}'
-   @get{source}.copy{to = name}
+   if not transforms or transforms.length === 0:
+      @get{source}.copy{to = name}
+   else:
+      contents =
+         transforms.reduce{f, @get{source}.text} where
+            f{x, t} = t.transform{x}
+      @get{name}.write{contents}
 
 task main{root} =
 
@@ -323,8 +329,8 @@ task main{root} =
          sources-exist = true
       #write{contents} ->
          write-it{name, contents}
-      #copy{source} ->
-         copy-it{name, source}
+      #copy{source, transforms = null} ->
+         copy-it{name, source, transforms}
 
    ;;;;;;;;;;;;;;;;;
    ;; COPY ASSETS ;;

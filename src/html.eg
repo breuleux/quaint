@@ -36,6 +36,8 @@ class AppendInjector:
                rel = .stylesheet
                type = "text/css"
                href = data.path
+         else ->
+            throw E.bad-resource-type{'Cannot include resources of type "{data.type}"'}
 
    inject-node{root, node} =
       var candidates = {root}
@@ -71,9 +73,15 @@ class HTMLFormatter:
          head = AppendInjector{.head}.inject
          body = AppendInjector{.body}.inject
       }
+      @transformers = {=}
 
    register-injectors{injectors} =
       @injectors &: injectors
+
+   register-transformers{transformers} =
+      items{transformers} each {type, tr} ->
+         @transformers[type] or= {=}
+         @transformers[type] &: tr
 
    expand-components{match node} =
       ENode? {=> tags, => props, => children} ->
@@ -97,13 +105,31 @@ class HTMLFormatter:
           resources
           options >> [defaults & options]} =
       files = {=}
-      items{resources} each {path0, clone! data} ->
+      items{resources} each {path0, clone! var data} ->
+         data.transforms = {}
+
+         if not path-is-url:
+            data.dest = path.join{options.root, path0}
+
          orig-path = data.path
          path-is-url = data.path-is-url
          embeddable = data.type !== null
          data.inline = embeddable and data.inline or options.inline
+
+         while.outer true:
+            type = data.type
+            items{@transformers[type]} each {_, transformer} ->
+               data = transformer{data}
+               if data.transform:
+                  data.transforms.push{data.transform}
+               if type !== data.type:
+                  continue outer
+            break
+
          if data.inline and data.contents === true:
             data.contents = @engine.read-resource-contents{.resource, data.path}
+            [data.transforms or {}] each t ->
+               data.contents = t.transform{data.contents}
 
          if not path-is-url:
             data.path = path.join{options.url, path0}
@@ -118,9 +144,9 @@ class HTMLFormatter:
                      'method for injection must be a String or a Function'
          if not data.inline and not path-is-url:
             if data.contents !== null:
-               files[path.join{options.root, path0}] =
+               files[data.dest] =
                   if data.contents === true:
-                     #copy{data.full-path or orig-path}
+                     #copy{data.full-path or orig-path, data.transforms or {}}
                   else:
                      #write{data.contents}
          items{data.dependencies or {=}} each {p, src} ->
