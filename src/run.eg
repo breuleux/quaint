@@ -230,15 +230,16 @@ task compile{file, template-root} =
          {file and path = f2.path, contents and text = f2.text}
    }
 
+   q.template = cfg.templates.default
+   q.setenv{common-data{}}
+   q.plug{*plugins}
+
    items{cfg.resources.files} each {name, file} ->
       data = analyze-path{file}
       if data.path and not data.path-is-url and not file.starts-with{"/"}:
          data.full-path = @get{cfg.content-root}.get{data.path}.path
       q.register-resources with {name => data}
 
-   q.template = cfg.templates.default
-   q.setenv{common-data{}}
-   q.plug{*plugins}
    res = q.translate{file.text, cfg.format} with
       resources = {
          root and url = path.join{cfg.output, cfg.resources.root}
