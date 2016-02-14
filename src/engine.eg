@@ -83,7 +83,11 @@ class Engine:
       @formatters = {
          html = HTMLFormatter{@}
       }
-      @regexps = {}
+      @regexps = {
+         start = {}
+         add = {=}
+         rm = {=}
+      }
       @methods = {}
       @macros = {=}
       @resolvers = {=}
@@ -228,9 +232,10 @@ class Engine:
    ;;       result
 
    translate{src, format, options = {=}} =
-      finalize{match, ndone} =
+
+      finalize{match, regexps} =
          var String? s ->
-            enumerate{@regexps.slice{ndone}} each {i, {r, match repl}} ->
+            regexps each {r, match repl} ->
                String? ->
                   s = s.replace{r, repl}
                Function? f or f is [-> repl] ->
@@ -243,18 +248,33 @@ class Engine:
                            "\x00"
                   s = s.replace{r, f2}
                   if inserts.length > 1:
-                     return collapse{zip{inserts, s.split{"\x00"}}}
+                     return collapse{zip{inserts, s.split{"\x00"}}, regexps}
                   else:
                      s
             s
-         x -> x
+         x -> collapse{x, regexps}
 
-      collapse{x} =
-         etools.merge-children{x, true, {x} -> finalize{x, 0}}
+      collapse{node, _regexps} =
+         var add = {}
+         var rm = {}
+         [node.tags or {}] each tag ->
+            add ++= @regexps.add[tag] or {}
+            rm ++= @regexps.rm[tag] or {}
+         regexps =
+            if add.length or rm.length:
+               then:
+                  r = new Set{_regexps}
+                  add each entry -> r.add{entry}
+                  rm each entry -> r.delete{entry}
+                  r
+               else:
+                  _regexps
+         etools.merge-children{node, false} with sub-node ->
+            finalize{sub-node, regexps}
 
       results = @run{src}
 
-      main = normalize{collapse{top}} where top =
+      main = normalize{collapse{top, new Set{@regexps.start}}} where top =
          if options.paragraph:
             p % results.main
          else:
@@ -322,15 +342,27 @@ class Engine:
       @
 
    register-postprocessor{*match} =
-      {match expr, repl} ->
-         String? ->
-            @regexps.push{{RegExp{expr, "g"}, repl}}
-            @
-         RegExp? ->
-            @regexps.push{{expr, repl}}
-            @
-      {each {expr, repl}} ->
-         @register-substitutions{expr, repl}
+      {expr, repl, options = {=}} ->
+
+         options as {
+            whitelist => wl = null
+            blacklist => bl = {.raw, .pre, .code, .script, .style, .kbd}
+         }
+
+         entry = {if{String? expr, RegExp{expr, "g"}, expr}, repl}
+
+         if wl:
+            wl each tag ->
+               [@regexps.add[tag] or= {}].push{entry}
+         else:
+            @regexps.start.push{entry}
+
+         bl each tag ->
+            [@regexps.rm[tag] or= {}].push{entry}
+
+         @
+      {each {expr, repl, options = {=}}} ->
+         @register-postprocessor{expr, repl, options}
          @
 
    register-resolvers{resolvers} =
@@ -448,6 +480,7 @@ class Engine:
       e.documents = @documents
       e.evaluator = @evaluator.fork{}
       e.formatters = clone{@formatters}
+      ;; TODO: regexps should be deep cloned
       e.regexps = clone{@regexps}
       e.macros = clone{@macros}
       e.methods = clone{@methods}
