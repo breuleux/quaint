@@ -220,7 +220,8 @@ to-data{node, options = {=}} =
       if not Array? result:
          throw E.quaint.data.inconsistent with
             "Inconsistent definition: some, but not all statements are list entries."
-      result.push{to-data{item, options}}
+      else:
+         result.push{to-data{item, options}}
 
    add-kv{key, value} =
       if use-map:
@@ -229,14 +230,16 @@ to-data{node, options = {=}} =
          if not Map? result:
             throw E.quaint.data.inconsistent with
                "Inconsistent definition: some, but not all statements are key/value pairs"
-         result.set{to-data{key, options}, value}
+         else:
+            result.set{to-data{key, options}, value}
       else:
          if result === null:
             result = {=}
          if not Object.get-prototype-of{result} === Object.prototype:
             throw E.quaint.data.inconsistent with
                "Inconsistent definition: some, but not all statements are key/value pairs"
-         result[key.raw{}] = value
+         else:
+            result[key.raw{}] = value
 
    var leaf-exists = false
    statements{shed{node}} each stmt ->
