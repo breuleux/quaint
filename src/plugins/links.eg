@@ -36,6 +36,11 @@ make-link{engine, match type, label, url, prefix = ""} =
 
 install{@} =
 
+   sr{engine} =
+      match engine.documents.meta.get-raw{.site-rel}:
+         "." -> ""
+         s -> '{s}/'
+
    @register-rules with {
       "\\maybe\\label @@ \\url"{engine, {=> label, url => shed! url}} =
          make-link{engine, .link, label, url}
@@ -51,19 +56,15 @@ install{@} =
 
 
       "\\maybe\\label @@@ \\url"{engine, {=> label, url => shed! url}} =
-         sr = engine.documents.meta.get-raw{.site-root}
-         make-link{engine, .link, label, url, sr}
+         make-link{engine, .link, label, url, sr{engine}}
 
       "\\maybe\\label @@@ image : \\url"{engine, {=> label, url => shed! url}} =
-         sr = engine.documents.meta.get-raw{.site-root}
-         make-link{engine, .image, label, url, sr}
+         make-link{engine, .image, label, url, sr{engine}}
 
       "@@@ audio : \\url"{engine, {url => shed! url}} =
-         sr = engine.documents.meta.get-raw{.site-root}
-         make-link{engine, .audio, "", url, sr}
+         make-link{engine, .audio, "", url, sr{engine}}
 
       "@@@ video : \\url"{engine, {url => shed! url}} =
-         sr = engine.documents.meta.get-raw{.site-root}
-         make-link{engine, .video, "", url, sr}
+         make-link{engine, .video, "", url, sr{engine}}
    }
 
