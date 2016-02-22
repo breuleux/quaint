@@ -150,6 +150,14 @@ merge-config{normalize-config! cfg, argv} =
    ;; if cfg.save-meta === true:
    ;;    cfg.save-meta = "meta.json"
 
+
+   cfg.server.start-page =
+      match cfg.sources:
+         {R"^([^*]*).q$"! {_, name}} ->
+            '{name}.html'
+         else ->
+            "index.html"
+
    finalize-config{cfg}
 
 finalize-config{cfg} =
