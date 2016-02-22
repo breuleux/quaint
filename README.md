@@ -9,7 +9,7 @@ easier to customize.
 
 **[Website](http://breuleux.github.io/quaint/)**
 
-Quaint is written in [Earl Grey](http://breuleux.github.io/earl-grey/)
+Quaint is written in [Earl Grey](http://earl-grey.io)
 
 
 Install
