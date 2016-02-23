@@ -76,7 +76,7 @@ get-arguments{} =
       @describe{"resources-url", "URL for the resources directory"}
 
       ;; --serve
-      @default{.serve, false}
+      ;; @default{.serve, false}
       @describe{.serve, "Start server on specified port, in output directory"}
 
       ;; --stdout, -s
@@ -105,7 +105,7 @@ get-arguments{} =
 
       ;; --watch, -w
       @alias{.w, .watch}
-      @default{"watch", false}
+      ;; @default{"watch", false}
       @describe{"watch", "Watch for changes to rebuild"}
 
       ;; TODO
@@ -244,7 +244,7 @@ async provide{} =
             watch = cfg.watch and not cfg._print
          }
 
-      if cfg.server.enable and not cfg._print:
+      if cfg.watch and cfg.server.enable and not cfg._print:
          filendir.write-file-sync{p, text} where
             p = path.join{cfg.nominal-output, ".quaint-server-entry-point.html"}
             text = '''<meta http-equiv="refresh" content="0; URL='{server-start-page}'" />'''

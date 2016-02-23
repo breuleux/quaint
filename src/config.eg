@@ -116,19 +116,23 @@ merge-config{normalize-config! cfg, argv} =
       cfg.templates.root = argv.template-directory
 
    ;; others
-   {.format, .verbose, .watch, .output} each name ->
-      if argv[name] as x:
-         cfg[name] = x
+   {.format, .verbose, .output} each name ->
+      if argv[name] !== undefined:
+         cfg[name] = argv[name]
    if argv.resources as [let x]:
       cfg.resources.root = x
    if argv.resources-url as [let x]:
       cfg.resources.url = x
    if argv.inline as [let x]:
       cfg.resources.inline = x
-   if argv.serve as [let x]:
-      if x:
-         cfg.server.enable = true
-         cfg.server.port = if{x === true, 8080, Number{x}}
+   if argv.watch !== undefined:
+      cfg.watch = argv.watch
+      if not cfg.watch:
+         cfg.server.enable = false
+   if argv.serve !== undefined:
+      let x = argv.serve
+      cfg.server.enable = x
+      cfg.server.port = if{x === true, 8080, Number{x}}
    if argv.eval:
       cfg._eval = argv.eval
       cfg._print = true
