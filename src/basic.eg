@@ -100,9 +100,20 @@ core-plugin{@} =
             results = enumerate{elems} each {match i, elem} ->
                when [i mod 2] === 0 ->
                   match engine.gen{elem} as x:
-                     [div %]? or {block => true?} ->
+                     {block => true?} ->
                         x
-                     != "" when wide ->
+                     ENode? ->
+                        if not wide
+                           \ or x.tags.some{tag -> tag === "div"}
+                           \ or x.tags.length > 0 and x.tags.every{tag -> R"^[.#]"? tag}:
+                           x
+                        elif wide:
+                           p % x
+                        else:
+                           x
+                     R"^[ \n\t]*$"? ->
+                        x
+                     when wide ->
                         p % x
                      else ->
                         x
