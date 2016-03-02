@@ -12,7 +12,6 @@ require:
    mkdirp
    "./setup" ->
       setup, setup-plugin
-   format-json
    inquirer-promise as inq
 
 get-arguments{} =
@@ -174,7 +173,7 @@ get-arguments{} =
 reload-bin-path = path.join{__dirname, '../node_modules/reload/bin/reload'}
 
 async commit-setup{config, instructions, filename} =
-   filendir.write-file-sync{filename, format-json.plain{config}}
+   filendir.write-file-sync{filename, JSON.stringify{config, null, 2}}
    instructions each
       #mkdir{dir} ->
          mkdirp.sync{dir}

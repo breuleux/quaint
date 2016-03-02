@@ -4,7 +4,6 @@ require:
    .index as quaint
    module
    quasar -> deprox
-   format-json
    path
    chalk
    "./config" ->
@@ -266,14 +265,15 @@ task write-it{name, contents} =
 task copy-it{name, source, transforms} =
    @log with '    Copy {source}'
    @log with '    ---> {chalk.green{name}}'
+   src = @get{source}
+   dest = @get{name}
    if not transforms or transforms.length === 0:
-      @get{source}.copy{to = name}
+      src.copy{to = name}
    else:
-      src = @get{source}
       contents =
          transforms.reduce{f, src.text} where
             f{x, t} = t.transform{x, src.path, file -> @get{file}}
-      @get{name}.write{contents}
+      dest.write{contents}
 
 task main{root} =
 
@@ -347,7 +347,7 @@ task main{root} =
    if not sources-exist:
       @log{"Nothing to do."}
    elif cfg.save-meta:
-      @get{cfg.save-meta}.write{format-json.plain{meta}}
+      @get{cfg.save-meta}.write{JSON.stringify{meta, null, 2}}
       @log with 'Saved the meta information in {chalk.bold{cfg.save-meta}}'
    elif cfg.meta??.file:
       new-meta =
@@ -359,5 +359,5 @@ task main{root} =
                object with lodash.sort-by{items{meta}} with {{k, v}} -> v[field]
             else ->
                meta
-      @get{cfg.meta.file}.write{format-json.plain{new-meta}}
+      @get{cfg.meta.file}.write{JSON.stringify{new-meta, null, 2}}
       @log with 'Saved the meta information in {chalk.bold{cfg.meta.file}}'

@@ -10,7 +10,6 @@
     "earlgrey-runtime": ">=0.0.12",
     "engage": ">=0.0.11",
     "filendir": "^1.0.0",
-    "format-json": "^1.0.3",
     "fs-extra": "^0.26.2",
     "globby": "^3.0.1",
     "inquirer-promise": ">=0.0.3",
