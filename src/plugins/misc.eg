@@ -5,6 +5,8 @@ require:
       to-data, leaf-data
    .common ->
       analyze-path
+   ..doc ->
+      SeqDocument
 
 
 provide:
@@ -12,7 +14,14 @@ provide:
 
 
 install{@} =
+   @register-documents with {
+      head = SeqDocument{}
+   }
+
    @register-macros with {
+
+      head{engine, body} =
+         engine.into{.head, engine.gen{body}}
 
       plugins{engine, shed-all! raw! body} =
          body.split{R"[ \n,]+"} each name when name !== "" ->
