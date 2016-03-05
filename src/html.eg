@@ -75,8 +75,8 @@ class HTMLFormatter:
 
    constructor{@engine} =
       @injectors = {
-         head = AppendInjector{.head}.inject
-         body = AppendInjector{.body}.inject
+         head = AppendInjector{.head}
+         body = AppendInjector{.body}
       }
       @transformers = {=}
 
@@ -145,7 +145,7 @@ class HTMLFormatter:
          if embeddable:
             match data.method:
                String? s ->
-                  @injectors[s]{enode, data}
+                  @injectors[s].inject{enode, data}
                Function? f ->
                   f{enode, data}
                else ->
@@ -161,6 +161,11 @@ class HTMLFormatter:
                      #write{data.contents}
          items{data.dependencies or {=}} each {p, src} ->
             files[path.join{options.root, p}] = src
+
+      ;; parts = @engine.documents.head.entries{}
+      ;; if parts.length > 0:
+      ;;    @injectors.head.inject-node{enode, parts}
+
       {html{enode}, files}
 
 
