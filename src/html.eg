@@ -17,7 +17,7 @@ class AppendInjector:
       [^[@tag] %]? node
 
    make-node{data} =
-      match {data.type, data.inline}:
+      result = match {data.type, data.inline}:
          {.js, === true} ->
             script[raw] %
                type = "text/javascript"
@@ -38,6 +38,11 @@ class AppendInjector:
                href = data.dest-url
          else ->
             throw E.bad-resource-type{'Cannot include resources of type "{data.type}"'}
+      if data.id:
+         result.props.id = data.id
+      if data.class:
+         result.props.class = data.class
+      result
 
    inject-node{root, node} =
       var candidates = {root}
