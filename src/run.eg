@@ -249,7 +249,7 @@ task compile{file, template-root} =
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
 
-   @log with '  Output {chalk.bold.green{dest.path}}'
+   @log with '  Output {chalk.bold.green{res.meta.path}}'
    @log with M{.end, ""}
    res
 
@@ -316,7 +316,8 @@ task main{root} =
       if cfg._print:
          print results.contents
       else:
-         dest = @rename-out{file, extension = ".html"}
+         ;; dest = @rename-out{file, extension = ".html"}
+         dest = @get{results.meta.path}
          dest.write{results.contents}
       resources &: results.files
       meta[path.relative{root.path, file.path}] = results.meta

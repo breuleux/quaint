@@ -20,6 +20,17 @@ install{@} =
 
    @register-macros with {
 
+      path{engine, pathname >> pathname.shed{}.raw{}} =
+         ;; FIXME: implementation is buggy if old-path is inside url but before
+         ;; the end of the string
+         m{x} = engine.documents.meta.get{x}
+         old-path = m{.path} or "unknown.html"
+         {
+            engine.into{.meta, {.path, pathname}}
+            engine.into{.meta, {.url, m{.url}.replace{old-path, pathname}}}
+            engine.into{.meta, {.local-url, m{.local-url}.replace{old-path, pathname}}}
+         }
+
       head{engine, body} =
          engine.into{.head, engine.gen{body}}
 
