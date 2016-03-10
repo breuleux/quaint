@@ -249,7 +249,8 @@ task compile{file, template-root} =
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
 
-   @log with '  Output {chalk.bold.green{res.meta.path}}'
+   out-path = path.join{cfg.output, res.meta.path}
+   @log with '  Output {chalk.bold.green{out-path}}'
    @log with M{.end, ""}
    res
 
@@ -288,8 +289,9 @@ task main{root} =
    ;; compiling the Quaint files
 
    @log with M{.begin, chalk.bold{"Resolve global plugins"}}
-   items{cfg.plugins} each {name, arg} ->
-      resolve-plugin{name, arg}
+   plugins =
+      items{cfg.plugins} each {name, arg} ->
+         resolve-plugin{name, arg}
    @log with M{.end, ""}
 
    ;;;;;;;;;;;;;;;;;;;;;
@@ -317,10 +319,18 @@ task main{root} =
          print results.contents
       else:
          ;; dest = @rename-out{file, extension = ".html"}
-         dest = @get{results.meta.path}
+         out-path = path.join{cfg.output, results.meta.path}
+         dest = @get{out-path}
          dest.write{results.contents}
       resources &: results.files
       meta[path.relative{root.path, file.path}] = results.meta
+
+   ;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; PLUGIN POSTPROCESS ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;
+
+   plugins each plugin when plugin.postprocess ->
+      resources &: plugin.postprocess{cfg, meta, resources}
 
    ;;;;;;;;;;;;;;;;;;;;
    ;; COPY RESOURCES ;;
@@ -344,6 +354,10 @@ task main{root} =
       dest = @rename-out{file}
       copy-it{dest.path, file.path}
    @log with M{.end, ""}
+
+   ;;;;;;;;;;;;;;;
+   ;; SAVE META ;;
+   ;;;;;;;;;;;;;;;
 
    if not sources-exist:
       @log{"Nothing to do."}
