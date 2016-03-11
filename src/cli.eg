@@ -221,7 +221,8 @@ async provide{} =
             await execute-setup{null, config-file}
          return
 
-      server-out = cfg.nominal-output
+      nominal-output = cfg.output
+      server-out = nominal-output
       server-start-page = path.join{cfg.site-root or "", cfg.server.start-page}
 
       engage{main, opts & if{cfg._print, {log{} = pass}, {=}}}.run{} where
@@ -245,7 +246,7 @@ async provide{} =
 
       if cfg.watch and cfg.server.enable and not cfg._print:
          filendir.write-file-sync{p, text} where
-            p = path.join{cfg.nominal-output, ".quaint-server-entry-point.html"}
+            p = path.join{nominal-output, ".quaint-server-entry-point.html"}
             text = '''<meta http-equiv="refresh" content="0; URL='{server-start-page}'" />'''
          child_process.spawn{reload-bin-path} with
             {
