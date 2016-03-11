@@ -166,6 +166,7 @@ merge-config{normalize-config! cfg, argv} =
 
 finalize-config{cfg} =
    cfg.nominal-output = cfg.output
-   cfg.output = path.join{cfg.output, cfg.site-root or ""}
+   ;; cfg.output = path.join{cfg.output, cfg.site-root or ""}
+   cfg.actual-output = path.join{cfg.output, cfg.site-root or ""}
    cfg
 

@@ -177,7 +177,7 @@ task compile{file, template-root} =
    sr = path.join{"/", cfg.site-root}
    rr = cfg.resources.root or ""
    base-dest = path.dirname{dest.path}
-   rel = path.relative{cfg.output or base-dest, base-dest}
+   rel = path.relative{cfg.actual-output or base-dest, base-dest}
    basename = path.basename{dest.path}
    rrel = path.relative{rel, rr} or "."
    meta = {
@@ -241,7 +241,7 @@ task compile{file, template-root} =
 
    res = q.translate{file.text, cfg.format} with
       resources = {
-         root and url = path.join{cfg.output, cfg.resources.root}
+         root and url = path.join{cfg.actual-output, cfg.resources.root}
          url = rrel
       }
    res.meta = object with
@@ -249,7 +249,7 @@ task compile{file, template-root} =
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
 
-   out-path = path.join{cfg.output, res.meta.path}
+   out-path = path.join{cfg.actual-output, res.meta.path}
    @log with '  Output {chalk.bold.green{out-path}}'
    @log with M{.end, ""}
    res
@@ -319,7 +319,7 @@ task main{root} =
          print results.contents
       else:
          ;; dest = @rename-out{file, extension = ".html"}
-         out-path = path.join{cfg.output, results.meta.path}
+         out-path = path.join{cfg.actual-output, results.meta.path}
          dest = @get{out-path}
          dest.write{results.contents}
       resources &: results.files
