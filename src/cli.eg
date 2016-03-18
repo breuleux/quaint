@@ -232,7 +232,7 @@ async provide{} =
             paths = {
                root = "."
                content = cfg.content-root or "."
-               output = cfg.output
+               output = cfg.actual-output
             }
             show = {
                read = false
