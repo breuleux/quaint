@@ -69,10 +69,10 @@ get-arguments{} =
 
       ;; --resources, -r
       @alias{.r, .resources}
-      @describe{.r, "Directory where to put the resources"}
+      @describe{.r, "Directory where to put the resources (default: resources/)"}
 
-      ;; --resources-url
-      @describe{"resources-url", "URL for the resources directory"}
+      ;; ;; --resources-url
+      ;; @describe{"resources-url", "URL for the resources directory"}
 
       ;; --serve
       ;; @default{.serve, false}
