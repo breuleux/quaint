@@ -41,22 +41,28 @@ get-arguments{} =
       @nargs{.e, 1}
       @describe{.e, "Quaint string to parse directly"}
 
-      ;; --format, -f
-      @alias{.f, .format}
+      ;; ;; --format, -f
+      ;; @alias{.f, .format}
+      ;; @nargs{.f, 1}
+      ;; @describe{.f, "Format (only html currently supported)"}
+
+
+      ;; --from, -f
+      @alias{.f, .from}
       @nargs{.f, 1}
-      @describe{.f, "Format (only html currently supported)"}
+      @describe{.f, "Content root. Except for the output and template paths, all paths are relative to this directory."}
 
       ;; --help, -h
       @alias{.h, .help}
       @help{.h}
 
-      ;; --inline
-      @describe{.inline, "Inline resources in the HTML"}
+      ;; ;; --inline
+      ;; @describe{.inline, "Inline resources in the HTML"}
 
       ;; --output, -o
       @alias{.o, .output}
       @nargs{.o, 1}
-      @describe{.o, "File or directory to save the output to"}
+      @describe{.o, "Directory to save the output into"}
 
       ;; --plugin, -p
       @alias{.p, .plugin}
@@ -87,16 +93,16 @@ get-arguments{} =
       ;; --template, -t
       @alias{.t, .template}
       @nargs{.t, 1}
-      @describe{.t, "Name of the default template to use"}
+      @describe{.t, "Template directory, or name of the default template to use"}
 
       ;; --template-directory
       @nargs{"template-directory", 1}
       @describe{"template-directory", "Template directory"}
 
-      ;; --verbose, -v
-      @alias{.v, .verbose}
-      @boolean{.v}
-      @describe{.v, "Print information about the operations performed"}
+      ;; ;; --verbose, -v
+      ;; @alias{.v, .verbose}
+      ;; @boolean{.v}
+      ;; @describe{.v, "Print information about the operations performed"}
 
       ;; --setup
       @default{"setup", false}

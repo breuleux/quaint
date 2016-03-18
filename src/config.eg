@@ -2,9 +2,13 @@
 require:
    deepmerge
    path
+   fs
 
 provide:
    merge-config
+
+is-directory{p} =
+   fs.exists-sync{p} and fs.lstat-sync{p}.is-directory{}
 
 cli-error{msg, fn} =
    try:
@@ -110,8 +114,12 @@ merge-config{normalize-config! cfg, argv} =
    cfg.inject = injections
 
    ;; templates
-   if argv.template:
-      cfg.templates.default = argv.template
+   if argv.template as t:
+      if is-directory{t}:
+         cfg.templates.root = t
+      else:
+         cfg.templates.root = path.dirname{t}
+         cfg.templates.default = path.basename{t}
    if argv.template-directory:
       cfg.templates.root = argv.template-directory
 
@@ -119,6 +127,8 @@ merge-config{normalize-config! cfg, argv} =
    {.format, .verbose, .output} each name ->
       if argv[name] !== undefined:
          cfg[name] = argv[name]
+   if argv.from:
+      cfg.content-root = argv.from
    if argv.resources as [let x]:
       cfg.resources.root = x
    if argv.resources-url as [let x]:
@@ -144,6 +154,9 @@ merge-config{normalize-config! cfg, argv} =
 
    ;; if cfg.sources.length === 0:
    ;;    cfg.sources = {"**/*.q"}
+
+   if cfg.sources.length === 0 and cfg.content-root !== ".":
+      cfg.sources = {"**/*.q"}
 
    ;; Starting the server implies watch
    if cfg.server.enable:
