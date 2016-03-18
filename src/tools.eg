@@ -37,6 +37,8 @@ may-fail{f} =
    try:
       f{}
    catch e:
+      if e.quaint-unrecoverable:
+         throw e
       Deferred with {engine, docs} ->
          if errn == null:
             docs.errors or= SeqDocument{}

@@ -4,12 +4,84 @@ require:
    child_process
    chalk
    path
-   .run -> PluginResolver
    fs
+   module
 
 provide:
    setup
    setup-plugin
+   install-plugin
+   PluginResolver
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin resolution ;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+class PluginResolver:
+
+   constructor{@use-global = true} =
+      @m = @module-here{}
+      @added-global-path = false
+
+   module-here{} =
+      m = new module{}
+      m.filename = process.cwd{}
+      c = process.cwd{}.split{"/"}
+      m.paths = xs.reverse{} where xs = [1..c.length] each i ->
+         c[...i].join{"/"} + "/node_modules"
+      ;; Push global npm path
+      if @use-global:
+         m.paths.push with
+            "/usr/local/lib/node_modules"
+            "/usr/lib/node_modules"
+      m
+
+   r{p} =
+      x = module._load{p, @m, true}
+      x??.quaint-plugin or x
+
+   rn{p} =
+      try:
+         module._load{p, @m, true}
+      catch e:
+         null
+
+   r2{name} =
+      if @added-global-path or not @use-global:
+         @r{name}
+      else:
+         try:
+            @r{name}
+         catch e:
+            ;; If all else fails (this is a bit slow, which is why we don't do it
+            ;; if we don't have to)
+            @m.paths.push with
+               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
+            @added-global-path = true
+            @r{name}
+
+   try-require{orig, match names, all = names} =
+      {} ->
+         rqs = [all each name -> '"{name}"'].join{", "}
+         e = E.plugin-not-found with
+            'Could not find a plugin for "{orig}".\nI tried requiring the following modules: {rqs}.\nTry running the following command to install the {orig} plugin locally:\n  npm install quaint-{orig} --save'
+         e.plugin-name = orig
+         e.quaint-unrecoverable = true
+         throw e
+      {name, *rest} ->
+         try:
+            @r2{name}
+         catch e:
+            if e.message == 'Cannot find module \'{name}\'':
+               @try-require{orig, rest, all}
+            else:
+               throw e
+               ;; throw E.cli-error with
+               ;;    'An error happened when loading module \'{name}\''
+               ;;    e
+
 
 
 now = new Date{}
@@ -62,6 +134,7 @@ resources :: script.js
 
 
 resolver = PluginResolver{false}
+
 
 async install-plugin{name} =
    real-name = if{R"^(quaint-|\.|/|@)"? name, name, 'quaint-{name}'}

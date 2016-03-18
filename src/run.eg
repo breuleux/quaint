@@ -2,7 +2,6 @@
 require:
    child_process
    .index as quaint
-   module
    quasar -> deprox
    path
    chalk
@@ -14,13 +13,15 @@ require:
    "engage" ->
       EngageMessage as M
    lodash
+   .setup ->
+      PluginResolver, install-plugin
+   inquirer-promise as inq
 
 require-macros:
    engage -> task
 
 provide:
    main
-   PluginResolver
    resolver
 
 
@@ -40,71 +41,6 @@ json-parse{filename, contents} =
 
 
 var _server = null
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Plugin resolution ;;
-;;;;;;;;;;;;;;;;;;;;;;;
-
-class PluginResolver:
-
-   constructor{@use-global = true} =
-      @m = @module-here{}
-      @added-global-path = false
-
-   module-here{} =
-      m = new module{}
-      m.filename = process.cwd{}
-      c = process.cwd{}.split{"/"}
-      m.paths = xs.reverse{} where xs = [1..c.length] each i ->
-         c[...i].join{"/"} + "/node_modules"
-      ;; Push global npm path
-      if @use-global:
-         m.paths.push with
-            "/usr/local/lib/node_modules"
-            "/usr/lib/node_modules"
-      m
-
-   r{p} =
-      x = module._load{p, @m, true}
-      x??.quaint-plugin or x
-
-   rn{p} =
-      try:
-         module._load{p, @m, true}
-      catch e:
-         null
-
-   r2{name} =
-      if @added-global-path or not @use-global:
-         @r{name}
-      else:
-         try:
-            @r{name}
-         catch e:
-            ;; If all else fails (this is a bit slow, which is why we don't do it
-            ;; if we don't have to)
-            @m.paths.push with
-               child_process.spawn-sync{"npm", {.root, "-g"}}.stdout.to-string{}.trim{}
-            @added-global-path = true
-            @r{name}
-
-   try-require{orig, match names, all = names} =
-      {} ->
-         rqs = [all each name -> '"{name}"'].join{", "}
-         throw E.cli-error with
-            'Could not find a plugin for "{orig}". I tried requiring the following modules: {rqs}.\nIf they are available on npm, you can install them locally or globally, then try again.'
-      {name, *rest} ->
-         try:
-            @r2{name}
-         catch e:
-            if e.message == 'Cannot find module \'{name}\'':
-               @try-require{orig, rest, all}
-            else:
-               throw e
-               ;; throw E.cli-error with
-               ;;    'An error happened when loading module \'{name}\''
-               ;;    e
 
 resolver = PluginResolver{}
 
@@ -276,7 +212,28 @@ task copy-it{name, source, transforms} =
             f{x, t} = t.transform{x, src.path, file -> @get{file}}
       dest.write{contents}
 
+
 task main{root} =
+   try:
+      _main{root}
+   catch E.cli-error? e:
+      e.message.split{"\n"} each line ->
+         @log{chalk.red{line}}
+   catch E.plugin-not-found? e:
+      @log{chalk.bold{___}} with
+         'I could not find plugin "{e.plugin-name}". It might not be installed.'
+      install =
+         await inq.confirm{'Should I install quaint-{e.plugin-name} locally?'}
+      if install:
+         match [await install-plugin{e.plugin-name}]:
+            {_, match} ->
+               null? ->
+                  @log{chalk.bold.red{'Failed to install {e.plugin-name}.'}}
+               else ->
+                  main{root}
+
+
+task _main{root} =
 
    cfg = config{}
    template-root = cfg.templates.root and @get{cfg.templates.root}
@@ -306,7 +263,12 @@ task main{root} =
              text and contents = cfg._eval
          }}
       else:
-         consume{root.find{* cfg.sources}}
+         consume{root.find{*srcs}} where srcs =
+            cfg.sources each src ->
+               if root.get{src}.type === .directory:
+                  path.join{src, '**.q'}
+               else:
+                  src
 
    if cfg._print and sources.length > 1:
       throw E.quaint.multiple-files with
