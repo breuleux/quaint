@@ -34,10 +34,15 @@ install{@} =
       head{engine, body} =
          engine.into{.head, engine.gen{body}}
 
-      plugins{engine, shed-all! raw! body} =
-         body.split{R"[ \n,]+"} each name when name !== "" ->
-            p = engine.read-resource{.plugin, name, fallback-to-default = false}
-            p{engine}
+      plugins{engine, body} =
+         ps = to-data{body, {leaf = leaf-data}}
+         items{ps} each {name, match options} ->
+            false? ->
+               ;; plugin is off
+               pass
+            else ->
+               p = engine.read-resource{.plugin, name, fallback-to-default = false}
+               p{engine, if{options === true, {=}, options}}
          ""
 
       plugin{engine, raw! name, values} =
