@@ -218,7 +218,7 @@ task main{root} =
       _main{root}
    catch E.cli-error? e:
       e.message.split{"\n"} each line ->
-         @log{chalk.red{line}}
+         @error{chalk.red{line}}
    catch E.plugin-not-found? e:
       @log{chalk.bold{___}} with
          'I could not find plugin "{e.plugin-name}". It might not be installed.'

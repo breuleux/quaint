@@ -41,11 +41,11 @@ get-arguments{} =
       @nargs{.e, 1}
       @describe{.e, "Quaint string to parse directly"}
 
-      ;; ;; --format, -f
-      ;; @alias{.f, .format}
-      ;; @nargs{.f, 1}
-      ;; @describe{.f, "Format (only html currently supported)"}
-
+      ;; --format, -f
+      @alias{.f, .format}
+      @nargs{.f, 1}
+      @default{.f, .html}
+      @describe{.f, "Format (default: html)"}
 
       ;; --from, -f
       @alias{.f, .from}
@@ -99,10 +99,10 @@ get-arguments{} =
       @nargs{"template-directory", 1}
       @describe{"template-directory", "Template directory"}
 
-      ;; ;; --verbose, -v
-      ;; @alias{.v, .verbose}
-      ;; @boolean{.v}
-      ;; @describe{.v, "Print information about the operations performed"}
+      ;; --verbose, -v
+      @alias{.v, .verbose}
+      @boolean{.v}
+      @describe{.v, "Print information about the operations performed"}
 
       ;; --setup
       @default{"setup", false}

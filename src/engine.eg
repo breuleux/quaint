@@ -285,10 +285,12 @@ class Engine:
             {main, {=}}
          .text ->
             {main.toString{}, {=}}
-         .html ->
-            @formatters.html.format{main, @resources, options.resources}
          .dom ->
             {dom{main}, {=}}
+         when @formatters[format] ->
+            @formatters[format].format{main, @resources, options.resources}
+         else ->
+            throw E.cli-error.unknown-format{'Cannot generate code in format: "{format}"'}
 
       if @template and not options.no-template:
          tsrc =
