@@ -41,16 +41,16 @@ get-arguments{} =
       @nargs{.e, 1}
       @describe{.e, "Quaint string to parse directly"}
 
-      ;; --format, -f
-      @alias{.f, .format}
-      @nargs{.f, 1}
-      @default{.f, .html}
-      @describe{.f, "Format (default: html)"}
+      ;; --format
+      ;; @alias{.f, .format}
+      @nargs{.format, 1}
+      @default{.format, .html}
+      @describe{.format, "Format (default: html)"}
 
       ;; --from, -f
       @alias{.f, .from}
       @nargs{.f, 1}
-      @describe{.f, "Content root. Except for the output and template paths, all paths are relative to this directory."}
+      @describe{.from, "Content root. Except for the output and template paths, all paths are relative to this directory."}
 
       ;; --help, -h
       @alias{.h, .help}
