@@ -1,4 +1,5 @@
 
+
 require:
    child_process
    .index as quaint
@@ -16,6 +17,8 @@ require:
    .setup ->
       PluginResolver, install-plugin
    inquirer-promise as inq
+   .tools ->
+      as-indented-block
 
 require-macros:
    engage -> task
@@ -82,7 +85,7 @@ normalize-qname{match t} =
 task config{} =
    if @config._config-exists:
       merge-config with
-         JSON.parse{@get{"quaint.json"}.text}
+         JSON.parse{@get{@config._config-file}.text}
          @argv
    else:
       @config
@@ -180,10 +183,21 @@ task compile{file, template-root} =
          root and url = path.join{cfg.actual-output, cfg.resources.root}
          url = rrel
       }
+
    res.meta = object with
       q.documents.meta.entries{} each {k, match v} ->
          quaint.QAst? -> {k, v.raw{}}
          else -> {k, v}
+
+   res.files or= {=}
+   res.files &:
+      object with items{q.documents.files??.to-object{}} each {k, v} ->
+         {path.join{path.dirname{dest.path}, k}
+          #write{q.translate{as-indented-block{v.raw{}}, cfg.format}.contents}}
+   res.files &:
+      object with items{q.documents.rawfiles??.to-object{}} each {k, v} ->
+         {path.join{path.dirname{dest.path}, k}
+          #write{q.translate{as-indented-block{v.raw{}}, .text}.contents}}
 
    out-path = path.join{cfg.actual-output, res.meta.path}
    @log with '  Output {chalk.bold.green{out-path}}'
@@ -284,6 +298,8 @@ task _main{root} =
          out-path = path.join{cfg.actual-output, results.meta.path}
          dest = @get{out-path}
          dest.write{results.contents}
+         ;; items{results.files or {=}} each {filename, contents} ->
+         ;;    @get{filename}.write{contents}
       resources &: results.files
       meta[path.relative{root.path, file.path}] = results.meta
 
