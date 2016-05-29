@@ -19,11 +19,15 @@ install{@} =
 
    @register-macros with {
 
-      store{engine, shed! raw! name, body} =
+      store{engine, shed! raw! name, *rest, body} =
          if raw{body} == "dump!":
             engine.macros.dump{engine, name}
          else:
-            Into{name, body, create{} = SeqDocument{}}
+            match rest:
+               {} ->
+                  Into{name, body, create{} = SeqDocument{}}
+               {field} ->
+                  Into{name, {field.shed{}.raw{}, body}, create{} = MapDocument{}}
 
       dump{engine, shed! raw! name} =
          Deferred with {path, docs} ->
