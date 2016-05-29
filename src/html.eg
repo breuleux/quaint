@@ -113,11 +113,10 @@ class HTMLFormatter:
       items{resources} each {path0, clone! var data} ->
          data.transforms = {}
 
-         if not path-is-url:
-            data.dest = path.join{options.root, path0}
-
          orig-path = data.path
          path-is-url = data.path-is-url
+         if not path-is-url:
+            data.dest = path.join{options.root, path0}
          embeddable = data.type !== null
          data.inline = embeddable and data.inline or options.inline
 
