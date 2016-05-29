@@ -201,7 +201,7 @@ async provide{} =
 
       cfg = merge-config with
          if config-exists:
-            then: JSON.parse{fs.read-file-sync{"quaint.json", .utf8}}
+            then: JSON.parse{fs.read-file-sync{config-file, .utf8}}
             else: {=}
          argv
       cfg._config-file = config-file
