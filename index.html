@@ -1,31 +1,11 @@
 
 <!DOCTYPE html>
-
 <html>
-
   <head>
-    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
     <title>Quaint</title>
-    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
-    <script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.carousel.css"><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.theme.css"><link rel="stylesheet" type="text/css" href="/quaint/resources/owl/owl.transitions.css"><script src="/quaint/resources/owl/jquery-1.9.1.min.js"></script><script src="/quaint/resources/owl/owl.carousel.js"></script></head>
-
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1"><link rel="stylesheet" type="text/css" href="resources/style/highlight/xcode.css"><script type="text/javascript" src="resources/quaint/start.js"></script><script type="text/javascript" src="resources/quaint/quaint.js"></script><script type="text/javascript" src="resources/quaint/highlight.pack.js"></script><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Alegreya:400,400italic,700,700italic|Exo+2:800,400"><link rel="stylesheet" type="text/css" href="resources/look-nice/nav.css"><link rel="stylesheet" type="text/css" href="resources/look-nice/side.css"><script type="text/javascript" src="resources/look-nice/toc-scroll.js"></script><link rel="stylesheet" type="text/css" href="resources/look-nice/main.css"><script type="text/javascript" src="resources/look-nice/nav.js"></script><link rel="stylesheet" type="text/css" href="resources/style.css"><link rel="stylesheet" type="text/css" href="resources/owl/owl.carousel.css"><link rel="stylesheet" type="text/css" href="resources/owl/owl.theme.css"><link rel="stylesheet" type="text/css" href="resources/owl/owl.transitions.css"><script type="text/javascript" src="resources/owl/jquery-1.9.1.min.js"></script><script type="text/javascript" src="resources/owl/owl.carousel.js"></script></head>
   <body>
-    
-
-<div id="sidebar"><div id="sidebar-contents"></div></div>
-
-<div id="page">
-  <div id="nav-container" class="container"><div id="nav">
-      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
-<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
-      <div class="filler"></div>
-      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
-      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
-      <div class="navlink"><a href="/quaint/api.html">API</a></div>
-      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
-      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
-      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
-  
 
 
 
@@ -33,9 +13,20 @@
 
 
 
-<div id="main-container" class="container">
 
-<div id="present-container"><div id="present">
+
+<div class="nav-container-desktop"><nav id="nav-main" class="nav-main"><ul><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div><img src="assets/quaint-beige.png" alt="" title=""></a></li><li class="spacer"></li><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav></div><div class="nav-container-mobile"><nav class="nav-mobile-menu dropdown"><div class="hamburger"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div><ul><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav><nav id="nav-mobile" class="nav-mobile"><ul><li class="spacer"></li><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div></a></li><li class="spacer"></li><li><a href="index.html" id="logo-link"><img src="assets/quaint-beige.png" alt="" title=""></a></li></ul></nav></div>
+
+
+
+
+
+
+
+
+<div id="main-container">
+
+<div id="present-container"><div id="present" class="container">
     <img src="/quaint/assets/quaint-beige.png" height="80px" class="logo">
     <div class="quaint-word">QUAINT</div>
     <div class="quaint-description"><em>the extensible markup language</em></div>
@@ -73,7 +64,7 @@
   <div class="comparison">
     <div>
       <div class="lang">Markdown</div>
-      <pre class="hl">There are many wild animals in
+      <pre class="hljs">There are many wild animals in
 [Canada](//wikipedia.org/wiki/Canada).
 They include
 [bears](//wikipedia.org/wiki/Bear),
@@ -81,14 +72,14 @@ They include
 [beavers](//wikipedia.org/wiki/Beaver).</pre></div>
     <div>
       <div class="lang">Quaint</div>
-      <pre class="hl">[? \name] =&gt;
+      <pre class="hljs">[? \name] =&gt;
   {name} @@ //wikipedia.org/wiki/{name}
 
 There are many wild animals in ?Canada. They include ?bears, ?moose and ?beavers.</pre></div></div>
   <div class="comparison">
     <div>
       <div class="lang">Markdown</div>
-      <pre class="hl">Check out **these** packages!
+      <pre class="hljs">Check out **these** packages!
 * [marked][0]
 * [earlgrey][1]
 * [gulp][2]
@@ -100,7 +91,7 @@ There are many wild animals in ?Canada. They include ?bears, ?moose and ?beavers
 [3](//npmjs.com/package/express)</pre></div>
     <div>
       <div class="lang">Quaint</div>
-      <pre class="hl">[npm: \name] =&gt;
+      <pre class="hljs">[npm: \name] =&gt;
   {name} @@ //npmjs.com/package/{name}
 
 Check out __these packages!
@@ -111,7 +102,7 @@ Check out __these packages!
   <div class="comparison">
     <div>
       <div class="lang">HTML</div>
-      <pre class="hl">&lt;div id="page"&gt;
+      <pre class="hljs">&lt;div id="page"&gt;
   &lt;div class="post"&gt;
     &lt;div class="author"&gt;
       Albert Einstein
@@ -124,8 +115,8 @@ Check out __these packages!
 &lt;/div&gt;</pre></div>
     <div>
       <div class="lang">Quaint</div>
-      <pre class="hl">#page
-  .post
+      <pre class="hljs">#page %
+  .post %
     .author %
       Albert Einstein
     .postbody %
@@ -145,10 +136,9 @@ Check out __these packages!
   });</script></p>
 
 
-<div id="main">
+<div id="main" class="container"><p>
 
-
-<div id="instructions"><div class="quaint-example"><div class="input"><textarea rows="50">;; Edit me!!!
+ <div id="instructions"><div class="quaint-interactive"><div class="quaint-input"><textarea rows="50">;; Edit me!!!
 
 = What is it?
 
@@ -177,19 +167,19 @@ div %
   style =
     text-align:center;
     margin-top:50px
-  @@image:assets/quaint-small.png</textarea></div><div class="output">
+  @@image:assets/quaint-small.png</textarea></div><div class="quaint-output">
 
 <h1 id="whatisit">What is it?</h1>
 
-<p><strong>Quaint</strong> is a <em>markup language</em> that you can use to write documents. It is similar to <code class="hl">Markdown</code>, but it is <strong>more powerful</strong> and <strong>more extensible</strong>.</p>
+<p><strong>Quaint</strong> is a <em>markup language</em> that you can use to write documents. It is similar to <code class="hlinline">Markdown</code>, but it is <strong>more powerful</strong> and <strong>more extensible</strong>.</p>
 
 <h1 id="install">Install</h1>
 
 <p>To install <strong>Quaint</strong> globally:</p>
 
-<pre class="hl">npm install quaint -g</pre>
+<pre class="hljs">npm install quaint -g</pre>
 
-<p>This will install the <code class="hl">quaint</code> command on your system. Then you can convert quaint markup to HTML! See <a href="usage.html">usage</a>.</p>
+<p>This will install the <code class="hlinline">quaint</code> command on your system. Then you can convert quaint markup to HTML! See <a href="usage.html">usage</a>.</p>
 
 <h1 id="learn">Learn</h1>
 
@@ -204,18 +194,25 @@ div %
 
 </ul><div style="
     text-align:center;
-    margin-top:50px"><img src="assets/quaint-small.png" alt="" title=""></div></div></div></div>
+    margin-top:50px"><img src="assets/quaint-small.png" alt="" title=""></div></div></div></div></p>
+
+<h1 id="madewithquaint">Made with Quaint</h1>
+
+
+
+<p>For practical examples of Quaint markup in the wild, check out the
+source code for the following sites (if available):</p>
+
+<p><ul><li><a href="index.html">Quaint's documentation (this site)</a> — <strong>(<a href="https://github.com/breuleux/quaint-doc">source</a>)</strong></li>
+<li><a href="http://earl-grey.io">The Earl Grey language's documentation</a> — <strong>(<a href="https://github.com/breuleux/eg-doc">source</a>)</strong></li>
+<li><a href="http://breuleux.net">My blog</a> — <strong>(<a href="https://github.com/breuleux/blog">source</a>)</strong></li>
+<li><a href="http://outsideword.com">The Outside Word</a></li></ul></p>
 
 </div>
+
 
 <div class="spacer1"></div>
 
 </div>
 
-  <div id="foot-container" class="container"><div id="foot"></div></div></div>
-
-    <script>
-                                 System.import("edit").then(function(x){
-                                    if(x.main) x.main();
-                                 })
-                              </script></body></html>
+<script type="text/javascript">$$quaintQuaintMain();</script><script type="text/javascript">$$quaintNavFunctionality()</script></body></html>

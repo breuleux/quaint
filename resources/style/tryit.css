@@ -1,0 +1,94 @@
+/* TRYIT */
+@media screen and (min-width: 1300px) {
+  html, body {
+    height: 100%; }
+  #tryit {
+    height: 90%; } }
+
+.container {
+  margin-bottom: 0px; }
+
+#tryit {
+  -webkit-box-flex: 1;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background-color: #eee; }
+  #tryit .quaint-interactive .quaint-input textarea {
+    background-color: white; }
+  #tryit .quaint-interactive .quaint-input {
+    border-left: 0px; }
+  #tryit .quaint-interactive .quaint-output {
+    border-left: 0px; }
+
+@media screen and (min-width: 1200px) {
+  #tryit .quaint-interactive {
+    width: 1200px;
+    -webkit-box-align: stretch;
+    -webkit-align-items: stretch;
+        -ms-flex-align: stretch;
+                -ms-grid-row-align: stretch;
+            align-items: stretch;
+    -webkit-box-flex: 1;
+    -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1; }
+    #tryit .quaint-interactive .quaint-input {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -webkit-flex-direction: column;
+          -ms-flex-direction: column;
+              flex-direction: column; }
+    #tryit .quaint-interactive .quaint-input textarea {
+      -webkit-box-flex: 1;
+      -webkit-flex-grow: 1;
+          -ms-flex-positive: 1;
+              flex-grow: 1;
+      height: 100%;
+      /* background-color: white */
+      z-index: 100; }
+    #tryit .quaint-interactive .quaint-input {
+      /* border-left: 0px */
+      width: 500px; }
+    #tryit .quaint-interactive .quaint-output {
+      /* border-left: 0px */
+      width: 700px; } }
+
+@media screen and (max-width: 1200px) {
+  #tryit .quaint-interactive {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+            flex-direction: column; }
+    #tryit .quaint-interactive .quaint-input textarea {
+      height: 500px; }
+    #tryit .quaint-interactive .quaint-input {
+      width: 100%;
+      max-width: 750px; }
+    #tryit .quaint-interactive .quaint-output {
+      width: 100%;
+      max-width: 750px; } }

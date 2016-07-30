@@ -1,85 +1,222 @@
 
 <!DOCTYPE html>
-
 <html>
-
   <head>
-    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
     <title>Plugins</title>
-    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
-    </head>
-
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1"><link rel="stylesheet" type="text/css" href="../resources/style/highlight/xcode.css"><script type="text/javascript" src="../resources/quaint/start.js"></script><script type="text/javascript" src="../resources/quaint/quaint.js"></script><script type="text/javascript" src="../resources/quaint/highlight.pack.js"></script><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Alegreya:400,400italic,700,700italic|Exo+2:800,400"><link rel="stylesheet" type="text/css" href="../resources/look-nice/nav.css"><link rel="stylesheet" type="text/css" href="../resources/look-nice/side.css"><script type="text/javascript" src="../resources/look-nice/toc-scroll.js"></script><link rel="stylesheet" type="text/css" href="../resources/look-nice/main.css"><script type="text/javascript" src="../resources/look-nice/nav.js"></script><link rel="stylesheet" type="text/css" href="../resources/style.css"></head>
   <body>
-    
-
-<div id="sidebar"><div id="sidebar-contents"></div></div>
-
-<div id="page">
-  <div id="nav-container" class="container"><div id="nav">
-      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
-<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
-      <div class="filler"></div>
-      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
-      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
-      <div class="navlink"><a href="/quaint/api.html">API</a></div>
-      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
-      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
-      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
-  
-
-<div id="main-container" class="container"><div id="main">
 
 
 
 
 
+
+
+
+
+<div class="nav-container-desktop"><nav id="nav-main" class="nav-main"><ul><li><a href="../index.html" id="logo-link"><div class="quaint-word">QUAINT</div><img src="../assets/quaint-beige.png" alt="" title=""></a></li><li class="spacer"></li><li><a href="../syntax.html">Syntax</a></li><li><a href="../usage.html">Usage</a></li><li><a href="../api.html">API</a></li><li class="dropdown"><a href="../plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="../plugins/index.html">List</a></li><li><a href="../plugins/write.html">Contributing</a></li></ul></li><li><a href="../tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav></div><div class="nav-container-mobile"><nav class="nav-mobile-menu dropdown"><div class="hamburger"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div><ul><li><a href="../syntax.html">Syntax</a></li><li><a href="../usage.html">Usage</a></li><li><a href="../api.html">API</a></li><li class="dropdown"><a href="../plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="../plugins/index.html">List</a></li><li><a href="../plugins/write.html">Contributing</a></li></ul></li><li><a href="../tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav><nav id="nav-mobile" class="nav-mobile"><ul><li class="spacer"></li><li><a href="../index.html" id="logo-link"><div class="quaint-word">QUAINT</div></a></li><li class="spacer"></li><li><a href="../index.html" id="logo-link"><img src="../assets/quaint-beige.png" alt="" title=""></a></li></ul></nav></div>
+
+<div id="main" class="container">
+
+
+
+
+
+
+
+
+<style>
+  .plugin {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 2px solid #bbb;
+  }
+  .plugin .plugin-name {
+    width: 200px;
+  }
+  .plugin .plugin-name a {
+    color: #000;
+  }
+  .plugin .plugin-description {
+    width: 400px;
+  }</style>
+
+<style>
+  .important {
+    display: inline-block;
+    font-weight: bold;
+    background: #000;
+    color: white;
+    padding: 5px;
+  }
+  .important.todo {
+    background: #f00;
+  }
+  .important.incomplete {
+    background: #a00;
+  }
+  .important.document {
+    background: #00a;
+  }</style>
+
+
+<h1 id="installingaplugin">Installing a plugin</h1>
+
+<p>Plugins listed here can be used in a Quaint project by running the
+following following command:</p>
+
+<pre class="hljs">quaint --setup plugin-name</pre>
+
+<p>Most of them are configurable.</p>
+
+
+<h1 id="stylingandhighlighting">Styling and highlighting</h1>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-bootstrap3">bootstrap3</a></strong></div>
+    <div class="plugin-description">
+  Includes <a href="http://getbootstrap.com/">Bootstrap v3</a> CSS/JS files and
+  defines many components to use bootstrap's features.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-emoji">emoji</a></strong></div>
+    <div class="plugin-description">
+  Macros to insert emoji characters.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-google-fonts">google-fonts</a></strong></div>
+    <div class="plugin-description">
+  Use <a href="https://www.google.com/fonts">Google Fonts</a> on your pages.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-highlight">highlight</a></strong></div>
+    <div class="plugin-description">
+  Syntax highlighting for a hundred of languages.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-look-nice">look-nice</a></strong></div>
+    <div class="plugin-description">
+  An okay-looking, customizable and extensible stylesheet for your pages.</div></div>
+
+
+<h1 id="dataformats">Data formats</h1>
+
+<p><strong>json</strong> is supported by default.</p>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-csv">csv</a></strong></div>
+    <div class="plugin-description">
+  Format and include CSV files.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-yaml">yaml</a></strong></div>
+    <div class="plugin-description">
+  Format and include YAML files.</div></div>
 
 
 <h1 id="programminglanguages">Programming languages</h1>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-javascript">quaint-javascript</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-javascript">javascript</a></strong></div>
     <div class="plugin-description">
   Enables embedded JavaScript.</div></div>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-earlgrey">quaint-earlgrey</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-earlgrey">earlgrey</a></strong></div>
     <div class="plugin-description">
-  Enables embedded <a href="http://breuleux.github.io/earl-grey">Earl Grey</a>.</div></div>
+  Enables embedded <a href="http://earl-grey.io">Earl Grey</a>.</div></div>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-coffeescript">quaint-coffeescript</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-coffeescript">coffeescript</a></strong></div>
     <div class="plugin-description">
   Enables embedded <a href="http://coffeescript.org">CoffeeScript</a>.</div></div>
 
 
-<h1 id="syntaxhighlighting">Syntax highlighting</h1>
+<h1 id="otherlanguages">Other languages</h1>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-highlight">quaint-highlight</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-mathjax">mathjax</a></strong></div>
     <div class="plugin-description">
-  Syntax highlighting for a hundred of languages.</div></div>
+  Includes <a href="https://www.mathjax.org/">mathjax</a>, which lets you write
+  math with LaTeX syntax.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-quaint">quaint</a></strong></div>
+    <div class="plugin-description">
+  Embed interactive Quaint editors inside your pages.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-repple">repple</a></strong></div>
+    <div class="plugin-description">
+  Interactive JavaScript or <a href="http://earl-grey.io">Earl Grey</a> interpreter</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-sass">sass</a></strong></div>
+    <div class="plugin-description">
+  Enables embedded <a href="http://sass-lang.com/">SASS</a>.</div></div>
 
 
 <h1 id="others">Others</h1>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-sass">quaint-sass</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-disqus">disqus</a></strong></div>
     <div class="plugin-description">
-  Enables embedded SASS.</div></div>
+  Embed <a href="https://disqus.com">Disqus</a> comment threads.</div></div>
 
 <div class="plugin">
-    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-yaml">quaint-yaml</a></strong></div>
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-google-analytics">google-analytics</a></strong></div>
     <div class="plugin-description">
-  Format and include YAML files.</div></div>
+  Gather data with <a href="https://www.google.com/analytics/">Google Analytics</a>.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-google-charts">google-charts</a></strong></div>
+    <div class="plugin-description">
+  Display nice charts with
+  <a href="https://developers.google.com/chart/?hl=en">Google Charts</a>.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-google-maps">google-maps</a></strong></div>
+    <div class="plugin-description">
+  Show a map using <a href="https://maps.google.com">Google Maps</a> with
+  coordinates or an address.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-nav">nav</a></strong></div>
+    <div class="plugin-description">
+  Provides a <code class="hlinline">nav ::</code> macro to populate a navigation bar (but you
+  need to style it yourself).</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-share-buttons">share-buttons</a></strong></div>
+    <div class="plugin-description">
+  Put share buttons on your pages (Facebook, Twitter, Reddit, etc.)</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-smartypants">smartypants</a></strong></div>
+    <div class="plugin-description">
+  Translate <code class="hlinline">""</code> into curly quotes, <code class="hlinline">--</code> into en/em dashes, and so on.</div></div>
+
+<div class="plugin">
+    <div class="plugin-name"><strong><a href="http://github.com/breuleux/quaint-youtube">youtube</a></strong></div>
+    <div class="plugin-description">
+  Easily embed YouTube videos using their ID.</div></div>
 
 
 <h1 id="contributors">Contributors</h1>
 
 <p>Please consult the documentation on
-<strong><a href="/quaint/plugins/write.html">how to write a plugin</a></strong>.
-</p></div></div>
+<strong><a href="../plugins/write.html">how to write a plugin</a></strong>.</p>
 
-  <div id="foot-container" class="container"><div id="foot"></div></div></div>
+</div>
 
-    </body></html>
+<script type="text/javascript">$$quaintQuaintMain();</script><script type="text/javascript">$$quaintNavFunctionality()</script></body></html>

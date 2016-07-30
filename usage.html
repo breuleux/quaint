@@ -1,36 +1,24 @@
 
 <!DOCTYPE html>
-
 <html>
-
   <head>
-    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
     <title>Usage</title>
-    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
-    <script src="/quaint/lib/toc-scroll.js"></script></head>
-
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1"><link rel="stylesheet" type="text/css" href="resources/style/highlight/xcode.css"><script type="text/javascript" src="resources/quaint/start.js"></script><script type="text/javascript" src="resources/quaint/quaint.js"></script><script type="text/javascript" src="resources/quaint/highlight.pack.js"></script><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Alegreya:400,400italic,700,700italic|Exo+2:800,400"><link rel="stylesheet" type="text/css" href="resources/look-nice/nav.css"><link rel="stylesheet" type="text/css" href="resources/look-nice/side.css"><script type="text/javascript" src="resources/look-nice/toc-scroll.js"></script><link rel="stylesheet" type="text/css" href="resources/look-nice/main.css"><script type="text/javascript" src="resources/look-nice/nav.js"></script><link rel="stylesheet" type="text/css" href="resources/style.css"><script type="text/javascript" src="resources/js/toc-scroll.js"></script></head>
   <body>
-    
-
-<div id="sidebar"><div id="sidebar-contents">
-  <ul class="toc"><li><a href="#install">Install</a></li><li><a href="#usage">Usage</a></li><li><a href="#templates">Templates</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#datainjection">Data injection</a></li><li><a href="#configurationfile">Configuration file</a></li></ul></div></div>
-
-<div id="page">
-  <div id="nav-container" class="container"><div id="nav">
-      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
-<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
-      <div class="filler"></div>
-      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
-      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
-      <div class="navlink"><a href="/quaint/api.html">API</a></div>
-      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
-      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
-      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
-  
-
-<div id="main-container" class="container"><div id="main">
 
 
+
+
+
+
+
+
+
+<div class="nav-container-desktop"><nav id="nav-main" class="nav-main"><ul><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div><img src="assets/quaint-beige.png" alt="" title=""></a></li><li class="spacer"></li><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav></div><div class="nav-container-mobile"><nav class="nav-mobile-menu dropdown"><div class="hamburger"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div><ul><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav><nav id="nav-mobile" class="nav-mobile"><ul><li class="spacer"></li><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div></a></li><li class="spacer"></li><li><a href="index.html" id="logo-link"><img src="assets/quaint-beige.png" alt="" title=""></a></li></ul></nav></div><div id="side"><nav id="nav-side" class="nav-side"><ul><li>
+  <ul class="toc"><li><a href="#install">Install</a></li><li><a href="#compilingadocument">Compiling a document</a></li><li><a href="#creatingaconfigurationfile">Creating a configuration file</a></li><li><a href="#templates">Templates</a></li><li><a href="#advancedfeatures">Advanced features</a><ul><li><a href="#datainjection">Data injection</a></li></ul></li><li><a href="#usage">Usage</a></li></ul></li></ul></nav></div>
+
+<div id="main" class="container">
 
 
 
@@ -38,79 +26,108 @@
 
 <h1 id="install">Install</h1>
 
-<p>Assuming you have <code class="hl">npm</code> installed:</p>
+<p>Assuming you have <code class="hlinline">npm</code> installed:</p>
 
-<pre class="hl">npm install quaint -g</pre>
+<pre class="hljs">npm install quaint -g</pre>
 
-<p>This will install a <code class="hl">quaint</code> command globally. It will be your main
-tool unless you want to use the <a href="/quaint/api.html">API</a> directly or <a href="/quaint/plugins/write.html">write your own
+<p>This will install a <code class="hlinline">quaint</code> command globally. It will be your main
+tool unless you want to use the <a href="api.html">API</a> directly or <a href="plugins/write.html">write your own
 plugins</a>.</p>
 
 
-<h1 id="usage">Usage</h1>
+<h1 id="compilingadocument">Compiling a document</h1>
 
-<p>Here's the help for the <code class="hl">quaint</code> command:</p>
+<p>First, let's see if everything works!
+Write this in a file called <code class="hlinline">test.q</code>:</p>
 
-<pre class="hl">Usage: quaint &lt;file ...&gt; [options]
+<pre class="hljs">= Test
 
-Options:
-  -c, --config    Path to a configuration file with option values (must be JSON)
-                                                      [default: "./quaint.json"]
-  -d, --data      JSON string or file(s) defining field:value pairs to be made
-                  available inside markup (as {field}):
-                  * key:value
-                  * {"key": value, ...}
-                  * filename.json
-                  * prefix::filename.json
-  -e, --eval      Quaint string to parse directly
-  -f, --format    Format (only html currently supported)       [default: "html"]
-  -h, --help      Show help                                            [boolean]
-  -o, --out       File or directory to save the output to
-  -p, --plugin    Plugin(s) to import:
-                  * Quaint file (injected at the beginning)
-                  * Path to JavaScript file
-                  * Local npm module
-                  * Global npm module
-  -s, --stdout    Print to standard out               [boolean] [default: false]
-  -t, --template  Quaint file to use as template, or template directory
-  -v, --verbose   Print information about the operations performed     [boolean]
-  --save-meta     Save meta data in a file (./meta.json if the file is not
-                  specified)                                    [default: false]</pre>
+_This is a
 
+* T
+* E
+* S
+* T</pre>
+
+To compile the file into <code class="hlinline">test.html</code>:
+<pre class="hljs">quaint test.q</pre>
+
+To print the result on standard out:
+<pre class="hljs">quaint <span class="hljs-operator">-s</span> test.q</pre>
+
+By default the <code class="hlinline">@minimal</code> template is used, which inserts doctype,
+html/head/body tags and so on. You can use the <code class="hlinline">@none</code> template if
+you don't want any of that:
+<pre class="hljs">quaint <span class="hljs-operator">-s</span> test.q -t @none</pre>
+
+<p>If you want to see all the available flags:
+<bash>quaint -h</bash></p>
+
+
+<h1 id="creatingaconfigurationfile">Creating a configuration file</h1>
+
+Run:
+<pre class="hljs">quaint</pre>
+
+<p>with no arguments in a new directory to enter interactive setup. The
+command will create a configuration file called <code class="hlinline">quaint.json</code> (just go
+with the defaults if you're not sure what to do). The command will
+create the following file hierarchy:</p>
+
+<pre class="hljs">source_directory/
+  quaint.json     Configuration file
+  templates/      Template directory
+    default.q     Default template
+  content/        Content directory
+    assets/       Put your static assets here (images etc.)
+    index.q       Index page
+    script.js     A global script (you don't have to use it)
+    style.css     A global stylesheet (you don't have to use it)
+  output/         This is where the output will go</pre>
+
+<p>You will be asked if you want to install plugins. You can choose from
+<a href="plugins/index.html">this list</a>. At any time you can add/configure
+plugins with the following command:</p>
+
+<pre class="hljs">quaint --setup plugin-name</pre>
+
+<p>After this step, running <code class="hlinline">quaint</code> again with no arguments will launch
+compilation for all <code class="hlinline">.q</code> files in <code class="hlinline">content/</code> and (optionally) will
+watch for changes and serve the contents.</p>
 
 <h1 id="templates">Templates</h1>
 
-<p>Templates are an important part of <code class="hl">quaint</code>. They are very simple and
+<p>Templates are an important part of <code class="hlinline">quaint</code>. They are very simple and
 let you avoid repeating yourself.</p>
 
 <p>Let's make a simple boilerplate template with the doctype, &lt;html&gt; tag
-and whatnot. You might actually want to save this one!</p>
+and whatnot. This is equivalent to the default <code class="hlinline">@minimal</code> template:</p>
 
 <p><strong>boilerplate.q</strong></p>
 
-<pre class="hl">doctype :: html
+<pre class="hljs">doctype :: html
 html %
   head %
+    title %
+      meta::title !! Untitled
     meta %
-       http-equiv = Content-type
-       content = text/html
-       charset = UTF-8
-    title % [meta :: title] !! Untitled
-    link %
-       rel = stylesheet
-       type = text/css
-       href = my-stylesheet.css
+      http-equiv = Content-type
+      content = text/html
+      charset = UTF-8
   body %
     {body}</pre>
 
-<p>Notice the line that reads <code class="hl">{body}</code>: this is the place in the template
+<p>Notice the line that reads <code class="hlinline">{body}</code>: this is the place in the template
 where the contents of our post will be inserted.</p>
+
+<p>Put <code class="hlinline">boilerplate.q</code> in the root directory or in the <code class="hlinline">templates/</code>
+directory, depending on your configuration or lack thereof.</p>
 
 <p>Now you can write the post:</p>
 
 <p><strong>post.q</strong></p>
 
-<pre class="hl">template :: boilerplate
+<pre class="hljs">template :: boilerplate
 
 meta ::
   title = New post!
@@ -119,150 +136,102 @@ Hello! This is a new post!</pre>
 
 <p>And run:</p>
 
-<pre class="hl">quaint post.q</pre>
+<pre class="hljs">quaint post.q</pre>
 
-<p>Quaint will automatically fetch the template and fill it. It will also
-use the meta-information for the title and put it at the right place!</p>
+<p>Alternatively the <code class="hlinline">-t</code> flag can be used to force a template:</p>
 
-<p>Alternatively the <code class="hl">-t</code> flag can be used to either force a template or
-point Quaint to a template directory (so you can be neatly organized):</p>
+<pre class="hljs">quaint post.q -t tpl.q      <span class="hljs-comment"># Will use tpl.q instead of boilerplate.q</span></pre>
 
-<pre class="hl">quaint post.q -t tpl.q      <span class="hljs-comment"># Will use tpl.q instead of boilerplate.q</span>
-quaint post.q -t templates/ <span class="hljs-comment"># Will use templates/boilerplate.q</span></pre>
-
-<p>Lastly: it is possible for a template to have a template (using the
-same <code class="hl">template :: xyz</code> syntax that we saw). This is not a
-problem at all unless you create a cycle (in which case <code class="hl">quaint</code> will
-crash).</p>
+<p>It is possible for a template to have a template (using the same
+<code class="hlinline">template :: xyz</code> syntax that we saw). Just make sure not to create
+cycles or self-referential templates, quaint won't like that at all.</p>
 
 
-<h1 id="plugins">Plugins</h1>
+<h1 id="advancedfeatures">Advanced features</h1>
 
-<p>Say you want to highlight some Javascript in a post:</p>
-
-<p><strong>post.q</strong></p>
-
-<pre class="hl">Here's my super cool square function:
-
-javascript &amp;
-  function square(x) {
-      return x * x;
-  }</pre>
-
-<p>By default, Quaint will not do it. But the <code class="hl">quaint-highlight</code> plugin
-will do it.</p>
-
-<p>First you can install it globally (locally will work too):</p>
-
-<pre class="hl">npm install quaint-highlight -g</pre>
-
-<p>Once this is done you can refer to it by name (without the <code class="hl">quaint-</code>
-part):</p>
-
-<pre class="hl">quaint -p highlight post.q</pre>
-
-<p>This will save the result in <code class="hl">post.html</code>. This uses
-<a href="https://highlightjs.org/">highlight.js</a>.
-You will need to include a stylesheet as well. They are available
-<a href="https://github.com/isagalaev/highlight.js/tree/master/src/styles">here</a>.</p>
-
-<p>You may of course use as many plugins as you want, just use the <code class="hl">-p</code>
-option multiple times. For instance:</p>
-
-<pre class="hl">quaint -p highlight -p javascript post.q</pre>
-
-<p>If plugins can take options, you can provide them on the command line
-by writing them out as JSON next to the plugin name, like this:</p>
-
-<pre class="hl">quaint -p <span class="hljs-string">'highlight{"defaultLanguage: "python"}'</span> post.q</pre>
-
-<p>Note that you can specify and configure plugins inside a Quaint file
-with the <a href="syntax.html#plugin"><code class="hl">plugin</code></a> macro, although that will
-only work on a per-file basis.</p>
-
-
-<h1 id="datainjection">Data injection</h1>
+<h2 id="datainjection">Data injection</h2>
 
 <p>Let's create two files:</p>
 
-<ul><li><code class="hl">post.q</code> will contain the Quaint markup we want to render</li>
-<li><code class="hl">data.json</code> will contain data for the render</li></ul>
+<ul><li><code class="hlinline">post.q</code> will contain the Quaint markup we want to render</li>
+<li><code class="hlinline">data.json</code> will contain data for the render</li></ul>
 
 <p><strong>post.q</strong></p>
 
-<pre class="hl">The individual is named {name} {surname}.
+<pre class="hljs">The individual is named {name} {surname}.
 They are {gender} and were born on {birthdate}.</pre>
 
 <p><strong>data.json</strong></p>
 
-<pre class="hl">{
+<pre class="hljs">{
   "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"Alice"</span></span>,
   "<span class="hljs-attribute">surname</span>": <span class="hljs-value"><span class="hljs-string">"Lovelace"</span></span>,
   "<span class="hljs-attribute">gender</span>": <span class="hljs-value"><span class="hljs-string">"female"</span></span>,
   "<span class="hljs-attribute">birthdate</span>": <span class="hljs-value"><span class="hljs-string">"1960/06/21"</span>
 </span>}</pre>
 
-<p>Once these are defined, simply write:</p>
+<p>Once these are defined, try:</p>
 
-<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json</pre>
+<pre class="hljs">quaint post.q <span class="hljs-operator">-s</span> <span class="hljs-operator">-d</span> data.json</pre>
 
 <p>The data will be filled in as you would expect. Moreover, you can
 override parts of the data directly on the command line. For instance,
 if you want Alice's surname to be Pottergeist instead, you can do
 this:</p>
 
-<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> surname:Pottergeist</pre>
+<pre class="hljs">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> surname:Pottergeist</pre>
 
 <p>Or this:</p>
 
-<pre class="hl">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> <span class="hljs-string">'{"surname": "Pottergeist"}'</span></pre>
+<pre class="hljs">quaint post.q <span class="hljs-operator">-d</span> data.json <span class="hljs-operator">-d</span> <span class="hljs-string">'{"surname": "Pottergeist"}'</span></pre>
 
-<p>If you use the <code class="hl">quaint-javascript</code> plugin, all of the JSON contents
+<p>If you use the <code class="hlinline">quaint-javascript</code> plugin, all of the JSON contents
 become top-level variables. This means that you could, for instance,
 calculate Alice's age from her birthdate as an expression inside curly
 braces.</p>
 
+<p>See also the <a href="syntax.html#data">data</a> macro, which lets you load data
+inside quaint markup.</p>
 
 
-<h1 id="configurationfile">Configuration file</h1>
+<h1 id="usage">Usage</h1>
 
-<p>If there is a <code class="hl">quaint.json</code> file in the current directory, its contents
-will be used to fill in the options for generation. You can also
-specify a different configuration file with the <code class="hl">-c</code> option.</p>
+<p>You can access this help with <code class="hlinline">quaint -h</code>:</p>
 
-<p>Here is a sample <code class="hl">quaint.json</code> file:</p>
+<pre class="hljs">Usage: quaint &lt;file ...&gt; [options]
 
-<pre class="hl">{
-    "<span class="hljs-attribute">sources</span>": <span class="hljs-value"><span class="hljs-string">"src"</span></span>,
-    "<span class="hljs-attribute">output</span>": <span class="hljs-value"><span class="hljs-string">"out"</span></span>,
-    "<span class="hljs-attribute">template</span>": <span class="hljs-value"><span class="hljs-string">"templates"</span></span>,
-    "<span class="hljs-attribute">data</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"Roland"</span></span>,
-        "<span class="hljs-attribute">surname</span>": <span class="hljs-value"><span class="hljs-string">"Worthington"</span>
-    </span>}</span>,
-    "<span class="hljs-attribute">plugins</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">javascript</span>": <span class="hljs-value">{}</span>,
-        "<span class="hljs-attribute">highlight</span>": <span class="hljs-value">{"<span class="hljs-attribute">defaultLanguage</span>": <span class="hljs-value"><span class="hljs-string">"python"</span></span>}
-    </span>}
-</span>}</pre>
+Options:
+  -c, --config          Path to a configuration file with option values (must be
+                        JSON)                           [default: "quaint.json"]
+  -d, --data            JSON string or file(s) defining field:value pairs to be
+                        made available inside markup (as {field}):
+                        * key:value
+                        * {"key": value, ...}
+                        * filename.json
+                        * prefix::filename.json
+  -e, --eval            Quaint string to parse directly
+  --format              Format (default: html)                 [default: "html"]
+  -h, --help            Show help                                      [boolean]
+  -o, --output          Directory to save the output into
+  -p, --plugin          Plugin(s) to import:
+                        * Quaint file (injected at the beginning)
+                        * Path to JavaScript file
+                        * Local npm module
+                        * Global npm module
+  -r, --resources       Directory where to put the resources (default: resources
+                        /)
+  --serve               Start server on specified port, in output directory
+  -s, --stdout          Print to standard out         [boolean] [default: false]
+  -t, --template        Template directory, or name of the default template to
+                        use
+  --template-directory  Template directory
+  -v, --verbose         Print information about the operations performed
+                                                                       [boolean]
+  --setup               Set up and configure a plugin.          [default: false]
+  -f, --from            Content root. Except for the output and template paths,
+                        all paths are relative to this directory.
+  -w, --watch           Watch for changes to rebuild</pre>
 
-<p>Then, executing <code class="hl">quaint</code> with no arguments, or <code class="hl">quaint -c
-quaint.json</code>, will be equivalent to running it with the following
-options:</p>
+</div>
 
-<pre class="hl">quaint \
-  -o out \
-  -t templates \
-  -d'{"name": ...}' \
-  -p javascript \
-  -p 'highlight{"defaultLanguage": "python"}' \
-  src</pre>
-
-<p>Options in the configuration file can be supplemented (or overriden)
-with command line options.</p>
-
-</div></div>
-
-  <div id="foot-container" class="container"><div id="foot"></div></div></div>
-
-    </body></html>
+<script type="text/javascript">$$quaintQuaintMain();</script><script type="text/javascript">$$quaintNavFunctionality()</script></body></html>

@@ -1,38 +1,28 @@
 
 <!DOCTYPE html>
-
 <html>
-
   <head>
-    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
     <title>Try it!</title>
-    <link rel="stylesheet" type="text/css" href="/quaint/style/style.css">
-    <script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><script src="/quaint/lib/jspm_packages/system.js"></script><script src="/quaint/lib/config.js"></script><script src="/quaint/lib/highlight.pack.js"></script><link rel="stylesheet" type="text/css" href="/quaint/style/tryit.css"></head>
-
+    <meta http-equiv="Content-type" content="text/html" charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1"><link rel="stylesheet" type="text/css" href="resources/style/highlight/xcode.css"><script type="text/javascript" src="resources/quaint/start.js"></script><script type="text/javascript" src="resources/quaint/quaint.js"></script><script type="text/javascript" src="resources/quaint/highlight.pack.js"></script><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Alegreya:400,400italic,700,700italic|Exo+2:800,400"><link rel="stylesheet" type="text/css" href="resources/look-nice/nav.css"><link rel="stylesheet" type="text/css" href="resources/look-nice/side.css"><script type="text/javascript" src="resources/look-nice/toc-scroll.js"></script><link rel="stylesheet" type="text/css" href="resources/look-nice/main.css"><script type="text/javascript" src="resources/look-nice/nav.js"></script><link rel="stylesheet" type="text/css" href="resources/style.css"><link rel="stylesheet" type="text/css" href="resources/style/tryit.css"></head>
   <body>
-    
-
-<div id="sidebar"><div id="sidebar-contents"></div></div>
-
-<div id="page">
-  <div id="nav-container" class="container"><div id="nav">
-      <a href="/quaint/index.html" id="logo-link"><div class="quaint-word">QUAINT</div>
-<img src="/quaint/assets/quaint-beige.png" height="30px" class="logo"></a>
-      <div class="filler"></div>
-      <div class="navlink"><a href="/quaint/syntax.html">Syntax</a></div>
-      <div class="navlink"><a href="/quaint/usage.html">Usage</a></div>
-      <div class="navlink"><a href="/quaint/api.html">API</a></div>
-      <div class="navlink"><a href="/quaint/plugins/index.html">Plugins</a></div>
-      <div class="navlink"><a href="/quaint/tryit.html">Try it!</a></div>
-      <div class="navlink"><a href="http://github.com/breuleux/quaint">Github</a></div></div></div>
-  
 
 
 
 
 
 
-<div id="tryit"><div class="quaint-example"><div class="input"><textarea rows="1">;; Edit me!
+
+
+
+<div class="nav-container-desktop"><nav id="nav-main" class="nav-main"><ul><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div><img src="assets/quaint-beige.png" alt="" title=""></a></li><li class="spacer"></li><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav></div><div class="nav-container-mobile"><nav class="nav-mobile-menu dropdown"><div class="hamburger"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></div><ul><li><a href="syntax.html">Syntax</a></li><li><a href="usage.html">Usage</a></li><li><a href="api.html">API</a></li><li class="dropdown"><a href="plugins/index.html">Plugins</a><ul class="dropdown-menu"><li><a href="plugins/index.html">List</a></li><li><a href="plugins/write.html">Contributing</a></li></ul></li><li><a href="tryit.html">Try it!</a></li><li><a href="http://github.com/breuleux/quaint">Github</a></li></ul></nav><nav id="nav-mobile" class="nav-mobile"><ul><li class="spacer"></li><li><a href="index.html" id="logo-link"><div class="quaint-word">QUAINT</div></a></li><li class="spacer"></li><li><a href="index.html" id="logo-link"><img src="assets/quaint-beige.png" alt="" title=""></a></li></ul></nav></div>
+
+
+
+
+
+
+<div id="tryit"><div class="quaint-interactive"><div class="quaint-input"><textarea rows="1">;; Edit me!
 
 meta ::
   title = My Resume
@@ -68,7 +58,7 @@ Please embed my `code on your website:
 javascript &amp;
   function virus() { alert("AAAAAAAAHHH"); }
 
-@@image:assets/quaint-small.png</textarea></div><div class="output">
+@@image:assets/quaint-small.png</textarea></div><div class="quaint-output">
 
 
 
@@ -93,24 +83,14 @@ javascript &amp;
   <tr><td>Egg salad</td><td>You bet!</td><td>Decadent</td></tr>
   <tr><td>Cheesecake</td><td>Yes!!!</td><td>Oh my god</td></tr></table></li></ul>
 
-<p>My website is <a href="http://my.amazing.website.com">http://my.amazing.website.com</a>. Find me on <a href="http://google.com">Google</a>! It's easy as 2 + 2 = 4!</p>
+<p>My website is <a href="http://my.amazing.website.com"><span>http://my.amazing.website.com</span></a>. Find me on <a href="http://google.com">Google</a>! It's easy as 2 + 2 = 4!</p>
 
 
 
-<p>Please embed my <code class="hl">code</code> on your website:</p>
+<p>Please embed my <code class="hlinline">code</code> on your website:</p>
 
-<pre class="hl"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">virus</span>(<span class="hljs-params"></span>) </span>{ alert(<span class="hljs-string">"AAAAAAAAHHH"</span>); }</pre>
+<pre class="hljs"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">virus</span>(<span class="hljs-params"></span>) </span>{ alert(<span class="hljs-string">"AAAAAAAAHHH"</span>); }</pre>
 
 <p><img src="assets/quaint-small.png" alt="" title=""></p></div></div></div>
 
-  <div id="foot-container" class="container"><div id="foot"></div></div></div>
-
-    <script>
-                                 System.import("toc").then(function(x){
-                                    if(x.main) x.main();
-                                 })
-                              </script><script>
-                                 System.import("edit").then(function(x){
-                                    if(x.main) x.main();
-                                 })
-                              </script></body></html>
+<script type="text/javascript">$$quaintQuaintMain();</script><script type="text/javascript">$$quaintNavFunctionality()</script></body></html>
