@@ -1,6 +1,6 @@
 
 require:
-   inquirer-promise as inq
+   inquirer-shortcuts as inq
    child_process
    chalk
    path

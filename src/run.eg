@@ -16,7 +16,7 @@ require:
    lodash
    .setup ->
       PluginResolver, install-plugin
-   inquirer-promise as inq
+   inquirer-shortcuts as inq
    .tools ->
       as-indented-block
 
