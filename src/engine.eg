@@ -77,7 +77,10 @@ class Engine:
       @next = tools.next
       @top = true
       @is-quaint-engine = true
-      @components = {=}
+      @components = {
+         escape{tags, props, {child}} =
+            child
+      }
       @dispatch = Dispatcher{}
       @documents = {=}
       @formatters = {
@@ -111,13 +114,18 @@ class Engine:
 
 
    .gen{match node} =
-      
       Text? {t} or Oper? {t} ->
          l = node.location
-         r = R.g"~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.]"
-         node.location.text{}.replace{r} with {match} ->
+         r = R.g"(~|\\[\\~!@#$%^&*_\-+=<>/?;:.`|(){}\[\],.])"
+         res = enumerate{node.location.text{}.split{r}} each {i, match part} ->
+            when (i mod 2) === 0 ->
+               part
             "~" -> ""
-            s -> s[1]
+            s ->
+               escape % s[1]
+         match res:
+            {x} -> x
+            else -> res
 
       Seq? {*parts} ->
          result = f{} where f{} =
