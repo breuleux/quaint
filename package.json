@@ -12,6 +12,7 @@
     "filendir": "^1.0.0",
     "fs-extra": "^0.26.2",
     "globby": "^3.0.1",
+    "hyper-replace": "^0.1.0",
     "inquirer-shortcuts": "^1.0.1",
     "kaiser": ">=0.0.4",
     "mkdirp": "^0.5.1",

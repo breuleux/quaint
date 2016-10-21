@@ -23,6 +23,7 @@ require:
    /html
    /dom
    fs
+   hyper-replace
 
 provide:
    Dispatcher
@@ -174,98 +175,9 @@ class Engine:
       main = processDocuments{generated, docs}
       docs &: {= main}
 
-   ;; translate{src, format, options = {=}} =
-
-   ;;    ;; stash = {}
-
-   ;;    ;; crossReplace{children, regexps, ndone = 0} =
-   ;;    ;;    if regexps 
-   ;;    ;;    s = xs.join{""} where xs = children each
-   ;;    ;;       String? s -> s
-   ;;    ;;       other ->
-   ;;    ;;          stash.push with other
-   ;;    ;;          S'#{stash.length - 1}#'
-
-   ;;    finalize{match, ndone} =
-   ;;       var String? s ->
-   ;;          enumerate{@regexps.slice{ndone}} each {i, {r, match repl}} ->
-   ;;             String? ->
-   ;;                s = s.replace{r, repl}
-   ;;             Function? f or f is [-> repl] ->
-   ;;                s = s.replace{r, repl}
-   ;;                ;; parts = {}
-   ;;                ;; var index = 0
-   ;;                ;; var curr = null
-   ;;                ;; while [curr = r.exec{s}]:
-   ;;                ;;    parts.push{s[index...curr.index]}
-   ;;                ;;    index = curr.index + curr[0].length
-   ;;                ;;    parts.push{f{*curr}}
-   ;;                ;;    if not "g" in r.flags:
-   ;;                ;;       break
-   ;;                ;; parts.push{s.slice{index}}
-   ;;                ;; return collapse{parts, ndone + i + 1}
-   ;;          s
-   ;;       x -> x
-
-   ;;    collapse{x} =
-   ;;       etools.merge-children{x, true, {x} -> finalize{x, 0}}
-
-   ;;    results = @run{src}
-
-   ;;    main = normalize{collapse{top}} where top =
-   ;;       if options.paragraph:
-   ;;          p % results.main
-   ;;       else:
-   ;;          top % results.main
-
-   ;;    result = match format:
-   ;;       .enode -> main
-   ;;       .text -> main.toString{}
-   ;;       ;; .html -> html{main}
-   ;;       .html ->
-   ;;          {x, files} = @formatters.html.format{main, @resources, options}
-   ;;          x
-   ;;       .dom -> dom{main}
-
-   ;;    if @template and not options.no-template:
-   ;;       ;; r = @resolvers.template or @resolvers.default
-   ;;       ;; if not r:
-   ;;       ;;    throw E.template.no-resolver{'Cannot resolve templates.'}
-   ;;       tsrc =
-   ;;          ;; match r{@template}:
-   ;;          match @read-resource{.template, @template}:
-   ;;             {=> file, => contents} -> Source{contents, file}
-   ;;             {=> contents} or String? contents -> Source{contents, "<quaint>"}
-   ;;       @template = null
-   ;;       @setenv{.body, raw % result}
-   ;;       @translate{tsrc, format, options}
-   ;;    else:
-   ;;       result
-
    translate{src, format, options = {=}} =
 
-      finalize{match, regexps} =
-         var String? s ->
-            regexps each {r, match repl} ->
-               String? ->
-                  s = s.replace{r, repl}
-               Function? f or f is [-> repl] ->
-                  inserts = {""}
-                  f2{*args} =
-                     match f{*args}:
-                        String? s -> s
-                        other ->
-                           inserts.push{other}
-                           "\x00"
-                  s = s.replace{r, f2}
-                  if inserts.length > 1:
-                     return collapse{zip{inserts, s.split{"\x00"}}, regexps}
-                  else:
-                     s
-            s
-         x -> collapse{x, regexps}
-
-      collapse{node, _regexps} =
+      finalize{node, _regexps} =
          var add = {}
          var rm = {}
          [node.tags or {}] each tag ->
@@ -280,6 +192,28 @@ class Engine:
                   r
                else:
                   _regexps
+
+         target = match node:
+            String? s -> s
+            Array? a -> a
+            ENode? e -> e.children
+            else -> {node}
+         regexps-arg = regexps each {r, repl} ->
+            {pattern = r, replacement = repl}
+         new-children = hyper-replace{target, regexps-arg}
+         match node:
+            ENode? e ->
+               ;; e2 = ENode{e.tags, e.props, Array! new-children}
+               e.children = if{new-children === '', {}, Array! new-children}
+               collapse{e, regexps}
+            when Array? new-children ->
+               new-children each
+                  String? s -> s
+                  other -> collapse{other, regexps}
+            else ->
+               new-children
+
+      collapse{node, regexps} =
          etools.merge-children{node, false} with sub-node ->
             finalize{sub-node, regexps}
 
