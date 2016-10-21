@@ -356,7 +356,7 @@ class Engine:
 
          options as {
             whitelist => wl = null
-            blacklist => bl = {.raw, .pre, .code, .script, .style, .kbd}
+            blacklist => bl = {.raw, .pre, .code, .script, .style, .kbd, .escape}
          }
 
          entry = {if{String? expr, RegExp{expr, "g"}, expr}, repl}
