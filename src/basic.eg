@@ -59,7 +59,7 @@ core-plugin{@} =
             elif middle.block:
                % middle
             else:
-               middle
+               group % middle
          if middle.block:
             res &: {block = middle.block}
          res

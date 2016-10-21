@@ -80,6 +80,9 @@ class Engine:
       @components = {
          escape{tags, props, {child}} =
             child
+         group{tags, props, match} =
+            {child} -> child
+            children -> children
       }
       @dispatch = Dispatcher{}
       @documents = {=}
