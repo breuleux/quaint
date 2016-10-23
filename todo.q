@@ -15,16 +15,25 @@
 * Make compatible with Promises, async/await
 
 
-== 0.0.16
+== 0.1.1
 
 === TODO
 
 * Better way to instantiate a naked Engine?
 * `case macro
-* Change how `meta stores its data
 * postprocessing on `meta?
 * Split the CLI into `quaint and `quaintman or `quaint-mechanics
 * Put JSON support in `quaint-json~?
+* Ask to install plugins that are not found
+
+
+== 0.1.0
+
+=== DONE
+
+* Server points to file given as argument instead of index, if applicable
+* Change how `meta stores its data
+* tools.to-data
 
 
 == 0.0.14
