@@ -149,7 +149,8 @@ enode-to-data{match node, use-map = false} =
       f{node.children}
 
    Array? ->
-      f{node}
+      ;; f{node}
+      node
 
    ENode? ->
       throw E.enode-conversion{"Cannot convert element to data"}
