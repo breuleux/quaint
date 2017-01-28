@@ -13,6 +13,7 @@ provide:
    install-plugin
    PluginResolver
 
+sleep = promisify with {d, f} -> setTimeout.call{null, f, d}
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -145,6 +146,7 @@ async install-plugin{name} =
       if not fs.exists-sync{"package.json"}:
          fs.write-file-sync{"package.json", "{}"}
       result = child_process.spawn-sync{"npm", {"install", real-name, "--save"}}
+      await sleep{100}
       match result.status:
          0 ->
             print result.stdout.to-string{}
