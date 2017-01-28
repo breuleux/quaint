@@ -92,9 +92,9 @@ class HTMLFormatter:
       ENode? {=> tags, => props, => children} ->
          tags each tag ->
             if @engine.components[tag] as rule:
-               tags.splice{tags.index-of{tag}, 1}
+               x-tags = tags each t when t !== tag -> t
                try:
-                  return rule{tags, props, @expand-components{children}}
+                  return rule{x-tags, props, @expand-components{children}}
                catch e:
                   return
                      .error %
