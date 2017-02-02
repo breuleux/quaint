@@ -7,23 +7,23 @@
   "dependencies": {
     "chalk": "^1.1.1",
     "deepmerge": "^0.2.10",
-    "earlgrey-runtime": ">=0.0.12",
+    "earlgrey-runtime": "^0.1.0",
     "engage": ">=0.0.11",
     "filendir": "^1.0.0",
-    "fs-extra": "^0.26.2",
-    "globby": "^3.0.1",
     "hyper-replace": "^0.1.0",
-    "inquirer-shortcuts": "^1.0.1",
+    "inquirer-shortcuts": "^1.1.0",
     "kaiser": ">=0.0.4",
+    "lodash": "^4.17.4",
     "mkdirp": "^0.5.1",
     "opg": ">=0.0.3",
+    "quasar": "0.0.18",
     "reload": "^0.7.0",
-    "yargs": "^3.25.0"
+    "yargs": "^6.6.0"
   },
   "devDependencies": {
-    "earlgrey": ">=0.0.13",
-    "mocha": "^2.2.1",
-    "earl-mocha": ">=0.0.3"
+    "earl-mocha": ">=0.0.3",
+    "earlgrey": "^0.1.0",
+    "mocha": "^2.2.1"
   },
   "bin": {
     "quaint": "bin/quaint"
