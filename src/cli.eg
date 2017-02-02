@@ -1,5 +1,6 @@
 
 require:
+   chalk
    yargs
    deepmerge
    .run -> main
@@ -11,13 +12,16 @@ require:
    filendir
    mkdirp
    "./setup" ->
-      setup, setup-plugin
+      setup, default-setup, setup-plugin
    inquirer-shortcuts as inq
 
 get-arguments{} =
 
    argv = chain yargs:
-      @usage{"Usage: quaint <file ...> [options]"}
+      @usage{"""Usage: quaint <file ...> [options]
+
+Run quaint with no argument to set up a new project in the current directory
+or to run it if it already exists."""}
 
       ;; --config, -c
       @alias{.c, .config}
@@ -182,12 +186,22 @@ async commit-setup{config, instructions, filename} =
    filendir.write-file-sync{filename, JSON.stringify{config, null, 2}}
    instructions each
       #mkdir{dir} ->
+         print '{chalk.bold{"Creating directory"}}: {chalk.green{dir}}'
          mkdirp.sync{dir}
       #write{file, contents} ->
+         print '{chalk.bold{"Creating file"}}: {chalk.green{file}}'
          filendir.write-file-sync{file, contents}
+   if config.server.enable:
+      print chalk.bold{"Run the quaint command with no argument to start the server."}
+   else:
+      print chalk.bold{"Run `quaint --serve <port>` to start the server."}
 
 async execute-setup{initial-config, filename} =
    {=> let config, => instructions} = await setup{initial-config}
+   commit-setup{config, instructions, filename}
+
+async execute-default-setup{filename} =
+   {=> let config, => instructions} = await default-setup{}
    commit-setup{config, instructions, filename}
 
 async provide{} =
@@ -219,13 +233,30 @@ async provide{} =
                await execute-setup{cfg, config-file}
          return
       elif cfg.sources.length === 0 and not cfg._eval and not config-exists:
-         create = await inq.confirm with
+         create = await inq.list with
             'The configuration file "{config-file}" does not exist, '
-            \ + 'do you wish to create it?'
-            {default = true}
-         if create:
-            await execute-setup{null, config-file}
+            \ + 'what do you want to do?'
+            {{name = "Create a default project", value = .default}
+             {name = "Create a customized project", value = .custom}
+             "Quit"}
+            {default = 0}
+         match create:
+            .default ->
+               await execute-default-setup{config-file}
+            .custom ->
+               await execute-setup{null, config-file}
+            else ->
+               pass
          return
+
+
+         ;; create = await inq.confirm with
+         ;;    'The configuration file "{config-file}" does not exist, '
+         ;;    \ + 'do you wish to create it?'
+         ;;    {default = true}
+         ;; if create:
+         ;;    await execute-setup{null, config-file}
+         ;; return
 
       nominal-output = cfg.output
       server-out = nominal-output

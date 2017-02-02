@@ -9,6 +9,7 @@ require:
 
 provide:
    setup
+   default-setup
    setup-plugin
    install-plugin
    PluginResolver
@@ -85,53 +86,12 @@ class PluginResolver:
 
 
 
-now = new Date{}
+;; now = new Date{}
 
-zpad{String! var s, length} =
-   while s.length < length:
-      s = '0' + s
-   s
-
-
-scaffold-index = '''
-meta ::
-  title = Index
-  author = Your name
-  date = {now.get-full-year{}}-{zpad{now.get-month{} + 1, 2}}-{zpad{now.get-date{}, 2}}
-
-Write some text here.
-
-Syntax reference @@ http://breuleux.github.io/quaint/syntax.html
-'''
-
-scaffold-template = '''
-template :: @minimal
-= meta :: title
-\{body\}
-'''
-
-scaffold-style = '''
-/*
-This stylesheet will be included automatically on all pages.
-To import more stylesheets, go in quaint.json and add them to the resources.files list.
-
-CSS files are not copied automatically, so @import will not work.
-
-A stylesheet can be imported on a per-page basis with this statement:
-resources :: style.css
-*/
-'''
-
-scaffold-script = '''
-/*
-This script will be executed automatically on all pages.
-To import more scripts, go in quaint.json and add them to the resources.files list.
-
-A script can be imported on a per-page basis with this statement:
-resources :: script.js
-*/
-'''
-
+;; zpad{String! var s, length} =
+;;    while s.length < length:
+;;       s = '0' + s
+;;    s
 
 
 resolver = PluginResolver{false}
@@ -175,7 +135,7 @@ async setup-plugin{name, config, instructions} =
             plugin.quaint-default-config or {=}
 
 
-default-config = {
+empty-config = {
    content-root = null
    sources = null
    files = null
@@ -199,10 +159,48 @@ default-config = {
    plugins = {=}
 }
 
-async setup{var config = null
-            var instructions = null} =
+default-config = {
+   content-root = .content
+   sources = {"**/*.q"}
+   files = {.assets}
+   templates = {
+      root = .templates
+      default = null
+   }
+   output = .output
+   resources = {
+      root = .resources
+      files = {=}
+   }
+   hostname = null
+   site-root = null
+   server = {
+      enable = true
+      start-page = "index.html"
+      port = 9137
+   }
+   watch = true
+   plugins = {=}
+}
 
-   config or= clone{default-config}
+
+
+async default-setup{} =
+   config = clone{default-config}
+   instructions = {
+      #mkdir{config.content-root}
+      #mkdir{config.output}
+      #mkdir{config.templates.root}
+      #mkdir{path.join{config.content-root, config.files[0]}}
+   }
+   setup{config, instructions, false}
+
+
+async setup{var config = null
+            var instructions = null
+            prompt-files = true} =
+
+   config or= clone{empty-config}
    instructions or= {}
 
    ;;;;;;;;;;;;;;;;;
@@ -210,34 +208,37 @@ async setup{var config = null
    ;;;;;;;;;;;;;;;;;
 
    if not config.content-root:
-      content-root = await inq.input{"Source directory:", {default = .content}}
+      content-root = await inq.input{"Source directory:"
+                                     {default = default-config.content-root}}
       config &: {
          = content-root
-         sources = {"**/*.q"}
+         sources = default-config.sources
       }
       instructions.push with #mkdir{content-root}
 
    if not config.output:
-      output = await inq.input{"Output directory:", {default = .output}}
+      output = await inq.input{"Output directory:"
+                               {default = default-config.output}}
       config.output = output
       instructions.push with #mkdir{output}
 
    if not config.templates.root:
-      template-root = await inq.input{"Template directory:", {default = .templates}}
+      template-root = await inq.input{"Template directory:"
+                                      {default = default-config.templates.root}}
       config.templates.root = template-root
       instructions.push with #mkdir{template-root}
 
    if not config.files:
       assets-root = await inq.input with
          "Assets directory (source subdirectory):"
-         {default = .assets}
+         {default = default-config.files[0]}
       config.files = {assets-root}
       instructions.push with #mkdir{path.join{config.content-root, assets-root}}
 
    if not config.resources.root:
       resources-root = await inq.input with
          "Resources directory (output subdirectory):"
-         {default = .resources}
+         {default = default-config.resources.root}
       config.resources.root = resources-root
 
    ;;;;;;;;;;;;;;
@@ -247,7 +248,7 @@ async setup{var config = null
    if not config.hostname:
       hostname = await inq.input with
          "Where will the pages be hosted?"
-         {default = "http://localhost"}
+         {default = "http://localhost/"}
       config &:
          match hostname:
             R"^([a-z]+://)?([^/]+)/?(.*)$"! {_, protocol, host, match root} ->
@@ -283,23 +284,23 @@ async setup{var config = null
       'index.q' => {
          dir = config.content-root
          message = "a page to start with"
-         value = scaffold-index
+         ;; value = scaffold-index
       }
       'default.q' => {
          dir = config.templates.root
          message = "a template"
-         value = scaffold-template
+         ;; value = scaffold-template
       }
       'style.css' => {
          dir = config.content-root
          message = "a global stylesheet"
-         value = scaffold-style
+         ;; value = scaffold-style
          resources = {"style.css"}
       }
       'script.js' => {
          dir = config.content-root
          message = "a global script"
-         value = scaffold-script
+         ;; value = scaffold-script
          resources = {"script.js"}
       }
    }
@@ -310,15 +311,25 @@ async setup{var config = null
       p = path.join{value.dir, key}
       if fs.exists-sync{p}:
          continue
-      result = await inq.confirm with
-         'Do you want me to create {value.message}: {p}?'
-         {default = true}
-      if result:
-         var text = value.value
-         if key === "default.q":
-            result2 = await inq.confirm with
-               "Do you want to use it as a default template?"
+      result =
+         if prompt-files:
+            await inq.confirm with
+               'Do you want me to create {value.message}: {p}?'
                {default = true}
+         else:
+            ;; print 'Creating {value.message}: {p}'
+            true
+      if result:
+         ;; var text = value.value
+         var text = fs.read-file-sync{path.join{__dirname, "..", "scaffold", key}, .utf8}
+         if key === "default.q":
+            result2 =
+               if prompt-files:
+                  await inq.confirm with
+                     "Do you want to use it as a default template?"
+                     {default = true}
+               else:
+                  true
             text = text.replace{"@minimal", config.templates.default}
             if result2:
                config.templates.default = key.replace{R".q$", ""}
@@ -336,7 +347,7 @@ async setup{var config = null
          'Should the quaint command start a server by default?'
          {default = true}
       config.server.enable = serve
-      if serve:
+      if config.server.enable:
          print 'The server port is {chalk.bold{config.server.port}}.'
 
    {= config, = instructions}
