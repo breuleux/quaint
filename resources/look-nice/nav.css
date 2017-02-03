@@ -1,16 +1,13 @@
 @charset "UTF-8";
 .nav-container-desktop, .nav-container-mobile {
   display: -webkit-box;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
-  -webkit-flex-direction: row;
       -ms-flex-direction: row;
           flex-direction: row;
   -webkit-box-align: stretch;
-  -webkit-align-items: stretch;
       -ms-flex-align: stretch;
           align-items: stretch;
   width: 100%;
@@ -25,16 +22,13 @@
 
 .nav-main > ul, .nav-leftmost > ul, .nav-rightmost > ul, .nav-mobile > ul {
   display: -webkit-box;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
-  -webkit-flex-direction: row;
       -ms-flex-direction: row;
           flex-direction: row;
   -webkit-box-align: stretch;
-  -webkit-align-items: stretch;
       -ms-flex-align: stretch;
           align-items: stretch;
   list-style-type: none;
@@ -44,16 +38,13 @@
 /* HAMBURGER HMMMMMMM */
 .hamburger {
   display: -webkit-box;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
-  -webkit-flex-direction: column;
       -ms-flex-direction: column;
           flex-direction: column;
   -webkit-box-pack: justify;
-  -webkit-justify-content: space-between;
       -ms-flex-pack: justify;
           justify-content: space-between;
   /* height: 1.7em */
@@ -83,7 +74,6 @@
 .nav-container-desktop {
   font-size: 18px;
   -webkit-box-pack: justify;
-  -webkit-justify-content: space-between;
       -ms-flex-pack: justify;
           justify-content: space-between; }
   .nav-container-desktop nav > ul > li {
@@ -95,16 +85,13 @@
       padding-right: 5px; }
   .nav-container-desktop nav li {
     display: -webkit-box;
-    display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
     -webkit-box-orient: horizontal;
     -webkit-box-direction: normal;
-    -webkit-flex-direction: row;
         -ms-flex-direction: row;
             flex-direction: row;
     -webkit-box-align: stretch;
-    -webkit-align-items: stretch;
         -ms-flex-align: stretch;
             align-items: stretch;
     margin: 0px; }
@@ -118,26 +105,21 @@
     padding: 0px; }
   .nav-container-desktop nav .dropdown > :first-child {
     display: -webkit-box;
-    display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
     -webkit-box-orient: horizontal;
     -webkit-box-direction: normal;
-    -webkit-flex-direction: row;
         -ms-flex-direction: row;
             flex-direction: row;
     -webkit-box-align: stretch;
-    -webkit-align-items: stretch;
         -ms-flex-align: stretch;
             align-items: stretch;
     position: relative;
     padding: 5px 10px;
     -webkit-box-align: center;
-    -webkit-align-items: center;
         -ms-flex-align: center;
             align-items: center;
     -webkit-box-pack: justify;
-    -webkit-justify-content: space-between;
         -ms-flex-pack: justify;
             justify-content: space-between;
     width: 100%;
@@ -187,16 +169,13 @@
 /* MOBILE */
 .nav-container-mobile {
   display: -webkit-box;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
-  -webkit-flex-direction: row;
       -ms-flex-direction: row;
           flex-direction: row;
   -webkit-box-align: stretch;
-  -webkit-align-items: stretch;
       -ms-flex-align: stretch;
           align-items: stretch;
   font-size: 20px;

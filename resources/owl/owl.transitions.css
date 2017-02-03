@@ -10,8 +10,7 @@
 	-moz-perspective : 1200px;
 	-moz-perspective-origin-x : 50%;
 	-moz-perspective-origin-y : 50%;
-	-webkit-perspective : 1200px;
-	        perspective : 1200px;
+	perspective : 1200px;
 }
 /* fade */
 .owl-fade-out {
