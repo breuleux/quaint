@@ -3,7 +3,7 @@
 require:
    child_process
    .index as quaint
-   quasar -> deprox
+   quasimodo -> deprox
    path
    chalk
    "./config" ->
