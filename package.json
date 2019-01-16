@@ -17,7 +17,7 @@
     "mkdirp": "^0.5.1",
     "opg": ">=0.0.3",
     "quasimodo": ">=0.0.19",
-    "reload": "^0.7.0",
+    "reload": "^2.4.0",
     "yargs": "^6.6.0"
   },
   "devDependencies": {
