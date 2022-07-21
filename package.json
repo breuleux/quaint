@@ -8,7 +8,7 @@
     "chalk": "^1.1.1",
     "deepmerge": "^0.2.10",
     "earlgrey-runtime": "^0.1.0",
-    "engage": ">=0.0.12",
+    "engage": "^0.0.13",
     "filendir": "^1.0.0",
     "hyper-replace": "^0.1.0",
     "inquirer-shortcuts": "^1.1.0",

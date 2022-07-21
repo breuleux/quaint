@@ -147,8 +147,10 @@ merge-config{normalize-config! cfg, argv} =
       cfg._eval = argv.eval
       cfg._print = true
       cfg.templates.default or= "@none"
-   else:
+   elif process.stdin.isTTY:
       cfg.templates.default or= "@minimal"
+   else:
+      cfg.templates.default or= "@none"
    if argv.stdout:
       cfg._print = true
 

@@ -14,6 +14,7 @@ require:
    "./setup" ->
       setup, default-setup, setup-plugin
    inquirer-shortcuts as inq
+   fs
 
 get-arguments{} =
 
@@ -232,22 +233,26 @@ async provide{} =
             else ->
                await execute-setup{cfg, config-file}
          return
-      elif cfg.sources.length === 0 and not cfg._eval and not config-exists:
-         create = await inq.list with
-            'The configuration file "{config-file}" does not exist, '
-            \ + 'what do you want to do?'
-            {{name = "Create a default project", value = .default}
-             {name = "Create a customized project", value = .custom}
-             "Quit"}
-            {default = 0}
-         match create:
-            .default ->
-               await execute-default-setup{config-file}
-            .custom ->
-               await execute-setup{null, config-file}
-            else ->
-               pass
-         return
+      elif cfg.sources.length === 0:
+         if not process.stdin.isTTY:
+            cfg._eval = fs.read-file-sync(process.stdin.fd, "utf-8");
+            cfg._print = true
+         elif not cfg._eval and not config-exists:
+            create = await inq.list with
+               'The configuration file "{config-file}" does not exist, '
+               \ + 'what do you want to do?'
+               {{name = "Create a default project", value = .default}
+               {name = "Create a customized project", value = .custom}
+               "Quit"}
+               {default = 0}
+            match create:
+               .default ->
+                  await execute-default-setup{config-file}
+               .custom ->
+                  await execute-setup{null, config-file}
+               else ->
+                  pass
+            return
 
 
          ;; create = await inq.confirm with
