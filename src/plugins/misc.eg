@@ -35,14 +35,24 @@ install{@} =
          engine.into{.head, engine.gen{body}}
 
       plugins{engine, body} =
-         ps = to-data{body, {leaf = leaf-data}}
-         items{ps} each {name, match options} ->
+         load{name, match options} =
             false? ->
                ;; plugin is off
                pass
             else ->
                p = engine.read-resource{.plugin, name, fallback-to-default = false}
                p{engine, if{options === true, {=}, options}}
+
+         match to-data{body, {leaf = leaf-data}}:
+            String? ps ->
+               ps.split(R"[\n, ]+") each name ->
+                  if name:
+                     load{name, true}
+            Array? ps ->
+               ps each name ->
+                  load{name, true}
+            items! ps ->
+               ps each {name, options} -> load{name, options}
          ""
 
       plugin{engine, raw! name, values} =

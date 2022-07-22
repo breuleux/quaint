@@ -1,0 +1,62 @@
+
+require:
+   fs
+   .setup ->
+      PluginResolver
+
+provide:
+   advanced-plugin
+
+
+normalize-qname{match t} =
+   R"^@|.q$"? or false? ->
+      t
+   else ->
+      t + ".q"
+
+
+relative-to-base{match filename, base} =
+   R"^/"? ->
+      filename
+   else ->
+      {base, filename}.join("/")
+
+
+advanced-plugin{*match} =
+   {options} when not options.is-quaint-engine ->
+      qeng -> advanced-plugin{qeng, options}
+
+   {q, options={}} ->
+      options as {
+         => base = process.cwd{}
+         => template-base = base
+         => uri-mapper = (path -> null)
+      }
+
+      q.register-resolvers with {
+         default{filename, options} =
+            f2 = relative-to-base{filename, base}
+            if not fs.exists-sync{f2}:
+               throw E.no-resource{'Resource does not exist: {f2}'}
+            {
+               file and path = f2
+               name = uri-mapper{f2}
+               contents and text = fs.read-file-sync(f2, .utf8)
+            }
+
+         plugin{match name} =
+            R"^\."? ->
+               resolver.try-require{name, {name}}
+            else ->
+               resolver.try-require{name, {'quaint-{name}', name}}
+
+         template{normalize-qname! filename} =
+            f2 = relative-to-base{filename, template-base}
+            {
+               file and path = f2
+               contents and text = fs.read-file-sync(f2, .utf8)
+            }
+      }
+
+
+resolver = PluginResolver{}

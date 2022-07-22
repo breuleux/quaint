@@ -328,8 +328,9 @@ class Engine:
    register-resources{resources} =
       items{resources} each {name, data} ->
          if data.path and not data.path-is-url and not data.full-path:
-            {=> path} = @read-resource{.resource, data.path, {read = false}}
+            {=> path, name => new-name = null} = @read-resource{.resource, data.path, {read = false}}
             data.full-path = path
+            data.name = new-name or name
 
          ;; if data.path and data.contents === true:
          ;;    data.contents = @read-resource-contents{.resource, data.path}
@@ -339,7 +340,7 @@ class Engine:
          ;;       throw E.quaint.resource with
          ;;          'Duplicate resource "{name}" has inconsistent content.'
 
-         @resources[name] = data
+         @resources[data.name] = data
 
    register-rule{*args} =
       console.error{'Deprecated: Engine::registerRule, use Engine::registerRules'}
