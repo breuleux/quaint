@@ -14,6 +14,8 @@ require:
       Engine, processDocuments
    .basic ->
       basic-plugin, core-plugin, lit-plugin
+   .setup ->
+      PluginResolver
    .advanced ->
       advanced-plugin
    .etools
