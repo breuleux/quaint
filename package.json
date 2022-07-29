@@ -1,6 +1,6 @@
 {
   "name": "quaint",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "format": "cjs",
   "description": "Extensible markup language.",
   "main": "./lib/index.js",
