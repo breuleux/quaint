@@ -1,6 +1,7 @@
 
 require:
    fs
+   path
    .setup ->
       PluginResolver
 
@@ -35,7 +36,11 @@ advanced-plugin{*match} =
 
       q.register-resolvers with {
          default{filename, options} =
-            f2 = relative-to-base{filename, base}
+            f2 = match options.requested-from:
+               null? or R"^<"? ->
+                  relative-to-base{filename, base}
+               rf ->
+                  path.join{path.dirname{rf}, filename}
             if not fs.exists-sync{f2}:
                throw E.no-resource{'Resource does not exist: {f2}'}
             {

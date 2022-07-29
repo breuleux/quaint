@@ -77,6 +77,7 @@ class Engine:
    constructor{Array! plugins} =
       @next = tools.next
       @top = true
+      @source-name = null
       @is-quaint-engine = true
       @components = {
          escape{tags, props, {child}} =
@@ -165,7 +166,15 @@ class Engine:
          @gen-from-source{Source{text, "<quaint>"}}
       Source? src ->
          parsed = parse{src}
-         @gen{parsed}
+         ;; TODO: we should use soft-fork, but that works poorly with
+         ;; some plugins that change engine.evaluator, because that will
+         ;; only change the soft fork...
+         ;; @soft-fork{source-name = src.url}.gen{parsed}
+         old-source-name = @source-name
+         @source-name = src.url
+         result = @gen{parsed}
+         @source-name = old-source-name
+         result
       node ->
          @gen{node}
 
@@ -363,7 +372,11 @@ class Engine:
       @
 
    read-resource{type, filename, var options} =
-      options = {fallback-to-default = true, read = true} & options
+      options = {
+         fallback-to-default = true
+         read = true
+         requested-from = @source-name
+      } & options
       resolver = @resolvers[type]
       var error = null
 
@@ -420,12 +433,29 @@ class Engine:
          {=> contents} -> contents
          contents -> contents
 
-   fork{} =
+   soft-fork{changes = {=}} =
       e = Engine{{}}
-      e.top = false
-      e.dispatch = @dispatch.clone{}
+      e.top = @top
+      e.dispatch = @dispatch
       e.components = @components
       e.documents = @documents
+      e.evaluator = @evaluator
+      e.formatters = @formatters
+      e.regexps = @regexps
+      e.macros = @macros
+      e.methods = @methods
+      e.methods each m -> e[m] = this[m]
+      e.resolvers = @resolvers
+      e.resources = @resources
+      e.template = @template
+      e.actual = [@]
+      e &: changes
+      e
+
+   fork{} =
+      e = @soft-fork{}
+      e.top = false
+      e.dispatch = @dispatch.clone{}
       e.evaluator = @evaluator.fork{}
       e.formatters = clone{@formatters}
       ;; TODO: regexps should be deep cloned
@@ -434,10 +464,8 @@ class Engine:
       e.methods = clone{@methods}
       e.methods each m -> e[m] = this[m]
       e.resolvers = clone{@resolvers}
-      e.resources = @resources
-      e.template = @template
+      e.actual = e
       e
-
 
    eval{text, env, loc = null} =
       @evaluator.eval{text, env, loc}
