@@ -40,7 +40,7 @@ advanced-plugin{*match} =
                null? or R"^<"? ->
                   relative-to-base{filename, base}
                rf ->
-                  path.join{path.dirname{rf}, filename}
+                  relative-to-base{path.join{path.dirname{rf}, filename}, base}
             if not fs.exists-sync{f2}:
                throw E.no-resource{'Resource does not exist: {f2}'}
             {
